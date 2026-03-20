@@ -1,730 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Section Detail — Store Manager</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-    rel="stylesheet"
-  />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Section — Store Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
   <style>
-    body {
-      background-color: #f8f9fa;
-    }
-
-    /* ── Tab styling ── */
-    .nav-tabs .nav-link {
-      color: #6c757d;
-      border: none;
-      border-bottom: 3px solid transparent;
-      padding: 0.6rem 1.1rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
-
-    .nav-tabs .nav-link:hover {
-      color: #343a40;
-      border-bottom-color: #dee2e6;
-    }
-
-    .nav-tabs .nav-link.active {
-      color: #0d6efd;
-      border-bottom: 3px solid #0d6efd;
-      background: transparent;
-      font-weight: 600;
-    }
-
-    .nav-tabs {
-      border-bottom: 1px solid #dee2e6;
-    }
-
-    /* ── Log cards ── */
-    .log-card {
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
-    }
-
-    .log-card .card-header {
-      background: transparent;
-      border-bottom: 1px solid #f0f0f0;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    /* ── Week badge ── */
-    .week-badge {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    /* ── Table tweaks ── */
-    .table th {
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: #6c757d;
-    }
-
-    .table td {
-      font-size: 0.88rem;
-      vertical-align: middle;
-    }
-
-    /* ── Section header ── */
-    .section-hero {
-      background: white;
-      border-bottom: 1px solid #e9ecef;
-      padding: 1rem 0;
-    }
-
-    .back-btn {
-      font-size: 0.85rem;
-      color: #6c757d;
-      text-decoration: none;
-    }
-
-    .back-btn:hover {
-      color: #343a40;
-    }
-
-    /* ── Add entry button area ── */
-    .tab-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .tab-toolbar h6 {
-      margin: 0;
-      font-weight: 600;
-      color: #343a40;
-    }
+    body{background:#f8f9fa}
+    .nav-tabs .nav-link{color:#6c757d;border:none;border-bottom:3px solid transparent;padding:.6rem 1.1rem;font-size:.9rem;font-weight:500}
+    .nav-tabs .nav-link:hover{color:#343a40;border-bottom-color:#dee2e6}
+    .nav-tabs .nav-link.active{color:#0d6efd;border-bottom:3px solid #0d6efd;background:transparent;font-weight:600}
+    .nav-tabs{border-bottom:1px solid #dee2e6}
+    .log-card{border:none;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+    .log-card .card-header{background:transparent;border-bottom:1px solid #f0f0f0;font-weight:600;font-size:.9rem}
+    .week-badge{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+    .table th{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#6c757d}
+    .table td{font-size:.88rem;vertical-align:middle}
+    .section-hero{background:#fff;border-bottom:1px solid #e9ecef;padding:1rem 0}
+    .back-btn{font-size:.85rem;color:#6c757d;text-decoration:none}
+    .back-btn:hover{color:#343a40}
+    .tab-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+    .tab-toolbar h6{margin:0;font-weight:600;color:#343a40}
+    .del-entry{opacity:0;transition:opacity .15s}
+    .log-card:hover .del-entry,.table tr:hover .del-entry{opacity:1}
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+  <nav class="navbar navbar-dark bg-dark px-3">
     <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
-      <i class="bi bi-shop fs-5"></i>
-      <span style="font-weight:700;">Store Manager</span>
+      <i class="bi bi-shop fs-5"></i><span style="font-weight:700">Store Manager</span>
     </a>
-    <div class="ms-auto d-flex align-items-center gap-3">
-      <span class="text-secondary small">
-        <i class="bi bi-circle-fill text-success me-1" style="font-size:0.5rem;"></i>
-        Connected
-      </span>
-      <span class="text-light small">
-        <i class="bi bi-person-circle me-1"></i>Staff
-      </span>
-    </div>
+    <span class="text-light small"><i class="bi bi-person-circle me-1"></i>Staff</span>
   </nav>
 
-  <!-- Section Hero Header -->
   <div class="section-hero">
     <div class="container">
       <a href="index.html" class="back-btn d-inline-flex align-items-center gap-1 mb-2">
         <i class="bi bi-arrow-left"></i> All Sections
       </a>
       <div class="d-flex align-items-center gap-3">
-        <div id="section-icon" style="font-size:2rem;">🍫</div>
+        <div id="sec-icon" style="font-size:2rem">📦</div>
         <div>
-          <h2 id="section-title" class="mb-0 fw-bold" style="font-size:1.4rem;">Chocolate</h2>
-          <small id="section-location" class="text-muted">Aisle 3</small>
+          <h2 id="sec-title" class="mb-0 fw-bold" style="font-size:1.4rem">Loading…</h2>
+          <small id="sec-location" class="text-muted"></small>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Main Content -->
   <div class="container py-4">
 
     <!-- Tabs -->
-    <ul class="nav nav-tabs mb-4" id="sectionTabs">
-      <li class="nav-item">
-        <button
-          class="nav-link active"
-          data-bs-toggle="tab"
-          data-bs-target="#tab-cleaning"
-          type="button"
-        >
-          <i class="bi bi-droplet me-1"></i>Cleaning
-        </button>
-      </li>
-      <li class="nav-item">
-        <button
-          class="nav-link"
-          data-bs-toggle="tab"
-          data-bs-target="#tab-planogram"
-          type="button"
-        >
-          <i class="bi bi-grid me-1"></i>Planogram
-        </button>
-      </li>
-      <li class="nav-item">
-        <button
-          class="nav-link"
-          data-bs-toggle="tab"
-          data-bs-target="#tab-expiry"
-          type="button"
-        >
-          <i class="bi bi-calendar-x me-1"></i>Expiry
-        </button>
-      </li>
-      <li class="nav-item">
-        <button
-          class="nav-link"
-          data-bs-toggle="tab"
-          data-bs-target="#tab-orders"
-          type="button"
-        >
-          <i class="bi bi-cart me-1"></i>Orders
-        </button>
-      </li>
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-cleaning"><i class="bi bi-droplet me-1"></i>Cleaning</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-planogram"><i class="bi bi-grid me-1"></i>Planogram</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-expiry"><i class="bi bi-calendar-x me-1"></i>Expiry</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-orders"><i class="bi bi-cart me-1"></i>Orders</button></li>
     </ul>
 
-    <!-- Tab Content -->
-    <div class="tab-content" id="sectionTabContent">
+    <div class="tab-content">
 
-      <!-- ══════════════════════════════
-           TAB 1 — CLEANING LOG
-      ══════════════════════════════ -->
+      <!-- ── CLEANING TAB ── -->
       <div class="tab-pane fade show active" id="tab-cleaning">
-
         <div class="tab-toolbar">
-          <h6><i class="bi bi-droplet text-primary me-2"></i>Cleaning Log — June 2025</h6>
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-cleaning">
-            <i class="bi bi-plus-lg me-1"></i>Log Clean
-          </button>
+          <h6><i class="bi bi-droplet text-primary me-2"></i>Cleaning Log</h6>
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-cleaning"><i class="bi bi-plus-lg me-1"></i>Log Clean</button>
         </div>
-
-        <!-- Month picker (placeholder) -->
         <div class="d-flex gap-2 mb-3">
-          <select class="form-select form-select-sm w-auto">
-            <option>June 2025</option>
-            <option>May 2025</option>
-            <option>April 2025</option>
-          </select>
+          <select id="clean-month" class="form-select form-select-sm w-auto"></select>
         </div>
-
-        <!-- Week cards -->
-        <div class="row g-3">
-
-          <!-- Week 1 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-success text-white">1</span>
-                Week 1
-                <span class="ms-auto badge bg-success bg-opacity-15 text-success">Cleaned</span>
-              </div>
-              <div class="card-body py-2 px-3">
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Date Cleaned</div>
-                  <div class="col-7">June 3, 2025</div>
-                </div>
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Cleaned By</div>
-                  <div class="col-7">Sarah</div>
-                </div>
-                <div class="row small text-muted">
-                  <div class="col-5 fw-semibold">Comments</div>
-                  <div class="col-7">Full wipe down, no issues.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Week 2 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-success text-white">2</span>
-                Week 2
-                <span class="ms-auto badge bg-success bg-opacity-15 text-success">Cleaned</span>
-              </div>
-              <div class="card-body py-2 px-3">
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Date Cleaned</div>
-                  <div class="col-7">June 10, 2025</div>
-                </div>
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Cleaned By</div>
-                  <div class="col-7">Mike</div>
-                </div>
-                <div class="row small text-muted">
-                  <div class="col-5 fw-semibold">Comments</div>
-                  <div class="col-7">Deep cleaned bottom shelf.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Week 3 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-secondary text-white">3</span>
-                Week 3
-                <span class="ms-auto badge bg-secondary bg-opacity-15 text-secondary">Pending</span>
-              </div>
-              <div class="card-body py-2 px-3 text-muted small fst-italic">
-                No entry yet.
-              </div>
-            </div>
-          </div>
-
-          <!-- Week 4 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-secondary text-white">4</span>
-                Week 4
-                <span class="ms-auto badge bg-secondary bg-opacity-15 text-secondary">Pending</span>
-              </div>
-              <div class="card-body py-2 px-3 text-muted small fst-italic">
-                No entry yet.
-              </div>
-            </div>
-          </div>
-
+        <div class="row g-3" id="cleaning-weeks">
+          <div class="col-12 text-center py-4 text-muted small">Loading…</div>
         </div>
-        <!-- end week cards -->
-
       </div>
-      <!-- end TAB 1 -->
 
-      <!-- ══════════════════════════════
-           TAB 2 — PLANOGRAM
-      ══════════════════════════════ -->
+      <!-- ── PLANOGRAM TAB ── -->
       <div class="tab-pane fade" id="tab-planogram">
-
         <div class="tab-toolbar">
-          <h6><i class="bi bi-grid text-info me-2"></i>Planogram Integrity — June 2025</h6>
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-planogram">
-            <i class="bi bi-plus-lg me-1"></i>Log Check
-          </button>
+          <h6><i class="bi bi-grid text-info me-2"></i>Planogram Integrity</h6>
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-planogram"><i class="bi bi-plus-lg me-1"></i>Log Check</button>
         </div>
-
         <div class="d-flex gap-2 mb-3">
-          <select class="form-select form-select-sm w-auto">
-            <option>June 2025</option>
-            <option>May 2025</option>
-          </select>
+          <select id="plano-month" class="form-select form-select-sm w-auto"></select>
         </div>
-
-        <div class="row g-3">
-
-          <!-- Week 1 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-success text-white">1</span>
-                Week 1
-                <span class="ms-auto badge bg-success bg-opacity-15 text-success">Checked</span>
-              </div>
-              <div class="card-body py-2 px-3">
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Date Checked</div>
-                  <div class="col-7">June 2, 2025</div>
-                </div>
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Checked By</div>
-                  <div class="col-7">Sarah</div>
-                </div>
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Comments</div>
-                  <div class="col-7">All good, no issues.</div>
-                </div>
-                <div class="row small text-muted">
-                  <div class="col-5 fw-semibold">Plano Fixed</div>
-                  <div class="col-7">
-                    <i class="bi bi-x-circle text-secondary"></i> No
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Week 2 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-warning text-dark">2</span>
-                Week 2
-                <span class="ms-auto badge bg-warning bg-opacity-15 text-warning">Fixed</span>
-              </div>
-              <div class="card-body py-2 px-3">
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Date Checked</div>
-                  <div class="col-7">June 9, 2025</div>
-                </div>
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Checked By</div>
-                  <div class="col-7">Mike</div>
-                </div>
-                <div class="row small text-muted mb-1">
-                  <div class="col-5 fw-semibold">Comments</div>
-                  <div class="col-7">Row 3 shifted after restocking.</div>
-                </div>
-                <div class="row small text-muted">
-                  <div class="col-5 fw-semibold">Plano Fixed</div>
-                  <div class="col-7">
-                    <i class="bi bi-check-circle-fill text-success"></i> Yes
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Week 3 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-secondary text-white">3</span>
-                Week 3
-                <span class="ms-auto badge bg-secondary bg-opacity-15 text-secondary">Pending</span>
-              </div>
-              <div class="card-body py-2 px-3 text-muted small fst-italic">
-                No entry yet.
-              </div>
-            </div>
-          </div>
-
-          <!-- Week 4 -->
-          <div class="col-12 col-md-6">
-            <div class="card log-card">
-              <div class="card-header d-flex align-items-center gap-2 py-2">
-                <span class="week-badge bg-secondary text-white">4</span>
-                Week 4
-                <span class="ms-auto badge bg-secondary bg-opacity-15 text-secondary">Pending</span>
-              </div>
-              <div class="card-body py-2 px-3 text-muted small fst-italic">
-                No entry yet.
-              </div>
-            </div>
-          </div>
-
+        <div class="row g-3" id="plano-weeks">
+          <div class="col-12 text-center py-4 text-muted small">Loading…</div>
         </div>
-
       </div>
-      <!-- end TAB 2 -->
 
-      <!-- ══════════════════════════════
-           TAB 3 — EXPIRY LOG
-      ══════════════════════════════ -->
+      <!-- ── EXPIRY TAB ── -->
       <div class="tab-pane fade" id="tab-expiry">
-
         <div class="tab-toolbar">
           <h6><i class="bi bi-calendar-x text-danger me-2"></i>Expiry Log</h6>
-          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-expiry">
-            <i class="bi bi-plus-lg me-1"></i>Flag Item
-          </button>
+          <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-expiry"><i class="bi bi-plus-lg me-1"></i>Flag Item</button>
         </div>
-
-        <!-- Filter row -->
-        <div class="d-flex gap-2 mb-3 flex-wrap">
-          <select class="form-select form-select-sm w-auto">
-            <option>All Items</option>
-            <option>Removed</option>
-            <option>Still on Shelf</option>
+        <div class="d-flex gap-2 mb-3">
+          <select id="expiry-filter" class="form-select form-select-sm w-auto">
+            <option value="all">All Items</option>
+            <option value="active">Still on Shelf</option>
+            <option value="removed">Removed</option>
           </select>
         </div>
-
-        <div class="card log-card">
-          <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th class="ps-3">Date</th>
-                  <th>Item</th>
-                  <th>Expiry Date</th>
-                  <th>Removed</th>
-                  <th>Sign Off</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="ps-3">Jun 5, 2025</td>
-                  <td>Lindt 70% Dark Bar</td>
-                  <td><span class="text-danger fw-semibold">Jun 3, 2025</span></td>
-                  <td>
-                    <span class="badge bg-success bg-opacity-15 text-success">
-                      <i class="bi bi-check-circle me-1"></i>Yes
-                    </span>
-                  </td>
-                  <td>Sarah</td>
-                </tr>
-                <tr>
-                  <td class="ps-3">Jun 8, 2025</td>
-                  <td>Cadbury Roses Box</td>
-                  <td><span class="text-danger fw-semibold">Jun 6, 2025</span></td>
-                  <td>
-                    <span class="badge bg-success bg-opacity-15 text-success">
-                      <i class="bi bi-check-circle me-1"></i>Yes
-                    </span>
-                  </td>
-                  <td>Mike</td>
-                </tr>
-                <tr>
-                  <td class="ps-3">Jun 12, 2025</td>
-                  <td>Ferrero Rocher 200g</td>
-                  <td><span class="text-warning fw-semibold">Jun 14, 2025</span></td>
-                  <td>
-                    <span class="badge bg-danger bg-opacity-10 text-danger">
-                      <i class="bi bi-x-circle me-1"></i>No
-                    </span>
-                  </td>
-                  <td>—</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div id="expiry-table-wrap">
+          <div class="text-center py-4 text-muted small">Loading…</div>
         </div>
-
       </div>
-      <!-- end TAB 3 -->
 
-      <!-- ══════════════════════════════
-           TAB 4 — ORDERS
-      ══════════════════════════════ -->
+      <!-- ── ORDERS TAB ── -->
       <div class="tab-pane fade" id="tab-orders">
-
         <div class="tab-toolbar">
           <h6><i class="bi bi-cart text-warning me-2"></i>Order List</h6>
-          <button class="btn btn-warning btn-sm text-dark" data-bs-toggle="modal" data-bs-target="#modal-order">
-            <i class="bi bi-plus-lg me-1"></i>Add Order
-          </button>
+          <button class="btn btn-warning btn-sm text-dark" data-bs-toggle="modal" data-bs-target="#modal-order"><i class="bi bi-plus-lg me-1"></i>Add Order</button>
         </div>
-
         <div class="d-flex gap-2 mb-3">
-          <select class="form-select form-select-sm w-auto">
-            <option>All</option>
-            <option>Pending</option>
-            <option>Ordered</option>
+          <select id="order-filter" class="form-select form-select-sm w-auto">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="ordered">Ordered</option>
           </select>
         </div>
-
-        <div class="card log-card">
-          <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th class="ps-3">Date</th>
-                  <th>Item Needed</th>
-                  <th>Comments</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="ps-3">Jun 9, 2025</td>
-                  <td>Toblerone 100g</td>
-                  <td>Shelf completely empty, order 2 cases</td>
-                  <td>
-                    <span class="badge bg-warning bg-opacity-15 text-warning">Pending</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="ps-3">Jun 11, 2025</td>
-                  <td>Kinder Bueno x12 Box</td>
-                  <td>Running low — 3 left</td>
-                  <td>
-                    <span class="badge bg-success bg-opacity-15 text-success">Ordered</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div id="order-table-wrap">
+          <div class="text-center py-4 text-muted small">Loading…</div>
         </div>
-
       </div>
-      <!-- end TAB 4 -->
 
     </div>
-    <!-- end Tab Content -->
-
   </div>
-  <!-- end Container -->
 
-
-  <!-- ══════════════════════════════════
-       MODALS
-  ══════════════════════════════════ -->
-
-  <!-- Modal: Log Clean -->
+  <!-- ═══ Modal: Log Clean ═══ -->
   <div class="modal fade" id="modal-cleaning" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header">
-          <h5 class="modal-title fw-semibold">
-            <i class="bi bi-droplet text-primary me-2"></i>Log a Clean
-          </h5>
+          <h5 class="modal-title fw-semibold"><i class="bi bi-droplet text-primary me-2"></i>Log a Clean</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Week</label>
-            <select class="form-select form-select-sm">
-              <option>Week 1</option>
-              <option>Week 2</option>
-              <option selected>Week 3</option>
-              <option>Week 4</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Date Cleaned</label>
-            <input type="date" class="form-control form-control-sm" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Cleaned By</label>
-            <input type="text" class="form-control form-control-sm" placeholder="Staff name" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Comments</label>
-            <textarea class="form-control form-control-sm" rows="3" placeholder="Any notes..."></textarea>
-          </div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Week</label>
+            <select class="form-select form-select-sm" id="f-clean-week"></select></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Date Cleaned</label>
+            <input type="date" class="form-control form-control-sm" id="f-clean-date"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Cleaned By</label>
+            <input type="text" class="form-control form-control-sm" id="f-clean-by" placeholder="Staff name"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Comments</label>
+            <textarea class="form-control form-control-sm" rows="2" id="f-clean-comments" placeholder="Notes…"></textarea></div>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-primary btn-sm">Save Entry</button>
+          <button class="btn btn-primary btn-sm" id="f-clean-save">Save</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Log Planogram Check -->
+  <!-- ═══ Modal: Log Planogram ═══ -->
   <div class="modal fade" id="modal-planogram" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header">
-          <h5 class="modal-title fw-semibold">
-            <i class="bi bi-grid text-info me-2"></i>Log Planogram Check
-          </h5>
+          <h5 class="modal-title fw-semibold"><i class="bi bi-grid text-info me-2"></i>Log Planogram Check</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Week</label>
-            <select class="form-select form-select-sm">
-              <option>Week 1</option>
-              <option>Week 2</option>
-              <option selected>Week 3</option>
-              <option>Week 4</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Date Checked</label>
-            <input type="date" class="form-control form-control-sm" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Checked By</label>
-            <input type="text" class="form-control form-control-sm" placeholder="Staff name" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Comments</label>
-            <textarea class="form-control form-control-sm" rows="3" placeholder="Any issues noted..."></textarea>
-          </div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Week</label>
+            <select class="form-select form-select-sm" id="f-plano-week"></select></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Date Checked</label>
+            <input type="date" class="form-control form-control-sm" id="f-plano-date"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Checked By</label>
+            <input type="text" class="form-control form-control-sm" id="f-plano-by" placeholder="Staff name"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Comments</label>
+            <textarea class="form-control form-control-sm" rows="2" id="f-plano-comments" placeholder="Issues noted…"></textarea></div>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="plano-fixed-check" />
-            <label class="form-check-label small fw-semibold" for="plano-fixed-check">
-              Planogram was fixed / corrected
-            </label>
+            <input class="form-check-input" type="checkbox" id="f-plano-fixed"/>
+            <label class="form-check-label small fw-semibold" for="f-plano-fixed">Planogram was fixed / corrected</label>
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-primary btn-sm">Save Entry</button>
+          <button class="btn btn-primary btn-sm" id="f-plano-save">Save</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Flag Expiry Item -->
+  <!-- ═══ Modal: Flag Expiry ═══ -->
   <div class="modal fade" id="modal-expiry" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header">
-          <h5 class="modal-title fw-semibold">
-            <i class="bi bi-calendar-x text-danger me-2"></i>Flag Expiry Item
-          </h5>
+          <h5 class="modal-title fw-semibold"><i class="bi bi-calendar-x text-danger me-2"></i>Flag Expiry Item</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Date Found</label>
-            <input type="date" class="form-control form-control-sm" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Item Name</label>
-            <input type="text" class="form-control form-control-sm" placeholder="e.g. Lindt 70% Dark Bar" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Expiry Date on Product</label>
-            <input type="date" class="form-control form-control-sm" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Sign Off By</label>
-            <input type="text" class="form-control form-control-sm" placeholder="Staff name" />
-          </div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Date Found</label>
+            <input type="date" class="form-control form-control-sm" id="f-exp-date"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Item Name</label>
+            <input type="text" class="form-control form-control-sm" id="f-exp-item" placeholder="e.g. Lindt 70% Dark Bar"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Expiry Date on Product</label>
+            <input type="date" class="form-control form-control-sm" id="f-exp-expiry"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Sign Off By</label>
+            <input type="text" class="form-control form-control-sm" id="f-exp-sign" placeholder="Staff name"/></div>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="item-removed-check" />
-            <label class="form-check-label small fw-semibold" for="item-removed-check">
-              Item has been removed from shelf
-            </label>
+            <input class="form-check-input" type="checkbox" id="f-exp-removed"/>
+            <label class="form-check-label small fw-semibold" for="f-exp-removed">Item has been removed from shelf</label>
           </div>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-danger btn-sm">Save Entry</button>
+          <button class="btn btn-danger btn-sm" id="f-exp-save">Save</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Add Order -->
+  <!-- ═══ Modal: Add Order ═══ -->
   <div class="modal fade" id="modal-order" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header">
-          <h5 class="modal-title fw-semibold">
-            <i class="bi bi-cart text-warning me-2"></i>Add Order Item
-          </h5>
+          <h5 class="modal-title fw-semibold"><i class="bi bi-cart text-warning me-2"></i>Add Order Item</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Date</label>
-            <input type="date" class="form-control form-control-sm" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Item Needed</label>
-            <input type="text" class="form-control form-control-sm" placeholder="e.g. Toblerone 100g" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Comments</label>
-            <textarea class="form-control form-control-sm" rows="3" placeholder="Quantity, urgency, notes..."></textarea>
-          </div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Date</label>
+            <input type="date" class="form-control form-control-sm" id="f-ord-date"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Item Needed</label>
+            <input type="text" class="form-control form-control-sm" id="f-ord-item" placeholder="e.g. Toblerone 100g"/></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Comments</label>
+            <textarea class="form-control form-control-sm" rows="2" id="f-ord-comments" placeholder="Quantity, urgency…"></textarea></div>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-warning btn-sm text-dark">Save Entry</button>
+          <button class="btn btn-warning btn-sm text-dark" id="f-ord-save">Save</button>
         </div>
       </div>
     </div>
