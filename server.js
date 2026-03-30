@@ -5,10 +5,15 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-// ── Swap this to an env var for production ──
 const MONGO_URI =
   'mongodb+srv://otakuabhi2003_db_user:FIgLxm08PVDtpHdu@cluster0.6sdduhi.mongodb.net/?appName=Cluster0';
 const DB_NAME = 'store_manager';
+
+const SITES = [
+  { id: 'C01158', name: '96 Shell' },
+  { id: 'C01288', name: 'Riverside Shell' },
+  { id: 'C09066', name: '72 Shell' },
+];
 
 let db;
 
@@ -30,28 +35,45 @@ MongoClient.connect(MONGO_URI).then(async (client) => {
   db = client.db(DB_NAME);
   console.log('Connected to MongoDB Atlas');
 
-  // Seed 5 default sections on first run
-  const count = await db.collection('sections').countDocuments();
+  // ── One-time migration: stamp all existing docs with C01158 ──
+  const collections = ['sections', 'cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items'];
+  for (const col of collections) {
+    const result = await db.collection(col).updateMany(
+      { siteId: { $exists: false } },
+      { $set: { siteId: 'C01158' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`Migrated ${result.modifiedCount} docs in '${col}' → siteId: C01158`);
+    }
+  }
+
+  // Seed 5 default sections for C01158 if none exist yet
+  const count = await db.collection('sections').countDocuments({ siteId: 'C01158' });
   if (count === 0) {
     await db.collection('sections').insertMany([
-      { name: 'Chocolate', slug: 'chocolate', icon: '🍫', location: 'Aisle 3', displayOrder: 1, createdAt: new Date() },
-      { name: 'Novelty Candy', slug: 'novelty-candy', icon: '🍬', location: 'Aisle 4', displayOrder: 2, createdAt: new Date() },
-      { name: 'Meat Snacks', slug: 'meat-snacks', icon: '🥩', location: 'Aisle 5', displayOrder: 3, createdAt: new Date() },
-      { name: 'Candy Pegs', slug: 'candy-pegs', icon: '🍭', location: 'End Cap A', displayOrder: 4, createdAt: new Date() },
-      { name: 'Chocolate Pegs', slug: 'chocolate-pegs', icon: '🍫', location: 'End Cap B', displayOrder: 5, createdAt: new Date() },
+      { name: 'Chocolate',       slug: 'chocolate',       icon: '🍫', location: 'Aisle 3',   displayOrder: 1, siteId: 'C01158', createdAt: new Date() },
+      { name: 'Novelty Candy',   slug: 'novelty-candy',   icon: '🍬', location: 'Aisle 4',   displayOrder: 2, siteId: 'C01158', createdAt: new Date() },
+      { name: 'Meat Snacks',     slug: 'meat-snacks',     icon: '🥩', location: 'Aisle 5',   displayOrder: 3, siteId: 'C01158', createdAt: new Date() },
+      { name: 'Candy Pegs',      slug: 'candy-pegs',      icon: '🍭', location: 'End Cap A', displayOrder: 4, siteId: 'C01158', createdAt: new Date() },
+      { name: 'Chocolate Pegs',  slug: 'chocolate-pegs',  icon: '🍫', location: 'End Cap B', displayOrder: 5, siteId: 'C01158', createdAt: new Date() },
     ]);
-    console.log('Seeded 5 default sections');
+    console.log('Seeded 5 default sections for C01158');
   }
 
   app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
 }).catch((err) => { console.error(err); process.exit(1); });
+
+// ── Sites list (used by frontend) ──────────────────────
+app.get('/api/sites', (req, res) => res.json(SITES));
 
 // ═════════════════════════════════════════════════════════
 //  SECTIONS
 // ═════════════════════════════════════════════════════════
 app.get('/api/sections', async (req, res) => {
   try {
-    res.json(await db.collection('sections').find().sort({ displayOrder: 1 }).toArray());
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    res.json(await db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -64,11 +86,12 @@ app.get('/api/sections/:id', async (req, res) => {
 
 app.post('/api/sections', async (req, res) => {
   try {
-    const { name, icon, location } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name required' });
+    const { name, icon, location, siteId } = req.body;
+    if (!name)   return res.status(400).json({ error: 'Name required' });
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const n = await db.collection('sections').countDocuments();
-    const doc = { name, slug, icon: icon || '📦', location: location || '', displayOrder: n + 1, createdAt: new Date() };
+    const n = await db.collection('sections').countDocuments({ siteId });
+    const doc = { name, slug, icon: icon || '📦', location: location || '', displayOrder: n + 1, siteId, createdAt: new Date() };
     const r = await db.collection('sections').insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -78,19 +101,21 @@ app.delete('/api/sections/:id', async (req, res) => {
   try {
     const id = req.params.id;
     await db.collection('sections').deleteOne({ _id: new ObjectId(id) });
-    await Promise.all(['cleaning_logs','planogram_checks','expiry_logs','order_items']
+    await Promise.all(['cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items']
       .map((c) => db.collection(c).deleteMany({ sectionId: id })));
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ═════════════════════════════════════════════════════════
-//  DASHBOARD  (one call for the whole page)
+//  DASHBOARD
 // ═════════════════════════════════════════════════════════
 app.get('/api/dashboard', async (req, res) => {
   try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
     const p = currentPeriod();
-    const sections = await db.collection('sections').find().sort({ displayOrder: 1 }).toArray();
+    const sections = await db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
     const summaries = await Promise.all(sections.map(async (s) => {
       const sid = s._id.toString();
       const expiryCount = await db.collection('expiry_logs').countDocuments({ sectionId: sid, removed: false });
@@ -101,10 +126,10 @@ app.get('/api/dashboard', async (req, res) => {
     res.json({
       sections: summaries,
       summary: {
-        expiryAlerts:  summaries.reduce((a, s) => a + s.expiryCount, 0),
-        pendingOrders: summaries.reduce((a, s) => a + s.orderCount, 0),
+        expiryAlerts:   summaries.reduce((a, s) => a + s.expiryCount, 0),
+        pendingOrders:  summaries.reduce((a, s) => a + s.orderCount, 0),
         cleansThisWeek: summaries.filter((s) => s.cleanedThisWeek).length,
-        totalSections: sections.length,
+        totalSections:  sections.length,
       },
       currentPeriod: p,
     });
@@ -113,9 +138,13 @@ app.get('/api/dashboard', async (req, res) => {
 
 app.get('/api/dashboard/expiry-details', async (req, res) => {
   try {
-    const sections = await db.collection('sections').find().sort({ displayOrder: 1 }).toArray();
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const sections = await db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
     const out = await Promise.all(sections.map(async (s) => {
-      const items = await db.collection('expiry_logs').find({ sectionId: s._id.toString(), removed: false }).sort({ expiryDate: 1 }).toArray();
+      const items = await db.collection('expiry_logs')
+        .find({ sectionId: s._id.toString(), removed: false })
+        .sort({ expiryDate: 1 }).toArray();
       return { section: s, items };
     }));
     res.json(out.filter((d) => d.items.length > 0));
@@ -124,9 +153,13 @@ app.get('/api/dashboard/expiry-details', async (req, res) => {
 
 app.get('/api/dashboard/order-details', async (req, res) => {
   try {
-    const sections = await db.collection('sections').find().sort({ displayOrder: 1 }).toArray();
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const sections = await db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
     const out = await Promise.all(sections.map(async (s) => {
-      const items = await db.collection('order_items').find({ sectionId: s._id.toString(), ordered: false }).sort({ date: -1 }).toArray();
+      const items = await db.collection('order_items')
+        .find({ sectionId: s._id.toString(), ordered: false })
+        .sort({ date: -1 }).toArray();
       return { section: s, items };
     }));
     res.json(out.filter((d) => d.items.length > 0));
@@ -135,10 +168,13 @@ app.get('/api/dashboard/order-details', async (req, res) => {
 
 app.get('/api/dashboard/cleaning-details', async (req, res) => {
   try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
     const p = currentPeriod();
-    const sections = await db.collection('sections').find().sort({ displayOrder: 1 }).toArray();
+    const sections = await db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
     const out = await Promise.all(sections.map(async (s) => {
-      const entry = await db.collection('cleaning_logs').findOne({ sectionId: s._id.toString(), year: p.year, month: p.month, week: p.week });
+      const entry = await db.collection('cleaning_logs')
+        .findOne({ sectionId: s._id.toString(), year: p.year, month: p.month, week: p.week });
       return { section: s, cleaned: !!entry, entry };
     }));
     res.json({ details: out, currentPeriod: p });
@@ -159,7 +195,8 @@ app.get('/api/cleaning-logs', async (req, res) => {
 app.post('/api/cleaning-logs', async (req, res) => {
   try {
     const { sectionId, year, month, week, dateCleaned, cleanedBy, comments } = req.body;
-    const exists = await db.collection('cleaning_logs').findOne({ sectionId, year: +year, month: +month, week: +week });
+    const exists = await db.collection('cleaning_logs')
+      .findOne({ sectionId, year: +year, month: +month, week: +week });
     if (exists) return res.status(400).json({ error: 'Entry already exists for this week' });
     const doc = { sectionId, year: +year, month: +month, week: +week, dateCleaned: new Date(dateCleaned), cleanedBy: cleanedBy || '', comments: comments || '', createdAt: new Date() };
     const r = await db.collection('cleaning_logs').insertOne(doc);
@@ -188,7 +225,8 @@ app.get('/api/planogram-checks', async (req, res) => {
 app.post('/api/planogram-checks', async (req, res) => {
   try {
     const { sectionId, year, month, week, dateChecked, checkedBy, comments, planogramFixed } = req.body;
-    const exists = await db.collection('planogram_checks').findOne({ sectionId, year: +year, month: +month, week: +week });
+    const exists = await db.collection('planogram_checks')
+      .findOne({ sectionId, year: +year, month: +month, week: +week });
     if (exists) return res.status(400).json({ error: 'Entry already exists for this week' });
     const doc = { sectionId, year: +year, month: +month, week: +week, dateChecked: new Date(dateChecked), checkedBy: checkedBy || '', comments: comments || '', planogramFixed: !!planogramFixed, createdAt: new Date() };
     const r = await db.collection('planogram_checks').insertOne(doc);
@@ -228,7 +266,7 @@ app.post('/api/expiry-logs', async (req, res) => {
 app.put('/api/expiry-logs/:id', async (req, res) => {
   try {
     const u = {};
-    if (req.body.removed !== undefined) u.removed = req.body.removed;
+    if (req.body.removed   !== undefined) u.removed   = req.body.removed;
     if (req.body.signOffBy !== undefined) u.signOffBy = req.body.signOffBy;
     await db.collection('expiry_logs').updateOne({ _id: new ObjectId(req.params.id) }, { $set: u });
     res.json({ success: true });

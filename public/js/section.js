@@ -1,3 +1,24 @@
+/* ── Site management ─────────────────────────────────── */
+function getActiveSite() {
+  return localStorage.getItem('activeSiteId') || 'C01158';
+}
+
+function setActiveSite(siteId) {
+  localStorage.setItem('activeSiteId', siteId);
+}
+
+function initSiteSwitcher() {
+  const active = getActiveSite();
+  document.querySelectorAll('.site-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.site === active);
+    btn.addEventListener('click', () => {
+      setActiveSite(btn.dataset.site);
+      // Navigate back to dashboard so user picks a section for the new site
+      window.location = 'index.html';
+    });
+  });
+}
+
 /* ── Helpers ─────────────────────────────────────────── */
 async function api(url, opts = {}) {
   const res = await fetch(url, {
@@ -43,14 +64,17 @@ let cleaningData = [], planoData = [];
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
   if (!sectionId) return window.location = 'index.html';
+
+  initSiteSwitcher();
+
   const p = currentPeriod();
-  viewYear = p.year;
+  viewYear  = p.year;
   viewMonth = p.month;
 
   try {
     const sec = await api(`/api/sections/${sectionId}`);
-    document.getElementById('sec-icon').textContent = sec.icon || '📦';
-    document.getElementById('sec-title').textContent = sec.name;
+    document.getElementById('sec-icon').textContent     = sec.icon || '📦';
+    document.getElementById('sec-title').textContent    = sec.name;
     document.getElementById('sec-location').textContent = sec.location || '';
     document.title = `${sec.name} — Store Manager`;
   } catch { return window.location = 'index.html'; }
@@ -181,7 +205,7 @@ async function deleteWeekEntry(type, id) {
 
 /* ── EXPIRY ──────────────────────────────────────────── */
 async function loadExpiry() {
-  const wrap = document.getElementById('expiry-table-wrap');
+  const wrap   = document.getElementById('expiry-table-wrap');
   const filter = document.getElementById('expiry-filter').value;
   wrap.innerHTML = '<div class="text-center py-4 text-muted small">Loading…</div>';
   try {
@@ -232,7 +256,7 @@ document.getElementById('expiry-filter').addEventListener('change', loadExpiry);
 
 /* ── ORDERS ──────────────────────────────────────────── */
 async function loadOrders() {
-  const wrap = document.getElementById('order-table-wrap');
+  const wrap   = document.getElementById('order-table-wrap');
   const filter = document.getElementById('order-filter').value;
   wrap.innerHTML = '<div class="text-center py-4 text-muted small">Loading…</div>';
   try {
@@ -300,7 +324,7 @@ function wireFormHandlers() {
         sectionId, year: viewYear, month: viewMonth, week, dateCleaned: date, cleanedBy: by, comments
       }});
       bootstrap.Modal.getInstance(document.getElementById('modal-cleaning')).hide();
-      document.getElementById('f-clean-by').value = '';
+      document.getElementById('f-clean-by').value       = '';
       document.getElementById('f-clean-comments').value = '';
       loadCleaning();
     } catch (e) { alert(e.message); }
@@ -319,9 +343,9 @@ function wireFormHandlers() {
         sectionId, year: viewYear, month: viewMonth, week, dateChecked: date, checkedBy: by, comments, planogramFixed: fixed
       }});
       bootstrap.Modal.getInstance(document.getElementById('modal-planogram')).hide();
-      document.getElementById('f-plano-by').value = '';
+      document.getElementById('f-plano-by').value       = '';
       document.getElementById('f-plano-comments').value = '';
-      document.getElementById('f-plano-fixed').checked = false;
+      document.getElementById('f-plano-fixed').checked  = false;
       loadPlanogram();
     } catch (e) { alert(e.message); }
   });
@@ -339,8 +363,8 @@ function wireFormHandlers() {
         sectionId, date, item, expiryDate: expiry, signOffBy: sign, removed
       }});
       bootstrap.Modal.getInstance(document.getElementById('modal-expiry')).hide();
-      document.getElementById('f-exp-item').value = '';
-      document.getElementById('f-exp-sign').value = '';
+      document.getElementById('f-exp-item').value      = '';
+      document.getElementById('f-exp-sign').value      = '';
       document.getElementById('f-exp-removed').checked = false;
       loadExpiry();
     } catch (e) { alert(e.message); }
@@ -357,8 +381,8 @@ function wireFormHandlers() {
         sectionId, date, item, comments
       }});
       bootstrap.Modal.getInstance(document.getElementById('modal-order')).hide();
-      document.getElementById('f-ord-item').value = '';
-      document.getElementById('f-ord-comments').value = '';
+      document.getElementById('f-ord-item').value      = '';
+      document.getElementById('f-ord-comments').value  = '';
       loadOrders();
     } catch (e) { alert(e.message); }
   });

@@ -1,3 +1,33 @@
+/* ── Site management ─────────────────────────────────── */
+const SITES = {
+  C01158: '96 Shell',
+  C01288: 'Riverside Shell',
+  C09066: '72 Shell',
+};
+
+function getActiveSite() {
+  return localStorage.getItem('activeSiteId') || 'C01158';
+}
+
+function setActiveSite(siteId) {
+  localStorage.setItem('activeSiteId', siteId);
+}
+
+function initSiteSwitcher() {
+  const active = getActiveSite();
+  document.querySelectorAll('.site-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.site === active);
+    btn.addEventListener('click', () => {
+      setActiveSite(btn.dataset.site);
+      document.querySelectorAll('.site-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('page-title').textContent = SITES[btn.dataset.site] + ' — Sections';
+      loadDashboard();
+    });
+  });
+  document.getElementById('page-title').textContent = SITES[active] + ' — Sections';
+}
+
 /* ── Helpers ─────────────────────────────────────────── */
 async function api(url, opts = {}) {
   const res = await fetch(url, {
@@ -17,6 +47,7 @@ function fmtDate(d) {
 
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  initSiteSwitcher();
   loadDashboard();
   setupAddSection();
   setupDetailModals();
@@ -24,8 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Load Dashboard ──────────────────────────────────── */
 async function loadDashboard() {
+  const siteId = getActiveSite();
   try {
-    const data = await api('/api/dashboard');
+    const data = await api(`/api/dashboard?siteId=${siteId}`);
     renderSummary(data.summary);
     renderSections(data.sections);
   } catch (e) {
@@ -36,9 +68,9 @@ async function loadDashboard() {
 
 /* ── Summary Bar ─────────────────────────────────────── */
 function renderSummary(s) {
-  document.getElementById('sum-expiry').textContent = s.expiryAlerts;
-  document.getElementById('sum-orders').textContent = s.pendingOrders;
-  document.getElementById('sum-cleans').textContent = `${s.cleansThisWeek}/${s.totalSections}`;
+  document.getElementById('sum-expiry').textContent   = s.expiryAlerts;
+  document.getElementById('sum-orders').textContent   = s.pendingOrders;
+  document.getElementById('sum-cleans').textContent   = `${s.cleansThisWeek}/${s.totalSections}`;
   document.getElementById('sum-sections').textContent = s.totalSections;
 }
 
@@ -86,8 +118,10 @@ function renderSections(sections) {
     </div>`;
   grid.appendChild(addCol);
 
-  // Event delegation
-  grid.addEventListener('click', handleGridClick);
+  // Remove old listener to avoid duplicates, re-add fresh
+  const newGrid = grid.cloneNode(true);
+  grid.parentNode.replaceChild(newGrid, grid);
+  newGrid.addEventListener('click', handleGridClick);
 }
 
 function buildPills(s) {
@@ -121,25 +155,26 @@ function handleGridClick(e) {
     }
     return;
   }
-  // Card click → navigate
+  // Card click → navigate (pass siteId so section page knows which site it belongs to)
   const card = e.target.closest('.section-card[data-sid]');
   if (card) {
-    window.location = `section.html?id=${card.dataset.sid}`;
+    window.location = `section.html?id=${card.dataset.sid}&siteId=${getActiveSite()}`;
   }
 }
 
 /* ── Add Section ─────────────────────────────────────── */
 function setupAddSection() {
   document.getElementById('add-sec-save').addEventListener('click', async () => {
-    const name = document.getElementById('add-sec-name').value.trim();
-    const icon = document.getElementById('add-sec-icon').value.trim();
+    const name     = document.getElementById('add-sec-name').value.trim();
+    const icon     = document.getElementById('add-sec-icon').value.trim();
     const location = document.getElementById('add-sec-location').value.trim();
+    const siteId   = getActiveSite();
     if (!name) return alert('Section name is required.');
     try {
-      await api('/api/sections', { method: 'POST', body: { name, icon, location } });
+      await api('/api/sections', { method: 'POST', body: { name, icon, location, siteId } });
       bootstrap.Modal.getInstance(document.getElementById('modal-add-section')).hide();
-      document.getElementById('add-sec-name').value = '';
-      document.getElementById('add-sec-icon').value = '';
+      document.getElementById('add-sec-name').value     = '';
+      document.getElementById('add-sec-icon').value     = '';
       document.getElementById('add-sec-location').value = '';
       loadDashboard();
     } catch (e) { alert(e.message); }
@@ -151,10 +186,11 @@ function setupDetailModals() {
 
   // ── Expiry Detail ──
   document.getElementById('modal-expiry-detail').addEventListener('show.bs.modal', async () => {
+    const siteId = getActiveSite();
     const body = document.getElementById('expiry-detail-body');
     body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
     try {
-      const data = await api('/api/dashboard/expiry-details');
+      const data = await api(`/api/dashboard/expiry-details?siteId=${siteId}`);
       if (data.length === 0) {
         body.innerHTML = '<p class="text-center text-success py-3"><i class="bi bi-check-circle me-2"></i>No expiry alerts!</p>';
         return;
@@ -203,10 +239,11 @@ function setupDetailModals() {
 
   // ── Order Detail ──
   document.getElementById('modal-order-detail').addEventListener('show.bs.modal', async () => {
+    const siteId = getActiveSite();
     const body = document.getElementById('order-detail-body');
     body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
     try {
-      const data = await api('/api/dashboard/order-details');
+      const data = await api(`/api/dashboard/order-details?siteId=${siteId}`);
       if (data.length === 0) {
         body.innerHTML = '<p class="text-center text-success py-3"><i class="bi bi-check-circle me-2"></i>No pending orders!</p>';
         return;
@@ -255,10 +292,11 @@ function setupDetailModals() {
 
   // ── Cleaning Detail ──
   document.getElementById('modal-clean-detail').addEventListener('show.bs.modal', async () => {
+    const siteId = getActiveSite();
     const body = document.getElementById('clean-detail-body');
     body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
     try {
-      const data = await api('/api/dashboard/cleaning-details');
+      const data = await api(`/api/dashboard/cleaning-details?siteId=${siteId}`);
       const p = data.currentPeriod;
       const monthName = new Date(p.year, p.month - 1).toLocaleString('en-US', { month: 'long' });
       let html = `<p class="text-muted small mb-3">Week ${p.week} of ${monthName} ${p.year}</p>`;
@@ -298,7 +336,7 @@ async function markExpiryRemoved(id, btn) {
     row.style.opacity = '0.4';
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Done';
-    loadDashboard(); // refresh summary counts
+    loadDashboard();
   } catch (e) { alert(e.message); }
 }
 

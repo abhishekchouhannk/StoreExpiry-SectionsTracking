@@ -21,21 +21,33 @@
     .section-card:hover .delete-section-btn{opacity:1}
     .add-card{border:2px dashed #dee2e6!important;min-height:140px}
     .add-card:hover{border-color:#adb5bd!important;background:#f1f3f5}
+
+    /* Site selector */
+    .site-btn{font-size:.78rem;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.75);background:transparent;white-space:nowrap;transition:all .15s}
+    .site-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+    .site-btn.active{background:#fff;color:#212529;font-weight:600;border-color:#fff}
+    .site-switcher{display:flex;gap:6px;flex-wrap:wrap}
   </style>
 </head>
 <body>
 
-  <nav class="navbar navbar-dark bg-dark px-3">
+  <nav class="navbar navbar-dark bg-dark px-3 flex-wrap gap-2">
     <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
       <i class="bi bi-shop fs-5"></i><span>Store Manager</span>
     </a>
-    <span class="text-light small"><i class="bi bi-person-circle me-1"></i>Staff</span>
+    <!-- Site switcher -->
+    <div class="site-switcher" id="site-switcher">
+      <button class="site-btn" data-site="C01158">96 Shell</button>
+      <button class="site-btn" data-site="C01288">Riverside Shell</button>
+      <button class="site-btn" data-site="C09066">72 Shell</button>
+    </div>
+    <span class="text-light small ms-auto"><i class="bi bi-person-circle me-1"></i>Staff</span>
   </nav>
 
   <div class="container py-4">
     <div class="page-header mb-4">
-      <h1>Store Sections</h1>
-      <p class="mb-0">Select a section to manage cleaning, planograms, expiry, and orders.</p>
+      <h1 id="page-title">Store Sections</h1>
+      <p class="mb-0" id="page-subtitle">Select a section to manage cleaning, planograms, expiry, and orders.</p>
     </div>
 
     <!-- Summary Bar -->
