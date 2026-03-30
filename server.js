@@ -1,13 +1,13 @@
+require('dotenv').config();
+
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
-
-const MONGO_URI =
-  'mongodb+srv://otakuabhi2003_db_user:FIgLxm08PVDtpHdu@cluster0.6sdduhi.mongodb.net/?appName=Cluster0';
-const DB_NAME = 'store_manager';
+const MONGO_URI = process.env.MONGO_URI;
+const DB_NAME   = process.env.DB_NAME || 'store_manager';
+const PORT      = process.env.PORT || 3000;
 
 const SITES = [
   { id: 'C01158', name: '96 Shell' },

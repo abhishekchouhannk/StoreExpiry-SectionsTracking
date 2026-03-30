@@ -1,12 +1,18 @@
 /* ── Site management ─────────────────────────────────── */
-function getActiveSite() {
-  return localStorage.getItem('activeSiteId') || 'C01158';
+const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+
+function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
+function setActiveSite(siteId) { localStorage.setItem('activeSiteId', siteId); }
+
+function syncDropdownLabel(siteId) {
+  const lbl = document.getElementById('site-dropdown-label');
+  if (lbl) lbl.textContent = SITES[siteId];
 }
-function setActiveSite(siteId) {
-  localStorage.setItem('activeSiteId', siteId);
-}
+
 function initSiteSwitcher() {
   const active = getActiveSite();
+
+  // Pill switcher (tablet+)
   document.querySelectorAll('.site-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.site === active);
     btn.addEventListener('click', () => {
@@ -14,6 +20,30 @@ function initSiteSwitcher() {
       window.location = 'index.html';
     });
   });
+
+  // Mobile dropdown
+  const dropBtn  = document.getElementById('site-dropdown-btn');
+  const dropList = document.getElementById('site-dropdown-list');
+  if (dropBtn && dropList) {
+    syncDropdownLabel(active);
+    dropBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = dropList.classList.toggle('open');
+      dropBtn.classList.toggle('open', open);
+    });
+    document.addEventListener('click', () => {
+      dropList.classList.remove('open');
+      dropBtn.classList.remove('open');
+    });
+    document.querySelectorAll('.site-dropdown-item').forEach((item) => {
+      item.classList.toggle('active', item.dataset.site === active);
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setActiveSite(item.dataset.site);
+        window.location = 'index.html';
+      });
+    });
+  }
 }
 
 /* ── Custom tab switching ────────────────────────────── */

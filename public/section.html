@@ -193,7 +193,38 @@
     /* Empty state */
     .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--muted); font-size: .85rem; font-style: italic; }
 
-    @media (max-width: 480px) {
+    /* ── MOBILE SITE DROPDOWN ── */
+    .site-dropdown-wrap { display: none; position: relative; }
+    .site-dropdown-btn {
+      font-family: 'Syne', sans-serif; font-size: .75rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      padding: 6px 12px 6px 14px; border-radius: var(--pill-r);
+      border: 1.5px solid var(--text); background: var(--text); color: #fff;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .site-dropdown-btn i { font-size: .7rem; transition: transform .2s; }
+    .site-dropdown-btn.open i { transform: rotate(180deg); }
+    .site-dropdown-list {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 5px; min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.1); z-index: 200;
+    }
+    .site-dropdown-list.open { display: block; }
+    .site-dropdown-item {
+      font-family: 'Syne', sans-serif; font-size: .72rem; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      padding: 7px 12px; border-radius: 8px; cursor: pointer; border: none;
+      background: none; width: 100%; text-align: left; color: var(--muted);
+      transition: background .12s, color .12s;
+    }
+    .site-dropdown-item:hover { background: var(--bg); color: var(--text); }
+    .site-dropdown-item.active { color: var(--text); font-weight: 800; }
+    .site-dropdown-item.active::before { content: '✓ '; }
+
+    @media (max-width: 600px) {
+      .site-switcher { display: none; }
+      .site-dropdown-wrap { display: block; }
       .topbar { padding: 0 1rem; }
       .tab-content-area { padding: 1rem; }
       .sec-hero { padding: 1rem; }
@@ -208,6 +239,17 @@
       <button class="site-btn" data-site="C01158">96 Shell</button>
       <button class="site-btn" data-site="C01288">Riverside Shell</button>
       <button class="site-btn" data-site="C09066">72 Shell</button>
+    </div>
+    <div class="site-dropdown-wrap" id="site-dropdown-wrap">
+      <button class="site-dropdown-btn" id="site-dropdown-btn">
+        <span id="site-dropdown-label">96 Shell</span>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="site-dropdown-list" id="site-dropdown-list">
+        <button class="site-dropdown-item" data-site="C01158">96 Shell</button>
+        <button class="site-dropdown-item" data-site="C01288">Riverside Shell</button>
+        <button class="site-dropdown-item" data-site="C09066">72 Shell</button>
+      </div>
     </div>
     <button class="hamburger-btn" data-bs-toggle="offcanvas" data-bs-target="#offcanvas-menu">
       <i class="bi bi-list"></i>

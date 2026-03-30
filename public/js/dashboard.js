@@ -15,17 +15,63 @@ function setActiveSite(siteId) {
 
 function initSiteSwitcher() {
   const active = getActiveSite();
+
+  // ── Pill switcher (tablet+) ──
   document.querySelectorAll('.site-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.site === active);
     btn.addEventListener('click', () => {
       setActiveSite(btn.dataset.site);
       document.querySelectorAll('.site-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
+      syncDropdownLabel(btn.dataset.site);
       document.getElementById('page-title').textContent = SITES[btn.dataset.site];
       loadDashboard();
     });
   });
+
+  // ── Mobile dropdown ──
+  const dropBtn  = document.getElementById('site-dropdown-btn');
+  const dropList = document.getElementById('site-dropdown-list');
+
+  if (dropBtn && dropList) {
+    syncDropdownLabel(active);
+
+    dropBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = dropList.classList.toggle('open');
+      dropBtn.classList.toggle('open', open);
+    });
+
+    document.addEventListener('click', () => {
+      dropList.classList.remove('open');
+      dropBtn.classList.remove('open');
+    });
+
+    document.querySelectorAll('.site-dropdown-item').forEach((item) => {
+      item.classList.toggle('active', item.dataset.site === active);
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const site = item.dataset.site;
+        setActiveSite(site);
+        document.querySelectorAll('.site-dropdown-item').forEach((i) => i.classList.remove('active'));
+        item.classList.add('active');
+        syncDropdownLabel(site);
+        // keep pills in sync too
+        document.querySelectorAll('.site-btn').forEach((b) => b.classList.toggle('active', b.dataset.site === site));
+        document.getElementById('page-title').textContent = SITES[site];
+        dropList.classList.remove('open');
+        dropBtn.classList.remove('open');
+        loadDashboard();
+      });
+    });
+  }
+
   document.getElementById('page-title').textContent = SITES[active];
+}
+
+function syncDropdownLabel(siteId) {
+  const lbl = document.getElementById('site-dropdown-label');
+  if (lbl) lbl.textContent = SITES[siteId];
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -272,17 +318,20 @@ function setupDetailModals() {
       html += '<ul class="list-group list-group-flush">';
       data.details.forEach((d) => {
         html += d.cleaned
-          ? `<li class="list-group-item d-flex align-items-center">
-               <span class="me-2">${d.section.icon || '📦'}</span>
-               <strong>${d.section.name}</strong>
-               <span class="ms-auto badge bg-success bg-opacity-15 text-success">
-                 <i class="bi bi-check-circle-fill me-1"></i>Cleaned by ${d.entry.cleanedBy || '—'} · ${fmtDate(d.entry.dateCleaned)}
-               </span>
+          ? `<li class="list-group-item d-flex align-items-center gap-2" style="flex-wrap:wrap;padding:.65rem 0;">
+               <span>${d.section.icon || '📦'}</span>
+               <strong style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.section.name}</strong>
+               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
+                 <span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#166534;">
+                   <i class="bi bi-check-circle-fill me-1"></i>Cleaned
+                 </span>
+                 <span style="font-size:.68rem;color:#8a8880;">${d.entry.cleanedBy || '—'} · ${fmtDate(d.entry.dateCleaned)}</span>
+               </div>
              </li>`
-          : `<li class="list-group-item d-flex align-items-center">
-               <span class="me-2">${d.section.icon || '📦'}</span>
-               <strong>${d.section.name}</strong>
-               <span class="ms-auto badge bg-danger bg-opacity-10 text-danger">
+          : `<li class="list-group-item d-flex align-items-center gap-2" style="padding:.65rem 0;">
+               <span>${d.section.icon || '📦'}</span>
+               <strong style="flex:1;min-width:0;">${d.section.name}</strong>
+               <span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#fee2e2;color:#b91c1c;flex-shrink:0;">
                  <i class="bi bi-x-circle me-1"></i>Not cleaned
                </span>
              </li>`;
