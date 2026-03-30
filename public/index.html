@@ -185,6 +185,26 @@
     .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); border-radius: 9px; font-size: .78rem; padding: .42rem .9rem; }
     .btn-ghost:hover { border-color: #aaa; color: var(--text); }
 
+    /* ── SITE SWITCH OVERLAY ── */
+    #site-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(245,244,240,.7);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+    #site-overlay.active { display: flex; }
+    .overlay-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* ── MOBILE SITE DROPDOWN ── */
     .site-dropdown-wrap { display: none; position: relative; }
     .site-dropdown-btn {
@@ -226,6 +246,8 @@
   </style>
 </head>
 <body>
+
+  <div id="site-overlay"><div class="overlay-spinner"></div></div>
 
   <!-- ── TOP BAR ── -->
   <div class="topbar">
@@ -278,8 +300,13 @@
       </button>
 
       <div class="menu-footer">
-        <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a><br>
-        <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">abhishekchouhan.dev</a></p>
+        <p style="margin:0 0 .5rem;">Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
+        <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;transition:border-color .15s,background .15s;"
+           onmouseover="this.style.borderColor='var(--text)';this.style.background='var(--bg)'"
+           onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
+          abhishekchouhan.dev <i class="bi bi-arrow-up-right" style="font-size:.7rem;"></i>
+        </a>
       </div>
     </div>
   </div>

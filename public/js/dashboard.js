@@ -25,7 +25,7 @@ function initSiteSwitcher() {
       btn.classList.add('active');
       syncDropdownLabel(btn.dataset.site);
       document.getElementById('page-title').textContent = SITES[btn.dataset.site];
-      loadDashboard();
+      loadDashboard(true);
     });
   });
 
@@ -61,7 +61,7 @@ function initSiteSwitcher() {
         document.getElementById('page-title').textContent = SITES[site];
         dropList.classList.remove('open');
         dropBtn.classList.remove('open');
-        loadDashboard();
+        loadDashboard(true);
       });
     });
   }
@@ -99,9 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDetailModals();
 });
 
+/* ── Overlay ─────────────────────────────────────────── */
+function showOverlay() { document.getElementById('site-overlay').classList.add('active'); }
+function hideOverlay() { document.getElementById('site-overlay').classList.remove('active'); }
+
 /* ── Load Dashboard ──────────────────────────────────── */
-async function loadDashboard() {
+async function loadDashboard(withOverlay = false) {
   const siteId = getActiveSite();
+  if (withOverlay) showOverlay();
   try {
     const data = await api(`/api/dashboard?siteId=${siteId}`);
     renderSummary(data.summary);
@@ -109,6 +114,8 @@ async function loadDashboard() {
   } catch (e) {
     document.getElementById('sections-grid').innerHTML =
       `<div style="grid-column:1/-1;text-align:center;padding:3rem 0;color:#d1453b;font-size:.87rem;">Failed to load: ${e.message}</div>`;
+  } finally {
+    hideOverlay();
   }
 }
 

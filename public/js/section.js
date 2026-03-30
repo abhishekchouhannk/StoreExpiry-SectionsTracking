@@ -17,7 +17,8 @@ function initSiteSwitcher() {
     btn.classList.toggle('active', btn.dataset.site === active);
     btn.addEventListener('click', () => {
       setActiveSite(btn.dataset.site);
-      window.location = 'index.html';
+      document.getElementById('site-overlay').classList.add('active');
+      setTimeout(() => { window.location = 'index.html'; }, 120);
     });
   });
 
@@ -40,7 +41,8 @@ function initSiteSwitcher() {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         setActiveSite(item.dataset.site);
-        window.location = 'index.html';
+        document.getElementById('site-overlay').classList.add('active');
+        setTimeout(() => { window.location = 'index.html'; }, 120);
       });
     });
   }
