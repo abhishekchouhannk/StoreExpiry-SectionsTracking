@@ -9,7 +9,7 @@ const path = require('path');
 const MONGO_URI   = process.env.MONGO_URI;
 const DB_NAME     = process.env.DB_NAME || 'store_manager';
 const BACKUP_DIR  = path.join(__dirname, 'backups');
-const COLLECTIONS = ['sections', 'cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items', 'checklist_logs'];
+const COLLECTIONS = ['sections', 'cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items', 'checklist_logs', 'daily_checklist_logs'];
 
 async function backup() {
   const client = await MongoClient.connect(MONGO_URI);

@@ -163,14 +163,14 @@ function initActiveInitialBar() {
   input.addEventListener('input', () => {
     activeInitial = input.value.trim().toUpperCase();
     if (activeInitial) {
-      hint.textContent  = 'Tap any empty cell to sign off instantly';
-      hint.style.color  = '#166534';
+      hint.textContent         = 'Tap any empty cell to sign off instantly';
+      hint.style.color         = '#166534';
       input.style.background   = '#dcfce7';
       input.style.borderColor  = '#166534';
       input.style.color        = '#166534';
     } else {
-      hint.textContent  = 'Enter your initials above to enable quick sign-off';
-      hint.style.color  = 'var(--muted)';
+      hint.textContent         = 'Enter your initials above to enable quick sign-off';
+      hint.style.color         = 'var(--muted)';
       input.style.background   = '';
       input.style.borderColor  = '';
       input.style.color        = '';
@@ -212,9 +212,9 @@ async function loadWeek() {
   const from   = dateKey(days[0]);
   const to     = dateKey(days[6]);
   try {
-    const entries = await api(`/api/checklist?siteId=${siteId}&from=${from}&to=${to}&type=daily`);
+    const entries = await api(`/api/daily-checklist?siteId=${siteId}&from=${from}&to=${to}`);
     checklistData = {};
-    entries.forEach((e) => { checklistData[`${e.date}|${e.task}`] = { ...e, _id: e._id?.toString?.() || e._id }; });
+    entries.forEach((e) => { checklistData[`${e.date}|${e.task}`] = e; });
     renderTable(days);
   } catch (err) {
     document.getElementById('checklist-container').innerHTML =
@@ -228,20 +228,18 @@ function renderTable(days) {
 
   // Today first, then rest in chronological order
   const todayIdx = days.findIndex(d => dateKey(d) === todayKey);
-  let orderedDays;
-  if (todayIdx > 0) {
-    orderedDays = [days[todayIdx], ...days.slice(todayIdx + 1), ...days.slice(0, todayIdx)];
-  } else {
-    orderedDays = days;
-  }
+  const orderedDays = todayIdx > 0
+    ? [days[todayIdx], ...days.slice(todayIdx + 1), ...days.slice(0, todayIdx)]
+    : days;
 
   // Header
   let thead = '<tr><th>Task</th>';
   orderedDays.forEach((d) => {
     const isToday = dateKey(d) === todayKey;
-    const label   = d.toLocaleDateString('en-US', { weekday: 'short' });
-    const num     = d.getDate();
-    thead += `<th class="${isToday ? 'th-today' : ''}">${label}<br><span style="font-size:.8em;opacity:.7;">${num}</span></th>`;
+    thead += `<th class="${isToday ? 'th-today' : ''}">
+      ${d.toLocaleDateString('en-US', { weekday: 'short' })}<br>
+      <span style="font-size:.8em;opacity:.7;">${d.getDate()}</span>
+    </th>`;
   });
   thead += '</tr>';
 
@@ -282,8 +280,7 @@ function renderTable(days) {
     cell.addEventListener('click', () => {
       const date  = cell.dataset.date;
       const task  = decodeURIComponent(cell.dataset.task);
-      const key   = `${date}|${task}`;
-      const entry = checklistData[key];
+      const entry = checklistData[`${date}|${task}`];
       if (entry) {
         openSignModal(date, task);
       } else if (activeInitial) {
@@ -308,13 +305,13 @@ async function quickSign(date, task) {
     cell.innerHTML = activeInitial;
   }
   try {
-    const entry = await api('/api/checklist', {
+    const entry = await api('/api/daily-checklist', {
       method: 'POST',
-      body: { siteId, date, task, shift: 'daily', initials: activeInitial, type: 'daily' }
+      body: { siteId, date, task, initials: activeInitial }
     });
-    // Normalize _id to string so delete/edit works correctly
-    checklistData[key] = { ...entry, _id: entry._id?.toString?.() || entry._id };
+    checklistData[key] = entry;
   } catch (e) {
+    // Revert on failure
     if (cell) { cell.classList.remove('signed'); cell.innerHTML = '<span class="sign-placeholder">—</span>'; }
     alert(e.message);
   }
@@ -324,12 +321,11 @@ async function quickSign(date, task) {
 function openSignModal(date, task) {
   const key   = `${date}|${task}`;
   const entry = checklistData[key] || null;
-  const dateObj = new Date(date + 'T12:00:00');
 
   pendingCell = { date, task, existingId: entry?._id || null };
 
   document.getElementById('sign-modal-title').textContent = task;
-  document.getElementById('sign-task-name').textContent   = fmtDay(dateObj);
+  document.getElementById('sign-task-name').textContent   = fmtDay(new Date(date + 'T12:00:00'));
 
   const signForm   = document.getElementById('sign-form');
   const signedView = document.getElementById('signed-view');
@@ -382,12 +378,9 @@ async function saveSign() {
   const siteId = getActiveSite();
   try {
     if (existingId) {
-      await api(`/api/checklist/${existingId}`, { method: 'PUT', body: { initials } });
+      await api(`/api/daily-checklist/${existingId}`, { method: 'PUT', body: { initials } });
     } else {
-      await api('/api/checklist', {
-        method: 'POST',
-        body: { siteId, date, task, shift: 'daily', initials, type: 'daily' }
-      });
+      await api('/api/daily-checklist', { method: 'POST', body: { siteId, date, task, initials } });
     }
     bootstrap.Modal.getInstance(document.getElementById('modal-sign')).hide();
     loadWeek();
@@ -396,7 +389,7 @@ async function saveSign() {
 
 async function deleteSign() {
   try {
-    await api(`/api/checklist/${pendingCell.existingId}`, { method: 'DELETE' });
+    await api(`/api/daily-checklist/${pendingCell.existingId}`, { method: 'DELETE' });
     bootstrap.Modal.getInstance(document.getElementById('modal-sign')).hide();
     loadWeek();
   } catch (e) { alert(e.message); }
