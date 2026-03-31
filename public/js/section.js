@@ -18,7 +18,7 @@ function initSiteSwitcher() {
     btn.addEventListener('click', () => {
       setActiveSite(btn.dataset.site);
       document.getElementById('site-overlay').classList.add('active');
-      setTimeout(() => { window.location = 'index.html'; }, 120);
+      setTimeout(() => { window.location = '/'; }, 120);
     });
   });
 
@@ -42,7 +42,7 @@ function initSiteSwitcher() {
         e.stopPropagation();
         setActiveSite(item.dataset.site);
         document.getElementById('site-overlay').classList.add('active');
-        setTimeout(() => { window.location = 'index.html'; }, 120);
+        setTimeout(() => { window.location = '/'; }, 120);
       });
     });
   }
@@ -99,7 +99,7 @@ let cleaningData = [], planoData = [];
 
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
-  if (!sectionId) return window.location = 'index.html';
+  if (!sectionId) return window.location = '/';
 
   initSiteSwitcher();
   initTabs();
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sec-title').textContent    = sec.name;
     document.getElementById('sec-location').textContent = sec.location || '';
     document.title = `${sec.name} — Store Manager`;
-  } catch { return window.location = 'index.html'; }
+  } catch { return window.location = '/'; }
 
   buildMonthSelectors();
   loadCleaning();

@@ -279,9 +279,9 @@
     </div>
     <div class="offcanvas-body p-0" style="position:relative;overflow:hidden;">
       <div class="menu-label">Navigate</div>
-      <a class="menu-item" href="index.html" data-bs-dismiss="offcanvas">
+      <button class="menu-item" onclick="window.location='/'" data-bs-dismiss="offcanvas">
         <i class="bi bi-grid"></i> All Sections
-      </a>
+      </button>
       <div class="menu-footer">
         <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
         <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
@@ -298,7 +298,7 @@
 
   <!-- ── SECTION HERO ── -->
   <div class="sec-hero">
-    <a href="index.html" class="back-link"><i class="bi bi-arrow-left"></i> All Sections</a>
+    <a href="/" class="back-link" onclick="event.preventDefault();window.location='/'"><i class="bi bi-arrow-left"></i> All Sections</a>
     <div class="hero-row">
       <div class="hero-icon" id="sec-icon">📦</div>
       <div>

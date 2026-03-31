@@ -110,16 +110,28 @@ function setupSearch() {
     filterSections(input.value.trim().toLowerCase());
   });
 
-  // On mobile, when keyboard opens scroll so the first section card is visible
-  input.addEventListener('focus', () => {
-    setTimeout(() => {
-      const grid = document.getElementById('sections-grid');
-      const firstCard = grid?.querySelector('.sec-card[data-sid]');
-      if (firstCard) {
-        firstCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // When the viewport shrinks (keyboard opened) and the search input is focused,
+  // scroll the search bar to the very top so results are visible below it.
+  // Using visualViewport instead of 'focus' means it fires every time the
+  // keyboard opens, even if the input is already focused from a previous tap.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      if (document.activeElement === input) {
+        setTimeout(() => {
+          const wrap = document.querySelector('.search-wrap');
+          if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
       }
-    }, 350); // wait for keyboard to finish opening
-  });
+    });
+  } else {
+    // Fallback for browsers without visualViewport
+    input.addEventListener('focus', () => {
+      setTimeout(() => {
+        const wrap = document.querySelector('.search-wrap');
+        if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    });
+  }
 }
 
 function filterSections(q) {

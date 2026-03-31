@@ -136,16 +136,7 @@
       scroll-margin-top: 12px;
     }
     .sec-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.08); border-color: #ccc; }
-    .del-btn {
-      position: absolute; top: 9px; right: 9px;
-      width: 26px; height: 26px; border-radius: 7px;
-      border: 1px solid var(--border); background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity .15s; cursor: pointer; z-index: 2;
-    }
-    .sec-card:hover .del-btn { opacity: 1; }
-    .del-btn:hover { background: #fee2e2; border-color: #fca5a5; }
-    .del-btn i { font-size: .7rem; color: #d1453b; }
+    .del-btn { display: none; }
     .sec-icon { font-size: 1.5rem; margin-bottom: .5rem; line-height: 1; }
     .sec-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .92rem; margin: 0 0 .12rem; }
     .sec-loc  { font-size: .74rem; color: var(--muted); margin: 0 0 .7rem; }

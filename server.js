@@ -137,7 +137,11 @@ app.get('/api/dashboard', async (req, res) => {
     const sections = await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
     const summaries = await Promise.all(sections.map(async (s) => {
       const sid         = s._id.toString();
-      const expiryCount = await req.db.collection('expiry_logs').countDocuments({ sectionId: sid, removed: false });
+      const now14 = new Date(); now14.setDate(now14.getDate() + 14);
+      const expiryCount = await req.db.collection('expiry_logs').countDocuments({
+        sectionId: sid, removed: false,
+        expiryDate: { $lte: now14 }
+      });
       const orderCount  = await req.db.collection('order_items').countDocuments({ sectionId: sid, ordered: false });
       const cleaned     = await req.db.collection('cleaning_logs').findOne({ sectionId: sid, year: p.year, month: p.month, week: p.week });
       return { ...s, expiryCount, orderCount, cleanedThisWeek: !!cleaned };
@@ -162,7 +166,8 @@ app.get('/api/dashboard/expiry-details', async (req, res) => {
     const sections = await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
     const out = await Promise.all(sections.map(async (s) => {
       const items = await req.db.collection('expiry_logs')
-        .find({ sectionId: s._id.toString(), removed: false }).sort({ expiryDate: 1 }).toArray();
+        .find({ sectionId: s._id.toString(), removed: false, expiryDate: { $lte: (() => { const d = new Date(); d.setDate(d.getDate() + 14); return d; })() } })
+        .sort({ expiryDate: 1 }).toArray();
       return { section: s, items };
     }));
     res.json(out.filter((d) => d.items.length > 0));
