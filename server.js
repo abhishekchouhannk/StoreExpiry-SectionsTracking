@@ -475,6 +475,216 @@ app.delete('/api/weekly-checklist/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ═════════════════════════════════════════════════════════
+//  SCHEDULE — Claude Vision parsing + storage
+// ═════════════════════════════════════════════════════════
+
+// Parse schedule image with Claude Vision
+app.post('/api/schedule/parse', async (req, res) => {
+  try {
+    const { image, mimeType, siteId } = req.body;
+    if (!image || !mimeType || !siteId)
+      return res.status(400).json({ error: 'image, mimeType and siteId required' });
+
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mimeType, data: image }
+            },
+            {
+              type: 'text',
+              text: `You are reading a weekly work schedule image. Extract the schedule and return ONLY a valid JSON object with no markdown, no explanation, no backticks.
+
+The JSON must have this exact structure:
+{
+  "weekStart": "YYYY-MM-DD",
+  "schedule": [
+    {
+      "name": "First name only",
+      "shifts": [
+        { "day": "Mon", "date": "YYYY-MM-DD", "start": "6:00", "end": "15:00", "hours": 9 },
+        { "day": "Tue", "date": "YYYY-MM-DD", "start": null, "end": null, "hours": 0 }
+      ]
+    }
+  ]
+}
+
+Rules:
+- weekStart must be the Monday of the week shown (YYYY-MM-DD format)
+- Include all 7 days (Mon-Sun) for each person
+- For days marked "off", "na", "n/a" or blank: start=null, end=null, hours=0
+- Convert times to 24h format: "6a" = "6:00", "3p" = "15:00", "10p" = "22:00", "2.30p" = "14:30"
+- Use first name only for "name"
+- If a cell has a non-numeric entry like "OW" or "96_s", treat as hours=0
+- Return ONLY the JSON, nothing else`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await anthropicRes.json();
+    if (!anthropicRes.ok) throw new Error(data.error?.message || 'Claude API error');
+
+    const text = data.content[0].text.trim();
+    const parsed = JSON.parse(text);
+
+    res.json({ weekStart: parsed.weekStart, schedule: parsed.schedule });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Save parsed schedule
+app.post('/api/schedule', async (req, res) => {
+  try {
+    const { siteId, schedule } = req.body;
+    if (!siteId || !schedule) return res.status(400).json({ error: 'Missing fields' });
+
+    // Derive weekStart from schedule data (Monday of the first shift date)
+    const firstDate = schedule[0]?.shifts?.find(s => s.hours > 0)?.date;
+    if (!firstDate) return res.status(400).json({ error: 'No valid shift dates found' });
+
+    const d = new Date(firstDate + 'T12:00:00');
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    const weekStart = d.toISOString().split('T')[0];
+
+    // Upsert — replace existing schedule for this site+week
+    await req.db.collection('schedules').deleteOne({ siteId, weekStart });
+    const doc = { siteId, weekStart, schedule, createdAt: new Date() };
+    const r   = await req.db.collection('schedules').insertOne(doc);
+    res.json({ ...doc, _id: r.insertedId.toString() });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Get schedules for a site (newest first)
+app.get('/api/schedule', async (req, res) => {
+  try {
+    const { siteId, weekStart } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const q = { siteId };
+    if (weekStart) q.weekStart = weekStart;
+    const docs = await req.db.collection('schedules').find(q).sort({ weekStart: -1 }).toArray();
+    res.json(docs);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Delete a schedule
+app.delete('/api/schedule/:id', async (req, res) => {
+  try {
+    await req.db.collection('schedules').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
+// ═════════════════════════════════════════════════════════
+//  SCHEDULE — AI parse + store
+// ═════════════════════════════════════════════════════════
+const Anthropic = require('@anthropic-ai/sdk');
+
+app.post('/api/schedule/parse', async (req, res) => {
+  try {
+    const { siteId, imageBase64, mediaType } = req.body;
+    if (!siteId || !imageBase64) return res.status(400).json({ error: 'Missing fields' });
+
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await client.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 2000,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: imageBase64 }
+          },
+          {
+            type: 'text',
+            text: `Extract the weekly employee schedule from this image.
+Return ONLY valid JSON in this exact format, nothing else:
+{
+  "weekOf": "YYYY-MM-DD",
+  "schedule": [
+    {
+      "name": "First name only",
+      "shifts": ["shift or off or na", "shift or off or na", "shift or off or na", "shift or off or na", "shift or off or na", "shift or off or na", "shift or off or na"]
+    }
+  ]
+}
+The shifts array must have exactly 7 values, one for each day of the week starting Sunday.
+Use "off" when someone is off, "na" when not applicable or empty.
+For shifts, use the format shown in the schedule (e.g. "6a-3p", "2.30p-10p", "10p-6a").
+weekOf should be the Sunday (first day) of the week shown.
+First name only for the name field. Do not include rows that are not staff (e.g. "Total Hours", "Cleaning/CW").
+Return only the JSON object, no markdown, no explanation.`
+          }
+        ]
+      }]
+    });
+
+    const raw = message.content[0].text.trim();
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch(e) {
+      // Try extracting JSON from response if there's extra text
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) return res.status(500).json({ error: 'AI returned invalid JSON. Try a clearer image.' });
+      parsed = JSON.parse(match[0]);
+    }
+
+    // Save to DB — replace any existing schedule for this site+week
+    await req.db.collection('schedules').deleteMany({ siteId, weekOf: parsed.weekOf });
+    await req.db.collection('schedules').insertOne({
+      siteId,
+      weekOf: parsed.weekOf,
+      schedule: parsed.schedule,
+      createdAt: new Date()
+    });
+
+    res.json({
+      weekOf: parsed.weekOf,
+      staffCount: parsed.schedule.length,
+      schedule: parsed.schedule
+    });
+  } catch(e) {
+    console.error('Schedule parse error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Get current week's schedule for a site
+app.get('/api/schedule/current', async (req, res) => {
+  try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+
+    // Find the most recent schedule for this site
+    const doc = await req.db.collection('schedules')
+      .find({ siteId })
+      .sort({ weekOf: -1 })
+      .limit(1)
+      .toArray();
+
+    if (!doc.length) return res.json({ found: false });
+    res.json({ found: true, weekOf: doc[0].weekOf, schedule: doc[0].schedule });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Fallback (SPA) ──────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
