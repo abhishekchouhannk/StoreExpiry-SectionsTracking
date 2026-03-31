@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Shift Checklist — Store Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f4f0; --surface: #ffffff; --border: #e4e2dc;
+      --text: #1a1a18; --muted: #8a8880; --pill-r: 999px;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      padding: 0 1.4rem; height: 54px;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .site-switcher { display: flex; gap: 5px; flex-wrap: wrap; }
+    .site-btn {
+      font-family: 'Syne', sans-serif; font-size: .7rem; font-weight: 600;
+      letter-spacing: .05em; text-transform: uppercase; padding: 5px 12px;
+      border-radius: var(--pill-r); border: 1.5px solid var(--border);
+      color: var(--muted); background: transparent; cursor: pointer;
+      transition: all .16s ease; white-space: nowrap;
+    }
+    .site-btn:hover { border-color: var(--text); color: var(--text); }
+    .site-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
+    .hamburger-btn {
+      width: 36px; height: 36px; border-radius: 9px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .15s; flex-shrink: 0; color: var(--text);
+    }
+    .hamburger-btn:hover { border-color: var(--text); background: var(--text); color: #fff; }
+
+    /* ── MOBILE DROPDOWN ── */
+    .site-dropdown-wrap { display: none; position: relative; }
+    .site-dropdown-btn {
+      font-family: 'Syne', sans-serif; font-size: .75rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      padding: 6px 12px 6px 14px; border-radius: var(--pill-r);
+      border: 1.5px solid var(--text); background: var(--text); color: #fff;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .site-dropdown-btn i { font-size: .7rem; transition: transform .2s; }
+    .site-dropdown-btn.open i { transform: rotate(180deg); }
+    .site-dropdown-list {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 5px; min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.1); z-index: 200;
+    }
+    .site-dropdown-list.open { display: block; }
+    .site-dropdown-item {
+      font-family: 'Syne', sans-serif; font-size: .72rem; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      padding: 7px 12px; border-radius: 8px; cursor: pointer; border: none;
+      background: none; width: 100%; text-align: left; color: var(--muted);
+      transition: background .12s, color .12s;
+    }
+    .site-dropdown-item:hover { background: var(--bg); color: var(--text); }
+    .site-dropdown-item.active { color: var(--text); font-weight: 800; }
+    .site-dropdown-item.active::before { content: '✓ '; }
+
+    /* ── OFFCANVAS ── */
+    #offcanvas-menu { width: 280px !important; background: var(--bg) !important; border-left: 1px solid var(--border) !important; }
+    #offcanvas-menu .offcanvas-header { border-bottom: 1px solid var(--border); padding: 1.1rem 1.4rem; }
+    #offcanvas-menu .offcanvas-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; }
+    .menu-label { font-family: 'Syne', sans-serif; font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 1.1rem 1.4rem .4rem; }
+    .menu-item { display: flex; align-items: center; gap: .7rem; padding: .6rem 1.4rem; font-size: .87rem; font-weight: 500; color: var(--text); text-decoration: none; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: background .1s; }
+    .menu-item:hover { background: var(--border); }
+    .menu-item.active-page { background: var(--border); font-weight: 700; }
+    .menu-item i { font-size: .95rem; width: 18px; color: var(--muted); }
+    .menu-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.1rem 1.4rem; border-top: 1px solid var(--border); }
+    .menu-footer p { font-size: .76rem; color: var(--muted); margin: 0 0 .5rem; line-height: 1.7; }
+    .menu-footer a { color: var(--text); font-weight: 600; text-decoration: none; }
+    .menu-footer a:hover { text-decoration: underline; }
+
+    /* ── OVERLAY ── */
+    #site-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(245,244,240,.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+    #site-overlay.active { display: flex; }
+    .overlay-spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin .65s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── PAGE HEADER ── */
+    .page-header { padding: .9rem 1.4rem .5rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -.02em; margin: 0; }
+
+    /* ── WEEK NAV ── */
+    .week-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem 1.4rem 1rem; gap: 1rem;
+    }
+    .week-nav-info { font-family: 'Syne', sans-serif; font-size: .82rem; font-weight: 700; }
+    .week-nav-sub { font-size: .74rem; color: var(--muted); margin-top: 1px; }
+    .week-nav-btns { display: flex; gap: 6px; }
+    .nav-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .15s; color: var(--text); font-size: .85rem;
+    }
+    .nav-btn:hover { border-color: var(--text); background: var(--text); color: #fff; }
+    .nav-btn:disabled { opacity: .35; cursor: default; }
+    .today-btn {
+      font-family: 'Syne', sans-serif; font-size: .68rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      padding: 5px 12px; border-radius: var(--pill-r);
+      border: 1.5px solid var(--border); background: var(--surface);
+      cursor: pointer; transition: all .15s; color: var(--muted);
+    }
+    .today-btn:hover { border-color: var(--text); color: var(--text); }
+
+    /* ── CHECKLIST TABLE ── */
+    .checklist-wrap { padding: 0 1.4rem 3rem; overflow-x: auto; }
+    .checklist-table {
+      width: 100%; border-collapse: collapse;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 14px; overflow: hidden; min-width: 620px;
+    }
+    .checklist-table th {
+      font-family: 'Syne', sans-serif; font-size: .65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+      background: var(--bg); padding: .55rem .7rem;
+      border-bottom: 1px solid var(--border); border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .checklist-table th:last-child { border-right: none; }
+    .checklist-table td {
+      padding: .45rem .7rem; border-bottom: 1px solid #f0ede8;
+      border-right: 1px solid #f0ede8; font-size: .83rem; vertical-align: middle;
+    }
+    .checklist-table td:last-child { border-right: none; }
+    .checklist-table tbody tr:last-child td { border-bottom: none; }
+    .checklist-table tbody tr:hover td { background: #faf9f6; }
+
+    /* Category header rows */
+    .cat-row td {
+      font-family: 'Syne', sans-serif; font-size: .68rem; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase;
+      background: var(--bg); color: var(--muted);
+      padding: .4rem .7rem; border-bottom: 1px solid var(--border);
+    }
+
+    /* Today highlight */
+    .col-today { background: #fffbf0 !important; }
+    .th-today { background: #1a1a18 !important; color: #fff !important; }
+
+    /* Shift cells */
+    .shift-cell {
+      text-align: center; min-width: 42px; cursor: pointer;
+      transition: background .1s; position: relative;
+    }
+    .shift-cell:hover { background: #f0ede8 !important; }
+    .shift-cell.signed {
+      background: #dcfce7 !important; color: #166534;
+      font-weight: 700; font-size: .78rem; font-family: 'Syne', sans-serif;
+    }
+    .shift-cell.signed:hover { background: #bbf7d0 !important; }
+    .shift-cell .sign-placeholder { color: #d0cdc8; font-size: .75rem; }
+
+    /* Task name cell */
+    .task-cell { font-size: .83rem; min-width: 180px; }
+
+    /* ── SIGN MODAL ── */
+    .modal-content { border: 1.5px solid var(--border) !important; border-radius: 18px !important; box-shadow: 0 20px 60px rgba(0,0,0,.12) !important; }
+    .modal-header { border-bottom: 1px solid var(--border); padding: 1rem 1.3rem; }
+    .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .92rem; }
+    .modal-body { padding: 1.1rem 1.3rem; }
+    .modal-footer { padding: .7rem 1.3rem 1rem; border-top: none; }
+    .form-label { font-size: .72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .3rem; display: block; }
+    .form-control { border: 1.5px solid var(--border); border-radius: 9px; font-size: .87rem; background: var(--bg); color: var(--text); width: 100%; padding: .4rem .7rem; }
+    .form-control:focus { border-color: var(--text); box-shadow: none; background: #fff; outline: none; }
+    .btn-solid { background: var(--text); color: #fff; border: none; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: .78rem; font-weight: 700; letter-spacing: .04em; padding: .42rem 1rem; cursor: pointer; }
+    .btn-solid:hover { background: #333; color: #fff; }
+    .btn-solid-red { background: #d1453b; }
+    .btn-solid-red:hover { background: #b83530; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); border-radius: 9px; font-size: .78rem; padding: .42rem .9rem; cursor: pointer; }
+    .btn-ghost:hover { border-color: #aaa; color: var(--text); }
+
+    .initials-big {
+      font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+      text-align: center; letter-spacing: .1em; color: #166534;
+      background: #dcfce7; border-radius: 12px; padding: .5rem 1rem; margin-bottom: .75rem;
+    }
+    .signed-meta { font-size: .8rem; color: var(--muted); text-align: center; }
+
+    /* ── ACTIVE INITIAL BAR ── */
+    .initial-bar {
+      display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+      padding: .5rem 1.4rem .8rem;
+    }
+    .initial-bar-label {
+      font-family: 'Syne', sans-serif; font-size: .65rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+      white-space: nowrap;
+    }
+    .initial-badge {
+      display: none; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-size: .82rem; font-weight: 800;
+      letter-spacing: .1em; color: #166534;
+      background: #dcfce7; border: 1.5px solid #bbf7d0;
+      border-radius: 8px; padding: 3px 10px; cursor: pointer;
+      transition: background .12s;
+    }
+    .initial-badge:hover { background: #bbf7d0; }
+    .initial-edit-btn {
+      display: none; width: 26px; height: 26px; border-radius: 7px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      align-items: center; justify-content: center; cursor: pointer;
+      font-size: .72rem; color: var(--muted); transition: all .12s;
+    }
+    .initial-edit-btn:hover { border-color: var(--text); color: var(--text); }
+    .initial-clear-btn {
+      display: none; width: 26px; height: 26px; border-radius: 7px;
+      border: 1.5px solid #fca5a5; background: #fee2e2;
+      align-items: center; justify-content: center; cursor: pointer;
+      font-size: .72rem; color: #d1453b; transition: all .12s;
+    }
+    .initial-clear-btn:hover { background: #fecaca; }
+    .initial-input {
+      display: inline-block; font-family: 'Syne', sans-serif; font-size: .85rem;
+      font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      width: 70px; padding: 3px 8px; border: 1.5px solid var(--border);
+      border-radius: 8px; background: var(--surface); outline: none;
+      text-align: center; transition: border-color .15s, background .15s, color .15s;
+    }
+    .initial-input:focus { border-color: var(--text); }
+    .initial-hint { font-size: .76rem; color: var(--muted); transition: color .2s; }
+
+    @media (max-width: 600px) { .initial-bar { padding: .4rem 1rem .7rem; } }
+
+    @media (max-width: 600px) {
+      .site-switcher { display: none; }
+      .site-dropdown-wrap { display: block; }
+      .topbar { padding: 0 1rem; }
+      .week-nav { padding: .6rem 1rem .8rem; }
+      .checklist-wrap { padding: 0 1rem 2.5rem; }
+      .page-header { padding: .9rem 1rem .5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="site-overlay"><div class="overlay-spinner"></div></div>
+
+  <!-- ── TOP BAR ── -->
+  <div class="topbar">
+    <div class="site-switcher" id="site-switcher">
+      <button class="site-btn" data-site="C01158">96 Shell</button>
+      <button class="site-btn" data-site="C01288">Riverside Shell</button>
+      <button class="site-btn" data-site="C09066">72 Shell</button>
+    </div>
+    <div class="site-dropdown-wrap" id="site-dropdown-wrap">
+      <button class="site-dropdown-btn" id="site-dropdown-btn">
+        <span id="site-dropdown-label">96 Shell</span>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="site-dropdown-list" id="site-dropdown-list">
+        <button class="site-dropdown-item" data-site="C01158">96 Shell</button>
+        <button class="site-dropdown-item" data-site="C01288">Riverside Shell</button>
+        <button class="site-dropdown-item" data-site="C09066">72 Shell</button>
+      </div>
+    </div>
+    <button class="hamburger-btn" data-bs-toggle="offcanvas" data-bs-target="#offcanvas-menu">
+      <i class="bi bi-list"></i>
+    </button>
+  </div>
+
+  <!-- ── OFFCANVAS ── -->
+  <div class="offcanvas offcanvas-end" id="offcanvas-menu" tabindex="-1">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Menu</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0" style="position:relative;overflow:hidden;">
+      <div class="menu-label">Navigate</div>
+      <button class="menu-item" onclick="window.location='/'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-grid"></i> All Sections
+      </button>
+      <div class="menu-label">Daily Operations</div>
+      <button class="menu-item active-page" onclick="window.location='/shift-checklist.html'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-clipboard-check"></i> Shift Checklist
+      </button>
+      <button class="menu-item" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-list-check"></i> Daily Checklist
+      </button>
+
+      <div class="menu-footer">
+        <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
+        <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;transition:border-color .15s,background .15s;"
+           onmouseover="this.style.borderColor='var(--text)';this.style.background='var(--bg)'"
+           onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
+          abhishekchouhan.dev <i class="bi bi-arrow-up-right" style="font-size:.7rem;"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <h1 id="page-title">Shift Checklist</h1>
+  </div>
+
+  <!-- ── WEEK NAV ── -->
+  <div class="week-nav">
+    <div>
+      <div class="week-nav-info" id="week-nav-info">Week — of — —</div>
+      <div class="week-nav-sub" id="week-nav-sub">—</div>
+    </div>
+    <div class="week-nav-btns">
+      <button class="today-btn" id="btn-today">Today</button>
+      <button class="nav-btn" id="btn-prev" title="Previous week"><i class="bi bi-chevron-left"></i></button>
+      <button class="nav-btn" id="btn-next" title="Next week"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <!-- ── ACTIVE INITIAL BAR ── -->
+  <div class="initial-bar">
+    <span class="initial-bar-label">Quick sign-off:</span>
+    <input type="text" class="initial-input" id="active-initial-input" maxlength="4" placeholder="AC" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <span class="initial-hint" id="active-initial-hint">Enter your initials above to enable quick sign-off</span>
+    <!-- kept hidden, referenced by JS -->
+    <span style="display:none" id="active-initial-display"></span>
+    <button style="display:none" id="active-initial-edit"></button>
+    <button style="display:none" id="active-initial-clear"></button>
+  </div>
+
+  <!-- ── CHECKLIST TABLE ── -->
+  <div class="checklist-wrap">
+    <div id="checklist-container">
+      <div style="text-align:center;padding:3rem 0;color:var(--muted);font-size:.87rem;">
+        <div class="spinner-border spinner-border-sm me-2"></div>Loading…
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SIGN MODAL ── -->
+  <div class="modal fade" id="modal-sign" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sign-modal-title">Sign Off</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="sign-modal-body">
+          <p id="sign-task-name" style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem;"></p>
+          <div id="sign-form">
+            <label class="form-label">Your Initials</label>
+            <input type="text" class="form-control" id="sign-initials" placeholder="e.g. AC" maxlength="4" style="text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:1rem;"/>
+          </div>
+          <div id="signed-view" style="display:none;">
+            <div class="initials-big" id="signed-initials-display"></div>
+            <div class="signed-meta" id="signed-meta-display"></div>
+          </div>
+        </div>
+        <div class="modal-footer" id="sign-modal-footer">
+          <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn-solid" id="btn-sign-save">Sign Off</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/shift-checklist.js"></script>
+</body>
+</html>

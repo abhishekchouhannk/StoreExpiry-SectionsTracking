@@ -349,6 +349,7 @@ app.get('/api/checklist', async (req, res) => {
     const { siteId, from, to } = req.query;
     if (!siteId) return res.status(400).json({ error: 'siteId required' });
     const q = { siteId, date: { $gte: from, $lte: to } };
+    if (req.query.type) q.type = req.query.type;
     res.json(await req.db.collection('checklist_logs').find(q).toArray());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -363,7 +364,7 @@ app.post('/api/checklist', async (req, res) => {
     if (exists) return res.status(400).json({ error: 'Entry already exists for this cell' });
     const doc = { siteId, date, task, shift, initials: initials.toUpperCase(), createdAt: new Date() };
     const r   = await req.db.collection('checklist_logs').insertOne(doc);
-    res.json({ ...doc, _id: r.insertedId });
+    res.json({ ...doc, _id: r.insertedId.toString() });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
