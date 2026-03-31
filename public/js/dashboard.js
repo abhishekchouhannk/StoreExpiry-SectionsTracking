@@ -92,12 +92,43 @@ function fmtDate(d) {
 }
 
 /* ── Init ────────────────────────────────────────────── */
+let _allSections = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   initSiteSwitcher();
   loadDashboard();
   setupAddSection();
   setupDetailModals();
+  setupSearch();
 });
+
+function setupSearch() {
+  const input = document.getElementById('section-search');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    filterSections(input.value.trim().toLowerCase());
+  });
+}
+
+function filterSections(q) {
+  const grid  = document.getElementById('sections-grid');
+  if (!grid) return;
+  const cards = grid.querySelectorAll('.sec-card[data-sid]');
+  const empty = grid.querySelector('.search-empty');
+  let visible = 0;
+
+  cards.forEach((card) => {
+    const name = (card.querySelector('.sec-name')?.textContent || '').toLowerCase();
+    const loc  = (card.querySelector('.sec-loc')?.textContent || '').toLowerCase();
+    const show = !q || name.includes(q) || loc.includes(q);
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  if (empty) empty.style.display = (visible === 0 && q) ? 'block' : 'none';
+  const addCard = grid.querySelector('.add-card');
+  if (addCard) addCard.style.display = '';
+}
 
 /* ── Overlay ─────────────────────────────────────────── */
 function showOverlay() { document.getElementById('site-overlay').classList.add('active'); }
@@ -130,7 +161,11 @@ function renderSummary(s) {
 /* ── Sections ────────────────────────────────────────── */
 function renderSections(sections) {
   const grid = document.getElementById('sections-grid');
-  grid.innerHTML = '';
+  grid.innerHTML = '<div class="search-empty">No sections match your search.</div>';
+
+  // Re-apply any active search after render
+  const searchInput = document.getElementById('section-search');
+  const activeQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
   sections.forEach((s) => {
     const card = document.createElement('div');
@@ -159,6 +194,9 @@ function renderSections(sections) {
   const newGrid = grid.cloneNode(true);
   grid.parentNode.replaceChild(newGrid, grid);
   newGrid.addEventListener('click', handleGridClick);
+
+  // Re-apply search filter if user had typed something
+  if (activeQuery) filterSections(activeQuery);
 }
 
 function buildPills(s) {

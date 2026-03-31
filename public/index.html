@@ -171,6 +171,30 @@
     .add-card i { font-size: 1.4rem; color: var(--muted); }
     .add-card span { font-size: .76rem; font-weight: 600; color: var(--muted); font-family: 'Syne', sans-serif; }
 
+    /* ── SEARCH BAR ── */
+    .search-wrap { padding: 0 1.4rem .8rem; }
+    .search-box {
+      display: flex; align-items: center; gap: .6rem;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: .6rem 1rem;
+      transition: border-color .15s;
+    }
+    .search-box:focus-within { border-color: var(--text); }
+    .search-box i { color: var(--muted); font-size: .95rem; flex-shrink: 0; transition: color .15s; }
+    .search-box:focus-within i { color: var(--text); }
+    .search-box input {
+      border: none; background: none; outline: none;
+      font-family: 'DM Sans', sans-serif; font-size: .87rem;
+      color: var(--text); width: 100%;
+    }
+    .search-box input::placeholder { color: var(--muted); }
+    .search-empty {
+      grid-column: 1/-1; text-align: center;
+      padding: 3rem 0; color: var(--muted);
+      font-size: .87rem; font-style: italic; display: none;
+    }
+    @media (max-width: 600px) { .search-wrap { padding: 0 1rem .8rem; } }
+
     /* ── MODALS ── */
     .modal-content { border: 1.5px solid var(--border) !important; border-radius: 18px !important; box-shadow: 0 20px 60px rgba(0,0,0,.12) !important; }
     .modal-header { border-bottom: 1px solid var(--border); padding: 1rem 1.3rem; }
@@ -334,6 +358,14 @@
     <div class="s-tile t-blue">
       <div class="val" id="sum-sections">—</div>
       <div class="lbl">Sections</div>
+    </div>
+  </div>
+
+  <!-- ── SEARCH BAR ── -->
+  <div class="search-wrap">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" id="section-search" placeholder="Type to search a section…" autocomplete="off"/>
     </div>
   </div>
 
