@@ -359,9 +359,13 @@ function setupDetailModals() {
       const data = await api(`/api/dashboard/cleaning-details?siteId=${getActiveSite()}`);
       const p = data.currentPeriod;
       const monthName = new Date(p.year, p.month - 1).toLocaleString('en-US', { month: 'long' });
-      let html = `<p class="text-muted small mb-3">Week ${p.week} of ${monthName} ${p.year}</p>`;
+      // Sort: not cleaned first, cleaned at bottom
+      const sorted  = [...data.details].sort((a, b) => (a.cleaned === b.cleaned) ? 0 : a.cleaned ? 1 : -1);
+      const notDone = sorted.filter(d => !d.cleaned).length;
+      const done    = sorted.filter(d =>  d.cleaned).length;
+      let html = `<p class="text-muted small mb-3">Week ${p.week} of ${monthName} ${p.year} &nbsp;&middot;&nbsp; <span style="color:#b91c1c;font-weight:600;">${notDone} remaining</span> &nbsp;&middot;&nbsp; <span style="color:#166534;font-weight:600;">${done} done</span></p>`;
       html += '<ul class="list-group list-group-flush">';
-      data.details.forEach((d) => {
+      sorted.forEach((d) => {
         html += d.cleaned
           ? `<li class="list-group-item d-flex align-items-center gap-2" style="flex-wrap:wrap;padding:.65rem 0;">
                <span>${d.section.icon || '📦'}</span>
