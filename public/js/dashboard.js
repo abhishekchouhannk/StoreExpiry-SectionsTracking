@@ -105,8 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupSearch() {
   const input = document.getElementById('section-search');
   if (!input) return;
+
   input.addEventListener('input', () => {
     filterSections(input.value.trim().toLowerCase());
+  });
+
+  // On mobile, when keyboard opens scroll so the first section card is visible
+  input.addEventListener('focus', () => {
+    setTimeout(() => {
+      const grid = document.getElementById('sections-grid');
+      const firstCard = grid?.querySelector('.sec-card[data-sid]');
+      if (firstCard) {
+        firstCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 350); // wait for keyboard to finish opening
   });
 }
 
