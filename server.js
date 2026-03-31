@@ -432,6 +432,49 @@ app.delete('/api/daily-checklist/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ═════════════════════════════════════════════════════════
+//  WEEKLY CHECKLIST
+// ═════════════════════════════════════════════════════════
+app.get('/api/weekly-checklist', async (req, res) => {
+  try {
+    const { siteId, weekStart } = req.query;
+    if (!siteId || !weekStart) return res.status(400).json({ error: 'siteId and weekStart required' });
+    res.json(await req.db.collection('weekly_checklist_logs').find({ siteId, weekStart }).toArray());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/weekly-checklist', async (req, res) => {
+  try {
+    const { siteId, weekStart, task, initials } = req.body;
+    if (!siteId || !weekStart || !task || !initials)
+      return res.status(400).json({ error: 'Missing required fields' });
+    const exists = await req.db.collection('weekly_checklist_logs').findOne({ siteId, weekStart, task });
+    if (exists) return res.status(400).json({ error: 'Entry already exists for this task this week' });
+    const doc = { siteId, weekStart, task, initials: initials.toUpperCase(), createdAt: new Date() };
+    const r   = await req.db.collection('weekly_checklist_logs').insertOne(doc);
+    res.json({ ...doc, _id: r.insertedId.toString() });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/weekly-checklist/:id', async (req, res) => {
+  try {
+    const { initials } = req.body;
+    await req.db.collection('weekly_checklist_logs').updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { initials: initials.toUpperCase() } }
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/weekly-checklist/:id', async (req, res) => {
+  try {
+    await req.db.collection('weekly_checklist_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Fallback (SPA) ──────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 

@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Daily Checklist — Store Manager</title>
+  <title>Weekly Checklist — Store Manager</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet"/>
   <style>
-    :root { --bg:#f5f4f0;--surface:#ffffff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px; }
+    :root{--bg:#f5f4f0;--surface:#fff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px;}
     *{box-sizing:border-box;}
     body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+    /* topbar */
     .topbar{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 1.4rem;height:54px;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
     .site-switcher{display:flex;gap:5px;flex-wrap:wrap;}
-    .site-btn{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .16s ease;white-space:nowrap;}
+    .site-btn{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .16s;white-space:nowrap;}
     .site-btn:hover{border-color:var(--text);color:var(--text);}
     .site-btn.active{background:var(--text);border-color:var(--text);color:#fff;}
     .hamburger-btn{width:36px;height:36px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;color:var(--text);}
     .hamburger-btn:hover{border-color:var(--text);background:var(--text);color:#fff;}
+
+    /* mobile dropdown */
     .site-dropdown-wrap{display:none;position:relative;}
     .site-dropdown-btn{font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px 6px 14px;border-radius:var(--pill-r);border:1.5px solid var(--text);background:var(--text);color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;}
     .site-dropdown-btn i{font-size:.7rem;transition:transform .2s;}
@@ -28,6 +32,8 @@
     .site-dropdown-item:hover{background:var(--bg);color:var(--text);}
     .site-dropdown-item.active{color:var(--text);font-weight:800;}
     .site-dropdown-item.active::before{content:'✓ ';}
+
+    /* offcanvas */
     #offcanvas-menu{width:280px!important;background:var(--bg)!important;border-left:1px solid var(--border)!important;}
     #offcanvas-menu .offcanvas-header{border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;}
     #offcanvas-menu .offcanvas-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
@@ -39,10 +45,14 @@
     .menu-footer{position:absolute;bottom:0;left:0;right:0;padding:1.1rem 1.4rem;border-top:1px solid var(--border);}
     .menu-footer p{font-size:.76rem;color:var(--muted);margin:0 0 .5rem;}
     .menu-footer a{color:var(--text);font-weight:600;text-decoration:none;}
+
+    /* overlay */
     #site-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(245,244,240,.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;}
     #site-overlay.active{display:flex;}
     .overlay-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .65s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* page */
     .page-header{padding:.9rem 1.4rem .5rem;}
     .page-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;margin:0;}
     .week-nav{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1.4rem 1rem;gap:1rem;}
@@ -53,29 +63,30 @@
     .nav-btn:hover{border-color:var(--text);background:var(--text);color:#fff;}
     .today-btn{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;transition:all .15s;color:var(--muted);}
     .today-btn:hover{border-color:var(--text);color:var(--text);}
+
+    /* initial bar */
     .initial-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.5rem 1.4rem .8rem;}
     .initial-bar-label{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
     .initial-input{display:inline-block;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;width:70px;padding:3px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);outline:none;text-align:center;transition:border-color .15s,background .15s,color .15s;}
     .initial-input:focus{border-color:var(--text);}
     .initial-hint{font-size:.76rem;color:var(--muted);transition:color .2s;}
-    .checklist-wrap{padding:0 1.4rem 3rem;overflow-x:auto;}
-    .checklist-table{width:100%;border-collapse:collapse;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;min-width:480px;}
-    .checklist-table th{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);padding:.55rem .7rem;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center;}
-    .checklist-table th:first-child{text-align:left;min-width:200px;}
-    .checklist-table th:last-child{border-right:none;}
-    .checklist-table td{padding:.5rem .7rem;border-bottom:1px solid #f0ede8;border-right:1px solid #f0ede8;font-size:.83rem;vertical-align:middle;}
-    .checklist-table td:last-child{border-right:none;}
+
+    /* checklist table */
+    .checklist-wrap{padding:0 1.4rem 3rem;max-width:600px;}
+    .checklist-table{width:100%;border-collapse:collapse;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;}
+    .checklist-table th{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);padding:.55rem 1rem;border-bottom:1px solid var(--border);}
+    .checklist-table th:last-child{text-align:center;width:90px;}
+    .checklist-table td{padding:.5rem 1rem;border-bottom:1px solid #f0ede8;font-size:.85rem;vertical-align:middle;}
     .checklist-table tbody tr:last-child td{border-bottom:none;}
     .checklist-table tbody tr:hover td{background:#faf9f6;}
-    .cat-row td{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--bg);color:var(--muted);padding:.4rem .7rem;border-bottom:1px solid var(--border);}
-    .th-today{background:#1a1a18!important;color:#fff!important;}
-    .col-today{background:#fffbf0!important;}
-    .day-cell{text-align:center;min-width:54px;cursor:pointer;transition:background .1s;}
-    .day-cell:hover{background:#f0ede8!important;}
-    .day-cell.signed{background:#dcfce7!important;color:#166534;font-weight:700;font-size:.78rem;font-family:'Syne',sans-serif;}
-    .day-cell.signed:hover{background:#bbf7d0!important;}
-    .day-cell .sign-placeholder{color:#d0cdc8;font-size:.75rem;}
-    .task-cell{font-size:.83rem;}
+    .cat-row td{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--bg);color:var(--muted);padding:.4rem 1rem;border-bottom:1px solid var(--border);text-align:center;}
+    .sign-col{text-align:center;width:90px;cursor:pointer;transition:background .1s;}
+    .sign-col:hover{background:#f0ede8!important;}
+    .sign-col.signed{background:#dcfce7!important;color:#166534;font-weight:700;font-family:'Syne',sans-serif;font-size:.85rem;}
+    .sign-col.signed:hover{background:#bbf7d0!important;}
+    .sign-placeholder{color:#d0cdc8;font-size:.8rem;}
+
+    /* modals */
     .modal-content{border:1.5px solid var(--border)!important;border-radius:18px!important;box-shadow:0 20px 60px rgba(0,0,0,.12)!important;}
     .modal-header{border-bottom:1px solid var(--border);padding:1rem 1.3rem;}
     .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;}
@@ -85,17 +96,19 @@
     .form-control{border:1.5px solid var(--border);border-radius:9px;font-size:.87rem;background:var(--bg);color:var(--text);width:100%;padding:.4rem .7rem;}
     .form-control:focus{border-color:var(--text);box-shadow:none;background:#fff;outline:none;}
     .btn-solid{background:var(--text);color:#fff;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.42rem 1rem;cursor:pointer;}
-    .btn-solid:hover{background:#333;color:#fff;}
+    .btn-solid:hover{background:#333;}
     .btn-solid-red{background:#d1453b;}
     .btn-solid-red:hover{background:#b83530;}
     .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:9px;font-size:.78rem;padding:.42rem .9rem;cursor:pointer;}
     .btn-ghost:hover{border-color:#aaa;color:var(--text);}
     .initials-big{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;text-align:center;letter-spacing:.1em;color:#166534;background:#dcfce7;border-radius:12px;padding:.5rem 1rem;margin-bottom:.75rem;}
     .signed-meta{font-size:.8rem;color:var(--muted);text-align:center;}
+
     @media(max-width:600px){
       .site-switcher{display:none;}
       .site-dropdown-wrap{display:block;}
       .topbar,.week-nav,.initial-bar,.checklist-wrap,.page-header{padding-left:1rem;padding-right:1rem;}
+      .checklist-wrap{max-width:100%;}
     }
   </style>
 </head>
@@ -135,16 +148,15 @@
         <i class="bi bi-grid"></i> All Sections
       </button>
       <div class="menu-label">Daily Operations</div>
-      <button class="menu-item active-page" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas">
+      <button class="menu-item" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-list-check"></i> Daily Checklist
       </button>
       <button class="menu-item" onclick="window.location='/shift-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-clipboard-check"></i> Shift Checklist
       </button>
-      <button class="menu-item" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas">
+      <button class="menu-item active-page" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-week"></i> Weekly Checklist
       </button>
-
       <div class="menu-footer">
         <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
         <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
@@ -155,15 +167,15 @@
     </div>
   </div>
 
-  <div class="page-header"><h1 id="page-title">Daily Checklist</h1></div>
+  <div class="page-header"><h1 id="page-title">Weekly Checklist</h1></div>
 
   <div class="week-nav">
     <div>
-      <div class="week-nav-info" id="week-nav-info">Week — of — —</div>
+      <div class="week-nav-info" id="week-nav-info">—</div>
       <div class="week-nav-sub" id="week-nav-sub">—</div>
     </div>
     <div class="week-nav-btns">
-      <button class="today-btn" id="btn-today">Today</button>
+      <button class="today-btn" id="btn-today">This Week</button>
       <button class="nav-btn" id="btn-prev"><i class="bi bi-chevron-left"></i></button>
       <button class="nav-btn" id="btn-next"><i class="bi bi-chevron-right"></i></button>
       <button class="nav-btn" id="btn-print" title="Save as PDF"><i class="bi bi-download"></i></button>
@@ -196,7 +208,8 @@
           <p id="sign-task-name" style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem;"></p>
           <div id="sign-form">
             <label class="form-label">Your Initials</label>
-            <input type="text" class="form-control" id="sign-initials" placeholder="e.g. AC" maxlength="4" style="text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:1rem;"/>
+            <input type="text" class="form-control" id="sign-initials" placeholder="e.g. AC" maxlength="4"
+                   style="text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:1rem;"/>
           </div>
           <div id="signed-view" style="display:none;">
             <div class="initials-big" id="signed-initials-display"></div>
@@ -211,8 +224,7 @@
     </div>
   </div>
 
-
-  <!-- ── PRINT MODAL ── -->
+  <!-- PRINT MODAL -->
   <div class="modal fade" id="modal-print" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -222,17 +234,11 @@
         </div>
         <div class="modal-body">
           <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">
-            Select a 7-day range to export. Your browser will open a print dialog — choose <strong>Save as PDF</strong>.
+            Select the Monday of the week to export. Choose <strong>Save as PDF</strong> in the print dialog.
           </p>
-          <div style="display:flex;gap:.75rem;margin-bottom:.75rem;">
-            <div style="flex:1;">
-              <label class="form-label">Start Date</label>
-              <input type="date" class="form-control" id="print-start"/>
-            </div>
-            <div style="flex:1;">
-              <label class="form-label">End Date</label>
-              <input type="date" class="form-control" id="print-end" readonly/>
-            </div>
+          <div class="mb-3">
+            <label class="form-label">Week starting (Monday)</label>
+            <input type="date" class="form-control" id="print-start"/>
           </div>
           <div id="print-range-label" style="font-size:.8rem;color:var(--muted);text-align:center;min-height:1.2em;"></div>
         </div>
@@ -245,6 +251,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/daily-checklist.js"></script>
+  <script src="js/weekly-checklist.js"></script>
 </body>
 </html>

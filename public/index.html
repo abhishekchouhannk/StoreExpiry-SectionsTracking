@@ -112,6 +112,7 @@
     .s-tile .val {
       font-family: 'Syne', sans-serif; font-weight: 800;
       font-size: 1.55rem; line-height: 1; margin-bottom: .25rem;
+      display: flex; align-items: center; justify-content: center;
     }
     .s-tile .lbl { font-size: .68rem; color: var(--muted); font-weight: 500; letter-spacing: .02em; }
     .t-red   .val { color: #d1453b; }
@@ -321,6 +322,9 @@
       </button>
       <button class="menu-item" onclick="window.location='/shift-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-clipboard-check"></i> Shift Checklist
+      </button>
+      <button class="menu-item" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-calendar-week"></i> Weekly Checklist
       </button>
 
       <div class="menu-footer">
