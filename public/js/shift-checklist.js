@@ -433,32 +433,32 @@ const ENTRY_KEY = (e) => `${e.date}|${e.task}|${e.shift}`;
 function buildPrintHTML(siteId, siteName, startStr, endStr, days, dataMap) {
   const s = new Date(startStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const e = new Date(endStr   + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const monthYear = new Date(startStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  let cols = '<th style="text-align:left;min-width:160px;padding:4px 6px;">Task</th>';
+  let dayHeaders = '<th style="width:22%;text-align:left;padding:3px 5px;font-size:8.5px;">Task - Sign by Shift</th>';
   days.forEach(d => {
-    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    cols += `<th colspan="3" style="text-align:center;padding:4px 6px;border-left:1px solid #ccc;">${label}</th>`;
+    dayHeaders += `<th colspan="3" style="text-align:center;padding:3px 4px;font-size:8.5px;border-left:1px solid #bbb;">${d.toLocaleDateString('en-US',{weekday:'short'})} ${d.getDate()}</th>`;
   });
 
-  let subCols = '<th></th>';
+  let shiftRow = '<th></th>';
   days.forEach(() => {
     ['S1','S2','S3'].forEach(s => {
-      subCols += `<th style="text-align:center;font-size:9px;padding:2px 4px;border-left:1px solid #eee;">${s}</th>`;
+      shiftRow += `<th style="text-align:center;font-size:7.5px;padding:2px 3px;border-left:1px solid #eee;">${s}</th>`;
     });
   });
 
   let rows = '';
   CHECKLIST.forEach(({ category, tasks }) => {
-    rows += `<tr><td colspan="${1 + days.length * 3}" style="background:#f0f0f0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 6px;">${category}</td></tr>`;
+    rows += `<tr><td colspan="${1 + days.length * 3}" style="text-align:center;background:#e8e8e8;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:2px 5px;border-top:1px solid #bbb;border-bottom:1px solid #bbb;">${category}</td></tr>`;
     tasks.forEach(task => {
-      rows += `<tr><td style="padding:4px 6px;font-size:11px;">${task}</td>`;
+      rows += `<tr><td style="padding:2px 5px;font-size:8px;border-right:1px solid #ddd;">${task}</td>`;
       days.forEach(d => {
         const dk = dateKey(d);
         ['S1','S2','S3'].forEach(shift => {
-          const entry = dataMap[`${dk}|${task}|${shift}`];
-          const bg    = entry ? '#dcfce7' : '#fff';
-          const txt   = entry ? `<strong style="color:#166534;">${entry.initials}</strong>` : '';
-          rows += `<td style="text-align:center;background:${bg};border-left:1px solid #eee;padding:3px 4px;font-size:11px;">${txt}</td>`;
+          const entry = dataMap[dk + '|' + task + '|' + shift];
+          const bg  = entry ? '#e6f9ee' : '#fff';
+          const txt = entry ? `<b style="color:#166534;font-size:8px;">${entry.initials}</b>` : '';
+          rows += `<td style="text-align:center;background:${bg};border-left:1px solid #ddd;padding:1px 2px;">${txt}</td>`;
         });
       });
       rows += '</tr>';
@@ -468,20 +468,41 @@ function buildPrintHTML(siteId, siteName, startStr, endStr, days, dataMap) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
     <title>Shift Checklist — ${siteName} — ${s} to ${e}</title>
     <style>
-      body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 12px; }
-      h2 { font-size: 14px; margin: 0 0 2px; }
-      p  { font-size: 10px; color: #666; margin: 0 0 8px; }
-      table { border-collapse: collapse; width: 100%; }
-      th { background: #f8f8f8; font-size: 10px; font-weight: 600; padding: 4px 6px; border-bottom: 1.5px solid #ccc; }
-      td { border-bottom: 1px solid #eee; vertical-align: middle; }
-      tr:last-child td { border-bottom: none; }
-      @media print { @page { size: landscape; margin: 10mm; } }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; font-size: 8.5px; padding: 6mm; }
+      .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+      .shell-logo { font-size: 22px; line-height: 1; }
+      .title-block { text-align: center; flex: 1; }
+      .title-block h1 { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+      .info-block { font-size: 8px; text-align: right; border: 1px solid #ccc; padding: 3px 6px; line-height: 1.8; min-width: 120px; }
+      .info-block div { border-bottom: 1px solid #eee; }
+      .info-block div:last-child { border-bottom: none; }
+      .promise { font-size: 7.5px; color: #444; margin: 4px 0 5px; line-height: 1.4; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 3px 0; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th { background: #f0f0f0; font-size: 8px; font-weight: 700; padding: 2px 3px; border: 1px solid #bbb; text-align: center; }
+      th:first-child { text-align: left; }
+      td { border: 1px solid #ddd; vertical-align: middle; height: 13px; }
+      @media print {
+        @page { size: landscape; margin: 6mm; }
+        body { padding: 0; }
+      }
     </style>
   </head><body>
-    <h2>Shift Checklist — ${siteName} (${siteId})</h2>
-    <p>${s} – ${e}</p>
+    <div class="header-row">
+      <div class="shell-logo">🐚</div>
+      <div class="title-block">
+        <h1>Site Cleaning Checklist</h1>
+        <div style="font-size:8px;color:#555;">Shift Checklist — ${siteName}</div>
+      </div>
+      <div class="info-block">
+        <div>C-Location: <b>${siteId}</b></div>
+        <div>Week: <b>${s} – ${e}</b></div>
+        <div>Month/Year: <b>${monthYear}</b></div>
+      </div>
+    </div>
+    <div class="promise">We promise customers a great experience every time they visit. To keep our promise, your site needs to be thoroughly checked so it is ready to serve customers.</div>
     <table>
-      <thead><tr>${cols}</tr><tr>${subCols}</tr></thead>
+      <thead><tr>${dayHeaders}</tr><tr>${shiftRow}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </body></html>`;
