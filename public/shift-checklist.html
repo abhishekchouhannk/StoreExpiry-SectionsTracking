@@ -320,6 +320,7 @@
       <button class="today-btn" id="btn-today">Today</button>
       <button class="nav-btn" id="btn-prev" title="Previous week"><i class="bi bi-chevron-left"></i></button>
       <button class="nav-btn" id="btn-next" title="Next week"><i class="bi bi-chevron-right"></i></button>
+      <button class="nav-btn" id="btn-print" title="Save as PDF"><i class="bi bi-download"></i></button>
     </div>
   </div>
 
@@ -365,6 +366,39 @@
         <div class="modal-footer" id="sign-modal-footer">
           <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
           <button class="btn-solid" id="btn-sign-save">Sign Off</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── PRINT MODAL ── -->
+  <div class="modal fade" id="modal-print" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-download me-2"></i>Save as PDF</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">
+            Select a 7-day range to export. Your browser will open a print dialog — choose <strong>Save as PDF</strong>.
+          </p>
+          <div style="display:flex;gap:.75rem;margin-bottom:.75rem;">
+            <div style="flex:1;">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-control" id="print-start"/>
+            </div>
+            <div style="flex:1;">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-control" id="print-end" readonly/>
+            </div>
+          </div>
+          <div id="print-range-label" style="font-size:.8rem;color:var(--muted);text-align:center;min-height:1.2em;"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn-solid" id="btn-print-confirm"><i class="bi bi-download me-1"></i>Generate PDF</button>
         </div>
       </div>
     </div>

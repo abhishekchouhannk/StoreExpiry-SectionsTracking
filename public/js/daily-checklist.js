@@ -139,7 +139,22 @@ function fmtWeekRange(start, end) {
   return `${s} – ${e}`;
 }
 
-function weekOfMonth(date) { return Math.min(Math.ceil(date.getDate() / 7), 4); }
+function weekOfMonth(date) {
+  // True calendar week: week 1 = 1-7, week 2 = 8-14, etc.
+  return Math.ceil(date.getDate() / 7);
+}
+
+function weekHeader(weekStart, weekEnd) {
+  const startMonth = weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const endMonth   = weekEnd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const week       = weekOfMonth(weekStart);
+  if (startMonth === endMonth) {
+    return `Week ${week} of ${startMonth}`;
+  } else {
+    // Spans two months — show based on which month has more days in this week
+    return `Week ${week} of ${startMonth} / Week 1 of ${weekEnd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+  }
+}
 
 /* ── State ───────────────────────────────────────────── */
 let currentWeekStart = getMondayOf(new Date());
@@ -153,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initWeekNav();
   initActiveInitialBar();
   loadWeek();
+  initPrint();
 });
 
 /* ── Active initial bar ──────────────────────────────── */
@@ -200,7 +216,7 @@ function updateWeekHeader() {
   const week   = weekOfMonth(currentWeekStart);
   const month  = currentWeekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const siteId = getActiveSite();
-  document.getElementById('week-nav-info').textContent = `Week ${week} of ${month}`;
+  document.getElementById('week-nav-info').textContent = weekHeader(days[0], days[6]);
   document.getElementById('week-nav-sub').textContent  = `${SITES[siteId]} · ${fmtWeekRange(days[0], days[6])}`;
 }
 
@@ -393,4 +409,129 @@ async function deleteSign() {
     bootstrap.Modal.getInstance(document.getElementById('modal-sign')).hide();
     loadWeek();
   } catch (e) { alert(e.message); }
+}
+
+
+const API_BASE  = '/api/daily-checklist';
+const ENTRY_KEY = (e) => `${e.date}|${e.task}`;
+
+function buildPrintHTML(siteId, siteName, startStr, endStr, days, dataMap) {
+  const s = new Date(startStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const e = new Date(endStr   + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  let cols = '<th style="text-align:left;min-width:180px;padding:4px 6px;">Task</th>';
+  days.forEach(d => {
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    cols += `<th style="text-align:center;padding:4px 6px;border-left:1px solid #ccc;">${label}</th>`;
+  });
+
+  let rows = '';
+  CHECKLIST.forEach(({ category, tasks }) => {
+    rows += `<tr><td colspan="${1 + days.length}" style="background:#f0f0f0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 6px;">${category}</td></tr>`;
+    tasks.forEach(task => {
+      rows += `<tr><td style="padding:4px 6px;font-size:11px;">${task}</td>`;
+      days.forEach(d => {
+        const dk    = dateKey(d);
+        const entry = dataMap[`${dk}|${task}`];
+        const bg    = entry ? '#dcfce7' : '#fff';
+        const txt   = entry ? `<strong style="color:#166534;">${entry.initials}</strong>` : '';
+        rows += `<td style="text-align:center;background:${bg};border-left:1px solid #eee;padding:3px 4px;font-size:11px;">${txt}</td>`;
+      });
+      rows += '</tr>';
+    });
+  });
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <title>Daily Checklist — ${siteName} — ${s} to ${e}</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 12px; }
+      h2 { font-size: 14px; margin: 0 0 2px; }
+      p  { font-size: 10px; color: #666; margin: 0 0 8px; }
+      table { border-collapse: collapse; width: 100%; }
+      th { background: #f8f8f8; font-size: 10px; font-weight: 600; padding: 4px 6px; border-bottom: 1.5px solid #ccc; }
+      td { border-bottom: 1px solid #eee; vertical-align: middle; }
+      tr:last-child td { border-bottom: none; }
+      @media print { @page { size: landscape; margin: 10mm; } }
+    </style>
+  </head><body>
+    <h2>Daily Checklist — ${siteName} (${siteId})</h2>
+    <p>${s} – ${e}</p>
+    <table>
+      <thead><tr>${cols}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`;
+}
+
+/* ── Print / PDF ─────────────────────────────────────── */
+function initPrint() {
+  const btn = document.getElementById('btn-print');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    // Pre-fill start with current week's Monday
+    const monday = dateKey(currentWeekStart);
+    document.getElementById('print-start').value = monday;
+    setEndDate(monday);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-print')).show();
+  });
+
+  document.getElementById('print-start').addEventListener('change', (e) => {
+    setEndDate(e.target.value);
+  });
+
+  document.getElementById('btn-print-confirm').addEventListener('click', generatePDF);
+}
+
+function setEndDate(startStr) {
+  if (!startStr) return;
+  const start = new Date(startStr + 'T12:00:00');
+  const end   = new Date(start);
+  end.setDate(end.getDate() + 6);
+  const endStr = dateKey(end);
+  document.getElementById('print-end').value = endStr;
+  const s = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const e = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  document.getElementById('print-range-label').textContent = `${s} – ${e} (7 days)`;
+}
+
+async function generatePDF() {
+  const startStr = document.getElementById('print-start').value;
+  const endStr   = document.getElementById('print-end').value;
+  if (!startStr || !endStr) return;
+
+  const siteId   = getActiveSite();
+  const siteName = SITES[siteId];
+
+  // Fetch data for the selected range
+  let entries;
+  try {
+    entries = await api(`${API_BASE}?siteId=${siteId}&from=${startStr}&to=${endStr}`);
+  } catch (e) { alert('Failed to load data: ' + e.message); return; }
+
+  // Build data map
+  const dataMap = {};
+  entries.forEach((e) => {
+    const k = ENTRY_KEY(e);
+    dataMap[k] = e;
+  });
+
+  // Build 7 days in chronological order
+  const start = new Date(startStr + 'T12:00:00');
+  const days  = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+
+  // Generate print HTML
+  const html = buildPrintHTML(siteId, siteName, startStr, endStr, days, dataMap);
+
+  // Open in new window and trigger print
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 500);
+
+  bootstrap.Modal.getInstance(document.getElementById('modal-print')).hide();
 }
