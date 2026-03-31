@@ -279,7 +279,7 @@
     </div>
     <div class="offcanvas-body p-0" style="position:relative;overflow:hidden;">
       <div class="menu-label">Navigate</div>
-      <button class="menu-item" onclick="window.location='/'" data-bs-dismiss="offcanvas">
+      <button class="menu-item" onclick="window.location='/dashboard.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-grid"></i> All Sections
       </button>
       <div class="menu-label">Daily Operations</div>
@@ -291,6 +291,11 @@
       </button>
       <button class="menu-item" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-week"></i> Weekly Checklist
+      </button>
+
+      <div class="menu-label">Manager</div>
+      <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-calendar-plus"></i> Upload Schedule
       </button>
 
       <div class="menu-footer">
@@ -309,7 +314,7 @@
 
   <!-- ── SECTION HERO ── -->
   <div class="sec-hero">
-    <a href="/" class="back-link" onclick="event.preventDefault();window.location='/'"><i class="bi bi-arrow-left"></i> All Sections</a>
+    <a href="/dashboard.html" class="back-link" onclick="event.preventDefault();window.location='/dashboard.html'"><i class="bi bi-arrow-left"></i> All Sections</a>
     <div class="hero-row">
       <div class="hero-icon" id="sec-icon">📦</div>
       <div>

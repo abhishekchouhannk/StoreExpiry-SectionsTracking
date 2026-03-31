@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Schedule Upload — Store Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <style>
+    :root{--bg:#f5f4f0;--surface:#fff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1.4rem;}
+    .topbar{width:100%;max-width:560px;display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+    .back-link{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .12s;}
+    .back-link:hover{color:var(--text);}
+    .page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;}
+    .card{background:var(--surface);border:1.5px solid var(--border);border-radius:20px;padding:2rem;max-width:560px;width:100%;margin-bottom:1rem;}
+    .label{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;display:block;}
+    .select,.pw-input{width:100%;font-family:'DM Sans',sans-serif;font-size:.87rem;padding:.45rem .7rem;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);outline:none;margin-bottom:1rem;}
+    .select:focus,.pw-input:focus{border-color:var(--text);}
+    .pw-input{letter-spacing:.06em;margin-bottom:0;}
+    .pw-input.error{border-color:#d1453b;background:#fee2e2;}
+    .pw-err{font-size:.78rem;color:#d1453b;margin:.3rem 0 .75rem;display:none;}
+    .mb{margin-bottom:1rem;}
+    .drop-zone{border:2px dashed var(--border);border-radius:14px;padding:2.5rem 1rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;position:relative;margin-bottom:1rem;}
+    .drop-zone:hover,.drop-zone.dragover{border-color:var(--text);background:#faf9f6;}
+    .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .drop-icon{font-size:1.8rem;color:var(--muted);margin-bottom:.5rem;}
+    .drop-label{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted);}
+    .drop-sub{font-size:.72rem;color:var(--muted);margin-top:.25rem;}
+    #preview-wrap{display:none;margin-bottom:1rem;}
+    #preview-img{width:100%;border-radius:10px;border:1.5px solid var(--border);max-height:280px;object-fit:contain;}
+    .preview-clear{font-size:.75rem;color:var(--muted);cursor:pointer;margin-top:.4rem;display:inline-block;text-decoration:underline;}
+    .btn{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.04em;padding:.55rem 1.2rem;border-radius:10px;border:none;cursor:pointer;width:100%;transition:background .15s;}
+    .btn-primary{background:var(--text);color:#fff;}
+    .btn-primary:hover{background:#333;}
+    .btn-primary:disabled{background:#bbb;cursor:default;}
+    .status{font-size:.82rem;margin-top:.75rem;padding:.65rem 1rem;border-radius:10px;display:none;}
+    .status.loading{background:#f1f5f9;color:var(--muted);display:block;}
+    .status.success{background:#dcfce7;color:#166534;display:block;}
+    .status.error{background:#fee2e2;color:#b91c1c;display:block;}
+    .result-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;margin-bottom:.75rem;}
+    .staff-row{display:flex;align-items:flex-start;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid #f0ede8;gap:.75rem;}
+    .staff-row:last-child{border-bottom:none;}
+    .staff-name{font-weight:600;font-size:.85rem;min-width:100px;}
+    .shift-badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+    .shift-badge{font-size:.65rem;padding:2px 7px;border-radius:var(--pill-r);}
+    .shift-badge.on{background:#dcfce7;color:#166534;font-weight:600;}
+    .shift-badge.off{background:#f1f5f9;color:#94a3b8;}
+    #result-card{display:none;}
+    #result-card.show{display:block;}
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back-link" href="/dashboard.html"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    <span class="page-title">Upload Schedule</span>
+  </div>
+
+  <div class="card">
+    <label class="label">Site</label>
+    <select class="select" id="site-select">
+      <option value="C01158">96 Shell (C01158)</option>
+      <option value="C01288">Riverside Shell (C01288)</option>
+      <option value="C09066">72 Shell (C09066)</option>
+    </select>
+
+    <label class="label">Manager Password</label>
+    <div class="mb">
+      <input type="password" class="pw-input" id="pw-input" placeholder="Site password" maxlength="20"/>
+      <p class="pw-err" id="pw-err">Incorrect password for this site.</p>
+    </div>
+
+    <label class="label">Schedule Image</label>
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*"/>
+      <div class="drop-icon"><i class="bi bi-image"></i></div>
+      <div class="drop-label">Drop image or tap to browse</div>
+      <div class="drop-sub">Any photo of the weekly schedule sheet</div>
+    </div>
+    <div id="preview-wrap">
+      <img id="preview-img" alt="Preview"/>
+      <span class="preview-clear" id="preview-clear">Remove image</span>
+    </div>
+
+    <button class="btn btn-primary" id="btn-upload" disabled>
+      <i class="bi bi-stars"></i>&nbsp; Parse with AI &amp; Save
+    </button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card" id="result-card">
+    <div class="result-title">Parsed — week of <span id="result-week"></span></div>
+    <div id="result-rows"></div>
+  </div>
+
+  <script>
+    const PASSWORDS = { C01158:'C01158', C01288:'C01288', C09066:'C09066' };
+    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let selectedFile = null;
+
+    const fileInput   = document.getElementById('file-input');
+    const dropZone    = document.getElementById('drop-zone');
+    const previewWrap = document.getElementById('preview-wrap');
+    const previewImg  = document.getElementById('preview-img');
+    const btnUpload   = document.getElementById('btn-upload');
+
+    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+    document.getElementById('preview-clear').addEventListener('click', () => {
+      selectedFile = null; fileInput.value = '';
+      previewWrap.style.display = 'none'; dropZone.style.display = 'block'; checkReady();
+    });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      selectedFile = file;
+      previewImg.src = URL.createObjectURL(file);
+      previewWrap.style.display = 'block'; dropZone.style.display = 'none'; checkReady();
+    }
+
+    document.getElementById('pw-input').addEventListener('input', () => {
+      document.getElementById('pw-err').style.display = 'none';
+      document.getElementById('pw-input').classList.remove('error');
+      checkReady();
+    });
+    document.getElementById('site-select').addEventListener('change', () => {
+      document.getElementById('pw-err').style.display = 'none';
+      document.getElementById('pw-input').classList.remove('error');
+      checkReady();
+    });
+
+    function checkReady() {
+      btnUpload.disabled = !(selectedFile && document.getElementById('pw-input').value.trim());
+    }
+
+    btnUpload.addEventListener('click', async () => {
+      const siteId = document.getElementById('site-select').value;
+      const pw     = document.getElementById('pw-input').value.trim();
+      if (pw !== PASSWORDS[siteId]) {
+        document.getElementById('pw-err').style.display = 'block';
+        document.getElementById('pw-input').classList.add('error');
+        return;
+      }
+      setStatus('loading', '<i class="bi bi-stars"></i> Reading schedule with AI — takes ~10 seconds…');
+      btnUpload.disabled = true;
+      try {
+        const base64    = await toBase64(selectedFile);
+        const mediaType = selectedFile.type;
+        const res  = await fetch('/api/schedule/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ siteId, imageBase64: base64, mediaType })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Parse failed');
+        setStatus('success', `<i class="bi bi-check-circle-fill"></i> Saved schedule for week of <b>${data.weekOf}</b> — ${data.staffCount} staff`);
+        showResult(data);
+      } catch(e) {
+        setStatus('error', `<i class="bi bi-exclamation-circle"></i> ${e.message}`);
+      } finally { btnUpload.disabled = false; }
+    });
+
+    function toBase64(file) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+    }
+
+    function setStatus(type, html) {
+      const el = document.getElementById('status');
+      el.className = `status ${type}`; el.innerHTML = html;
+    }
+
+    function showResult(data) {
+      document.getElementById('result-week').textContent = data.weekOf;
+      const rows = document.getElementById('result-rows');
+      rows.innerHTML = '';
+      data.schedule.forEach(person => {
+        const row = document.createElement('div');
+        row.className = 'staff-row';
+        const badges = (person.shifts || []).map((shift, i) => {
+          const isOn = shift && !['off','na','-',''].includes(shift.toLowerCase());
+          return `<span class="shift-badge ${isOn?'on':'off'}">${DAYS[i]}: ${shift||'—'}</span>`;
+        }).join('');
+        row.innerHTML = `<span class="staff-name">${person.name}</span><div class="shift-badges">${badges}</div>`;
+        rows.appendChild(row);
+      });
+      document.getElementById('result-card').classList.add('show');
+    }
+  </script>
+</body>
+</html>
