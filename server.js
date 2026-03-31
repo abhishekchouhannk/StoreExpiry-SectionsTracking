@@ -340,6 +340,51 @@ app.delete('/api/order-items/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+
+// ═════════════════════════════════════════════════════════
+//  DAILY CHECKLIST
+// ═════════════════════════════════════════════════════════
+app.get('/api/checklist', async (req, res) => {
+  try {
+    const { siteId, from, to } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const q = { siteId, date: { $gte: from, $lte: to } };
+    res.json(await req.db.collection('checklist_logs').find(q).toArray());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/checklist', async (req, res) => {
+  try {
+    const { siteId, date, task, shift, initials } = req.body;
+    if (!siteId || !date || !task || !shift || !initials)
+      return res.status(400).json({ error: 'Missing required fields' });
+    // Prevent duplicates
+    const exists = await req.db.collection('checklist_logs').findOne({ siteId, date, task, shift });
+    if (exists) return res.status(400).json({ error: 'Entry already exists for this cell' });
+    const doc = { siteId, date, task, shift, initials: initials.toUpperCase(), createdAt: new Date() };
+    const r   = await req.db.collection('checklist_logs').insertOne(doc);
+    res.json({ ...doc, _id: r.insertedId });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/checklist/:id', async (req, res) => {
+  try {
+    const { initials } = req.body;
+    await req.db.collection('checklist_logs').updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { initials: initials.toUpperCase() } }
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/checklist/:id', async (req, res) => {
+  try {
+    await req.db.collection('checklist_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Fallback (SPA) ──────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
