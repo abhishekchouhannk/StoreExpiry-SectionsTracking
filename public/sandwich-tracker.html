@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Daily Checklist — Store Manager</title>
+  <title>Sandwich Tracker</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet"/>
   <style>
-    :root { --bg:#f5f4f0;--surface:#ffffff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px; }
+    :root{--bg:#f5f4f0;--surface:#fff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px;}
     *{box-sizing:border-box;}
     body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+    /* topbar */
     .topbar{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 1.4rem;height:54px;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
     .site-switcher{display:flex;gap:5px;flex-wrap:wrap;}
-    .site-btn{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .16s ease;white-space:nowrap;}
+    .site-btn{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .16s;white-space:nowrap;}
     .site-btn:hover{border-color:var(--text);color:var(--text);}
     .site-btn.active{background:var(--text);border-color:var(--text);color:#fff;}
     .hamburger-btn{width:36px;height:36px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;color:var(--text);}
@@ -28,6 +30,8 @@
     .site-dropdown-item:hover{background:var(--bg);color:var(--text);}
     .site-dropdown-item.active{color:var(--text);font-weight:800;}
     .site-dropdown-item.active::before{content:'✓ ';}
+
+    /* offcanvas */
     #offcanvas-menu{width:280px!important;background:var(--bg)!important;border-left:1px solid var(--border)!important;}
     #offcanvas-menu .offcanvas-header{border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;}
     #offcanvas-menu .offcanvas-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
@@ -39,63 +43,83 @@
     .menu-footer{position:absolute;bottom:0;left:0;right:0;padding:1.1rem 1.4rem;border-top:1px solid var(--border);}
     .menu-footer p{font-size:.76rem;color:var(--muted);margin:0 0 .5rem;}
     .menu-footer a{color:var(--text);font-weight:600;text-decoration:none;}
+
+    /* overlay */
     #site-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(245,244,240,.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;}
     #site-overlay.active{display:flex;}
     .overlay-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .65s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg);}}
-    .page-header{padding:.9rem 1.4rem .5rem;}
+
+    /* page */
+    .page-header{padding:.9rem 1.4rem .4rem;}
     .page-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;margin:0;}
-    .week-nav{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1.4rem 1rem;gap:1rem;}
-    .week-nav-info{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;}
-    .week-nav-sub{font-size:.74rem;color:var(--muted);margin-top:1px;}
-    .week-nav-btns{display:flex;gap:6px;}
+
+    /* week nav */
+    .week-nav{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.4rem .8rem;gap:1rem;flex-wrap:wrap;}
+    .week-info{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;}
+    .week-sub{font-size:.74rem;color:var(--muted);margin-top:1px;}
+    .week-btns{display:flex;gap:6px;align-items:center;}
     .nav-btn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--text);font-size:.85rem;}
     .nav-btn:hover{border-color:var(--text);background:var(--text);color:#fff;}
     .today-btn{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;transition:all .15s;color:var(--muted);}
     .today-btn:hover{border-color:var(--text);color:var(--text);}
-    .initial-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.5rem 1.4rem .8rem;}
-    .initial-bar-label{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
-    .initial-input{display:inline-block;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;width:70px;padding:3px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);outline:none;text-align:center;transition:border-color .15s,background .15s,color .15s;}
-    .initial-input:focus{border-color:var(--text);}
-    .initial-hint{font-size:.76rem;color:var(--muted);transition:color .2s;}
-    .checklist-wrap{padding:0 1.4rem 3rem;overflow-x:auto;}
-    .checklist-table{width:100%;border-collapse:collapse;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;min-width:480px;}
-    .checklist-table th{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);padding:.55rem .7rem;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center;}
-    .checklist-table th:first-child{text-align:left;min-width:200px;}
-    .checklist-table th:last-child{border-right:none;}
-    .checklist-table td{padding:.5rem .7rem;border-bottom:1px solid #f0ede8;border-right:1px solid #f0ede8;font-size:.83rem;vertical-align:middle;}
-    .checklist-table td:last-child{border-right:none;}
-    .checklist-table tbody tr:last-child td{border-bottom:none;}
-    .checklist-table tbody tr:hover td{background:#faf9f6;}
-    .cat-row td{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--bg);color:var(--muted);padding:.4rem .7rem;border-bottom:1px solid var(--border);}
-    .th-today{background:#1a1a18!important;color:#fff!important;}
-    .col-today{background:#fffbf0!important;}
-    .day-cell{text-align:center;min-width:54px;cursor:pointer;transition:background .1s;}
-    .day-cell:hover{background:#f0ede8!important;}
-    .day-cell.signed{background:#dcfce7!important;color:#166534;font-weight:700;font-size:.78rem;font-family:'Syne',sans-serif;}
-    .day-cell.signed:hover{background:#bbf7d0!important;}
-    .day-cell .sign-placeholder{color:#d0cdc8;font-size:.75rem;}
-    .task-cell{font-size:.83rem;}
+
+    /* delivery info bar */
+    .delivery-bar{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:.9rem 1.2rem;margin:0 1.4rem .8rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:center;}
+    .delivery-field label{font-family:'Syne',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px;}
+    .delivery-field input{border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;background:var(--bg);color:var(--text);padding:4px 8px;outline:none;width:140px;}
+    .delivery-field input:focus{border-color:var(--text);}
+    .coremark-note{font-size:.76rem;color:var(--muted);flex:1;min-width:200px;}
+    .coremark-note strong{color:var(--text);}
+
+    /* table */
+    .table-wrap{padding:0 1.4rem 3rem;overflow-x:auto;}
+    .sw-table{width:100%;border-collapse:collapse;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;min-width:780px;}
+    .sw-table th{font-family:'Syne',sans-serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg);padding:.5rem .65rem;border-bottom:1px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;text-align:center;}
+    .sw-table th:first-child{text-align:left;min-width:170px;}
+    .sw-table th:last-child{border-right:none;}
+    .sw-table td{padding:.45rem .65rem;border-bottom:1px solid #f0ede8;border-right:1px solid #f0ede8;font-size:.82rem;vertical-align:middle;text-align:center;cursor:pointer;transition:background .1s;}
+    .sw-table td:first-child{text-align:left;font-weight:500;cursor:default;}
+    .sw-table td:last-child{border-right:none;}
+    .sw-table tbody tr:last-child td{border-bottom:none;}
+    .sw-table tbody tr:hover td{background:#faf9f6;}
+    .sw-table tbody tr:hover td:first-child{background:transparent;}
+    .group-row td{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--bg);color:var(--muted);padding:.35rem .65rem;border-bottom:1px solid var(--border);text-align:left;cursor:default!important;}
+    .sw-table tbody tr:hover .group-row td{background:var(--bg);}
+
+    /* cell states */
+    .cell-filled{background:#f0fdf4!important;color:#166534;font-weight:600;}
+    .cell-empty .placeholder{color:#d0cdc8;font-size:.75rem;}
+    .cell-waste{background:#fff7ed!important;color:#c2410c;}
+    .cell-sign{font-size:.75rem;}
+
+    /* badges */
+    .sticker-yes{display:inline-block;background:#dcfce7;color:#166534;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:var(--pill-r);}
+    .sticker-no{display:inline-block;background:#f1f5f9;color:#94a3b8;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:var(--pill-r);}
+
+    /* modal */
     .modal-content{border:1.5px solid var(--border)!important;border-radius:18px!important;box-shadow:0 20px 60px rgba(0,0,0,.12)!important;}
     .modal-header{border-bottom:1px solid var(--border);padding:1rem 1.3rem;}
     .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;}
     .modal-body{padding:1.1rem 1.3rem;}
     .modal-footer{padding:.7rem 1.3rem 1rem;border-top:none;}
     .form-label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;display:block;}
-    .form-control{border:1.5px solid var(--border);border-radius:9px;font-size:.87rem;background:var(--bg);color:var(--text);width:100%;padding:.4rem .7rem;}
-    .form-control:focus{border-color:var(--text);box-shadow:none;background:#fff;outline:none;}
+    .form-control,.form-select{border:1.5px solid var(--border);border-radius:9px;font-size:.87rem;background:var(--bg);color:var(--text);width:100%;padding:.4rem .7rem;}
+    .form-control:focus,.form-select:focus{border-color:var(--text);box-shadow:none;background:#fff;outline:none;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
     .btn-solid{background:var(--text);color:#fff;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.04em;padding:.42rem 1rem;cursor:pointer;}
-    .btn-solid:hover{background:#333;color:#fff;}
+    .btn-solid:hover{background:#333;}
     .btn-solid-red{background:#d1453b;}
     .btn-solid-red:hover{background:#b83530;}
     .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);border-radius:9px;font-size:.78rem;padding:.42rem .9rem;cursor:pointer;}
     .btn-ghost:hover{border-color:#aaa;color:var(--text);}
-    .initials-big{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;text-align:center;letter-spacing:.1em;color:#166534;background:#dcfce7;border-radius:12px;padding:.5rem 1rem;margin-bottom:.75rem;}
-    .signed-meta{font-size:.8rem;color:var(--muted);text-align:center;}
+    .sandwich-modal-name{font-size:.84rem;color:var(--muted);margin-bottom:1rem;}
+
     @media(max-width:600px){
       .site-switcher{display:none;}
       .site-dropdown-wrap{display:block;}
-      .topbar,.week-nav,.initial-bar,.checklist-wrap,.page-header{padding-left:1rem;padding-right:1rem;}
+      .topbar,.page-header,.week-nav,.table-wrap{padding-left:1rem;padding-right:1rem;}
+      .delivery-bar{margin-left:1rem;margin-right:1rem;}
     }
   </style>
 </head>
@@ -124,6 +148,7 @@
     </button>
   </div>
 
+  <!-- OFFCANVAS -->
   <div class="offcanvas offcanvas-end" id="offcanvas-menu" tabindex="-1">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title">Menu</h5>
@@ -135,7 +160,7 @@
         <i class="bi bi-grid"></i> All Sections
       </button>
       <div class="menu-label">Daily Operations</div>
-      <button class="menu-item active-page" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas">
+      <button class="menu-item" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-list-check"></i> Daily Checklist
       </button>
       <button class="menu-item" onclick="window.location='/shift-checklist.html'" data-bs-dismiss="offcanvas">
@@ -144,15 +169,13 @@
       <button class="menu-item" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-week"></i> Weekly Checklist
       </button>
-
       <div class="menu-label">Manager</div>
-      <button class="menu-item" onclick="window.location='/sandwich-tracker.html'" data-bs-dismiss="offcanvas">
+      <button class="menu-item active-page" onclick="window.location='/sandwich-tracker.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-egg-fried"></i> Sandwich Tracker
       </button>
       <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-plus"></i> Upload Schedule
       </button>
-
       <div class="menu-footer">
         <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
         <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
@@ -163,97 +186,110 @@
     </div>
   </div>
 
-  <div class="page-header"><h1 id="page-title">Daily Checklist</h1></div>
+  <div class="page-header">
+    <h1 id="page-title">Sandwich Tracker</h1>
+  </div>
 
   <div class="week-nav">
     <div>
-      <div class="week-nav-info" id="week-nav-info">Week — of — —</div>
-      <div class="week-nav-sub" id="week-nav-sub">—</div>
+      <div class="week-info" id="week-info">—</div>
+      <div class="week-sub" id="week-sub">—</div>
     </div>
-    <div class="week-nav-btns">
-      <button class="today-btn" id="btn-today">Today</button>
+    <div class="week-btns">
+      <button class="today-btn" id="btn-today">This Week</button>
       <button class="nav-btn" id="btn-prev"><i class="bi bi-chevron-left"></i></button>
       <button class="nav-btn" id="btn-next"><i class="bi bi-chevron-right"></i></button>
-      <button class="nav-btn" id="btn-print" title="Save as PDF"><i class="bi bi-download"></i></button>
     </div>
   </div>
 
-  <div class="initial-bar">
-    <span class="initial-bar-label">Quick sign-off:</span>
-    <input type="text" class="initial-input" id="active-initial-input" maxlength="4" placeholder="AC" autocomplete="off" autocorrect="off" spellcheck="false"/>
-    <span class="initial-hint" id="active-initial-hint">Enter your initials above to enable quick sign-off</span>
+  <!-- Delivery info bar -->
+  <div class="delivery-bar">
+    <div class="delivery-field">
+      <label>Order Date (Monday cutoff)</label>
+      <input type="date" id="order-date"/>
+    </div>
+    <div class="delivery-field">
+      <label>Delivery Date (Wednesday)</label>
+      <input type="date" id="delivery-date"/>
+    </div>
+    <div class="coremark-note">
+      <strong>Coremark Fresh</strong> — Cutoff: <strong>Monday 8AM</strong> · Delivery: <strong>Wednesday</strong><br>
+      Goal: 1–2 units waste per flavour. $2 sticker 2 days before expiry.
+    </div>
   </div>
 
-  <div class="checklist-wrap">
-    <div id="checklist-container">
+  <div class="table-wrap">
+    <div id="tracker-container">
       <div style="text-align:center;padding:3rem 0;color:var(--muted);font-size:.87rem;">
         <div class="spinner-border spinner-border-sm me-2"></div>Loading…
       </div>
     </div>
   </div>
 
-  <!-- SIGN MODAL -->
-  <div class="modal fade" id="modal-sign" tabindex="-1">
+  <!-- ENTRY MODAL -->
+  <div class="modal fade" id="modal-entry" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="sign-modal-title">Sign Off</h5>
+          <h5 class="modal-title" id="entry-modal-title">Edit Entry</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p id="sign-task-name" style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem;"></p>
-          <div id="sign-form">
-            <label class="form-label">Your Initials</label>
-            <input type="text" class="form-control" id="sign-initials" placeholder="e.g. AC" maxlength="4" style="text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:1rem;"/>
-          </div>
-          <div id="signed-view" style="display:none;">
-            <div class="initials-big" id="signed-initials-display"></div>
-            <div class="signed-meta" id="signed-meta-display"></div>
-          </div>
-        </div>
-        <div class="modal-footer" id="sign-modal-footer">
-          <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn-solid" id="btn-sign-save">Sign Off</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ── PRINT MODAL ── -->
-  <div class="modal fade" id="modal-print" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-download me-2"></i>Save as PDF</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">
-            Select a 7-day range to export. Your browser will open a print dialog — choose <strong>Save as PDF</strong>.
-          </p>
-          <div style="display:flex;gap:.75rem;margin-bottom:.75rem;">
-            <div style="flex:1;">
-              <label class="form-label">Start Date</label>
-              <input type="date" class="form-control" id="print-start"/>
+          <p class="sandwich-modal-name" id="entry-sandwich-name"></p>
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Order Qty</label>
+              <input type="number" class="form-control" id="f-order-qty" min="0" placeholder="0"/>
             </div>
-            <div style="flex:1;">
-              <label class="form-label">End Date</label>
-              <input type="date" class="form-control" id="print-end" readonly/>
+            <div>
+              <label class="form-label">Received Qty</label>
+              <input type="number" class="form-control" id="f-received-qty" min="0" placeholder="0"/>
+            </div>
+            <div>
+              <label class="form-label">Expiry Date</label>
+              <input type="date" class="form-control" id="f-expiry-date"/>
+            </div>
+            <div>
+              <label class="form-label">$2 Sticker Used?</label>
+              <select class="form-select" id="f-sticker">
+                <option value="">—</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="na">N/A</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Sales</label>
+              <input type="number" class="form-control" id="f-sales" min="0" placeholder="0"/>
+            </div>
+            <div>
+              <label class="form-label">Waste</label>
+              <input type="number" class="form-control" id="f-waste" min="0" placeholder="0"/>
+            </div>
+            <div>
+              <label class="form-label">Recorded in PDI</label>
+              <select class="form-select" id="f-pdi">
+                <option value="">—</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Retailer Sign</label>
+              <input type="text" class="form-control" id="f-sign" placeholder="Initials" maxlength="6"/>
             </div>
           </div>
-          <div id="print-range-label" style="font-size:.8rem;color:var(--muted);text-align:center;min-height:1.2em;"></div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" id="entry-modal-footer">
           <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn-solid" id="btn-print-confirm"><i class="bi bi-download me-1"></i>Generate PDF</button>
+          <button class="btn-solid" id="btn-entry-save">Save</button>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/daily-checklist.js"></script>
+  <script src="js/sandwich-tracker.js"></script>
 
   <script>
     // Hide sandwich tracker nav item for 72 Shell

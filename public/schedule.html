@@ -195,5 +195,16 @@
       document.getElementById('result-card').classList.add('show');
     }
   </script>
+
+  <script>
+    // Hide sandwich tracker nav item for 72 Shell
+    (function() {
+      if (localStorage.getItem('activeSiteId') === 'C09066') {
+        document.querySelectorAll('.menu-item').forEach(btn => {
+          if (btn.textContent.includes('Sandwich Tracker')) btn.style.display = 'none';
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

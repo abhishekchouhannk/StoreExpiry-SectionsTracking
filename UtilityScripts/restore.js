@@ -14,7 +14,7 @@ const readline = require('readline');
 const MONGO_URI   = process.env.MONGO_URI;
 const DB_NAME     = process.env.DB_NAME || 'store_manager';
 const BACKUP_DIR  = path.join(__dirname, 'backups');
-const COLLECTIONS = ['sections', 'cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items', 'checklist_logs', 'daily_checklist_logs', 'weekly_checklist_logs', 'schedules'];
+const COLLECTIONS = ['sections', 'cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items', 'checklist_logs', 'daily_checklist_logs', 'weekly_checklist_logs', 'schedules', 'sandwich_logs'];
 
 function ask(question) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });

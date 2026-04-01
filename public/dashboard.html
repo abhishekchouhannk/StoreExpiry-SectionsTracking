@@ -302,9 +302,9 @@
       <button class="menu-item" data-bs-dismiss="offcanvas" data-bs-toggle="modal" data-bs-target="#modal-add-section">
         <i class="bi bi-plus-circle"></i> Add Section
       </button>
-      <button class="menu-item" data-bs-dismiss="offcanvas" onclick="loadDashboard()">
+      <!-- <button class="menu-item" data-bs-dismiss="offcanvas" onclick="loadDashboard()">
         <i class="bi bi-arrow-clockwise"></i> Refresh
-      </button>
+      </button> -->
       <div class="menu-label">Quick View</div>
       <button class="menu-item" data-bs-dismiss="offcanvas" data-bs-toggle="modal" data-bs-target="#modal-expiry-detail">
         <i class="bi bi-exclamation-circle"></i> Expiry Alerts
@@ -328,6 +328,9 @@
       </button>
 
       <div class="menu-label">Manager</div>
+      <button class="menu-item" onclick="window.location='/sandwich-tracker.html'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-egg-fried"></i> Sandwich Tracker
+      </button>
       <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-plus"></i> Upload Schedule
       </button>
@@ -464,5 +467,16 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/dashboard.js"></script>
+
+  <script>
+    // Hide sandwich tracker nav item for 72 Shell
+    (function() {
+      if (localStorage.getItem('activeSiteId') === 'C09066') {
+        document.querySelectorAll('.menu-item').forEach(btn => {
+          if (btn.textContent.includes('Sandwich Tracker')) btn.style.display = 'none';
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

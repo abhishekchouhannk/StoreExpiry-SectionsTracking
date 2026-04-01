@@ -294,6 +294,9 @@
       </button>
 
       <div class="menu-label">Manager</div>
+      <button class="menu-item" onclick="window.location='/sandwich-tracker.html'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-egg-fried"></i> Sandwich Tracker
+      </button>
       <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-plus"></i> Upload Schedule
       </button>
@@ -494,5 +497,16 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/section.js"></script>
+
+  <script>
+    // Hide sandwich tracker nav item for 72 Shell
+    (function() {
+      if (localStorage.getItem('activeSiteId') === 'C09066') {
+        document.querySelectorAll('.menu-item').forEach(btn => {
+          if (btn.textContent.includes('Sandwich Tracker')) btn.style.display = 'none';
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
