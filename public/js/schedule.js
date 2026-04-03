@@ -74,7 +74,13 @@ function getMondayOf(date) {
   return d;
 }
 
-function dateKey(date) { return date.toISOString().split('T')[0]; }
+function dateKey(date) {
+  // Use local date to avoid UTC offset shifting the date (e.g. Vancouver PST/PDT)
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
