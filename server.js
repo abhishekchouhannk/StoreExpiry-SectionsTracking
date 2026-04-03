@@ -272,7 +272,7 @@ app.get('/api/expiry-logs', async (req, res) => {
     const q = { sectionId };
     if (filter === 'removed') q.removed = true;
     else if (filter === 'active') q.removed = false;
-    res.json(await req.db.collection('expiry_logs').find(q).sort({ date: -1 }).toArray());
+    res.json(await req.db.collection('expiry_logs').find(q).sort({ expiryDate: 1, date: -1 }).toArray());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

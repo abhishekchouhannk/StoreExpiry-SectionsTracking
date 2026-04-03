@@ -253,21 +253,21 @@ async function loadExpiry() {
     data.forEach((item) => {
       const removedBadge = item.removed
         ? '<span class="tag tag-green"><i class="bi bi-check-circle me-1"></i>Removed</span>'
-        : `<button class="btn-solid" style="font-size:.7rem;padding:2px 9px" onclick="markExpRemoved('${item._id}')">Mark Removed</button>`;
+        : `<button class="btn-solid" style="font-size:.72rem;padding:3px 10px;white-space:nowrap;" onclick="markExpRemoved('${item._id}')">✓ Remove</button>`;
       rows += `
         <tr>
-          <td>${fmtDate(item.date)}</td>
           <td>${item.item}</td>
-          <td class="${item.removed ? '' : 'text-danger fw-semibold'}">${fmtDate(item.expiryDate)}</td>
+          <td style="${item.removed ? '' : 'color:#d1453b;font-weight:700;'}">${fmtDate(item.expiryDate)}</td>
           <td>${removedBadge}</td>
           <td>${item.signOffBy || '—'}</td>
+          <td style="color:var(--muted);font-size:.78rem;white-space:nowrap;">${fmtDate(item.date)}</td>
           <td><button class="del-row" onclick="deleteExpiry('${item._id}')"><i class="bi bi-trash3" style="font-size:.8rem"></i></button></td>
         </tr>`;
     });
     wrap.innerHTML = `
-      <div class="table-card">
-        <table class="table table-hover mb-0">
-          <thead><tr><th>Date Found</th><th>Item</th><th>Expiry</th><th>Status</th><th>Sign Off</th><th></th></tr></thead>
+      <div class="table-card" style="overflow-x:auto;">
+        <table class="table table-hover mb-0" style="min-width:520px;">
+          <thead><tr><th>Item</th><th>Expiry</th><th>Status</th><th>Sign Off</th><th>Date Found</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -369,20 +369,68 @@ function wireFormHandlers() {
     } catch (e) { alert(e.message); }
   });
 
-  // Save Expiry
+  // Multi-date expiry — wire up Add Date button
+  const expDateInput = document.getElementById('f-exp-expiry-input');
+  const expDatesList = document.getElementById('exp-dates-list');
+  let selectedExpiryDates = [];
+
+  function renderExpiryDateTags() {
+    expDatesList.innerHTML = selectedExpiryDates.map((d, i) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#f1f5f9;border-radius:8px;padding:4px 10px;font-size:.82rem;">
+        <span>${new Date(d + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+        <button type="button" onclick="removeExpiryDate(${i})" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:.9rem;padding:0 0 0 8px;">&times;</button>
+      </div>`).join('');
+  }
+
+  window.removeExpiryDate = function(i) {
+    selectedExpiryDates.splice(i, 1);
+    renderExpiryDateTags();
+  };
+
+  document.getElementById('btn-add-exp-date').addEventListener('click', () => {
+    const val = expDateInput.value;
+    if (!val) return;
+    if (selectedExpiryDates.includes(val)) { expDateInput.value = ''; return; }
+    selectedExpiryDates.push(val);
+    selectedExpiryDates.sort();
+    expDateInput.value = '';
+    renderExpiryDateTags();
+  });
+
+  expDateInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('btn-add-exp-date').click();
+  });
+
+  // Reset everything when modal opens
+  document.getElementById('modal-expiry').addEventListener('show.bs.modal', () => {
+    selectedExpiryDates = [];
+    renderExpiryDateTags();
+    if (expDateInput) expDateInput.value = '';
+    document.getElementById('f-exp-removed').checked = false;
+    document.getElementById('f-exp-item').value = '';
+    document.getElementById('f-exp-sign').value = '';
+    document.getElementById('f-exp-date').value = todayStr();
+  });
+
+  // Save Expiry — one entry per selected date
   document.getElementById('f-exp-save').addEventListener('click', async () => {
     const date    = document.getElementById('f-exp-date').value;
     const item    = document.getElementById('f-exp-item').value.trim();
-    const expiry  = document.getElementById('f-exp-expiry').value;
     const sign    = document.getElementById('f-exp-sign').value.trim();
     const removed = document.getElementById('f-exp-removed').checked;
     if (!item) return alert('Item name is required.');
+    if (selectedExpiryDates.length === 0) return alert('Add at least one expiry date.');
     try {
-      await api('/api/expiry-logs', { method: 'POST', body: { sectionId, date, item, expiryDate: expiry, signOffBy: sign, removed } });
+      // Fire one API call per expiry date
+      await Promise.all(selectedExpiryDates.map(expiry =>
+        api('/api/expiry-logs', { method: 'POST', body: { sectionId, date, item, expiryDate: expiry, signOffBy: sign, removed } })
+      ));
       bootstrap.Modal.getInstance(document.getElementById('modal-expiry')).hide();
       document.getElementById('f-exp-item').value = '';
       document.getElementById('f-exp-sign').value = '';
       document.getElementById('f-exp-removed').checked = false;
+      selectedExpiryDates = [];
+      renderExpiryDateTags();
       loadExpiry();
     } catch (e) { alert(e.message); }
   });
