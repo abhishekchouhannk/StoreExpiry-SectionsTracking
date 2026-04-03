@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Weekly Report</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#f5f4f0;--surface:#fff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px;}
+    *{box-sizing:border-box;}
+    body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+    .topbar{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 1.4rem;height:54px;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+    .site-switcher{display:flex;gap:5px;flex-wrap:wrap;}
+    .site-btn{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .16s;white-space:nowrap;}
+    .site-btn:hover{border-color:var(--text);color:var(--text);}
+    .site-btn.active{background:var(--text);border-color:var(--text);color:#fff;}
+    .hamburger-btn{width:36px;height:36px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;color:var(--text);}
+    .hamburger-btn:hover{border-color:var(--text);background:var(--text);color:#fff;}
+    .site-dropdown-wrap{display:none;position:relative;}
+    .site-dropdown-btn{font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px 6px 14px;border-radius:var(--pill-r);border:1.5px solid var(--text);background:var(--text);color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+    .site-dropdown-btn i{font-size:.7rem;transition:transform .2s;}
+    .site-dropdown-btn.open i{transform:rotate(180deg);}
+    .site-dropdown-list{display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:5px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:200;}
+    .site-dropdown-list.open{display:block;}
+    .site-dropdown-item{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:7px 12px;border-radius:8px;cursor:pointer;border:none;background:none;width:100%;text-align:left;color:var(--muted);}
+    .site-dropdown-item:hover{background:var(--bg);color:var(--text);}
+    .site-dropdown-item.active{color:var(--text);font-weight:800;}
+    .site-dropdown-item.active::before{content:'✓ ';}
+    #offcanvas-menu{width:280px!important;background:var(--bg)!important;border-left:1px solid var(--border)!important;}
+    #offcanvas-menu .offcanvas-header{border-bottom:1px solid var(--border);padding:1.1rem 1.4rem;}
+    #offcanvas-menu .offcanvas-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
+    .menu-label{font-family:'Syne',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:1.1rem 1.4rem .4rem;}
+    .menu-item{display:flex;align-items:center;gap:.7rem;padding:.6rem 1.4rem;font-size:.87rem;font-weight:500;color:var(--text);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .1s;text-decoration:none;}
+    .menu-item:hover{background:var(--border);}
+    .menu-item.active-page{background:var(--border);font-weight:700;}
+    .menu-item i{font-size:.95rem;width:18px;color:var(--muted);}
+    .menu-footer{position:absolute;bottom:0;left:0;right:0;padding:1.1rem 1.4rem;border-top:1px solid var(--border);}
+    .menu-footer p{font-size:.76rem;color:var(--muted);margin:0 0 .5rem;}
+    .menu-footer a{color:var(--text);font-weight:600;text-decoration:none;}
+    #site-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(245,244,240,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+    #site-overlay.active{display:flex;}
+    .overlay-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .65s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .page-header{padding:.9rem 1.4rem .5rem;}
+    .page-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;margin:0;}
+
+    .week-nav{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.4rem .8rem;gap:1rem;flex-wrap:wrap;}
+    .week-info{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;}
+    .week-sub{font-size:.74rem;color:var(--muted);margin-top:1px;}
+    .week-btns{display:flex;gap:6px;}
+    .nav-btn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--text);font-size:.85rem;}
+    .nav-btn:hover{border-color:var(--text);background:var(--text);color:#fff;}
+    .today-btn{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;transition:all .15s;color:var(--muted);}
+    .today-btn:hover{border-color:var(--text);color:var(--text);}
+    .print-btn{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:var(--pill-r);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;transition:all .15s;color:var(--muted);display:flex;align-items:center;gap:5px;}
+    .print-btn:hover{border-color:var(--text);color:var(--text);}
+
+    .report-wrap{padding:0 1.4rem 3rem;}
+
+    /* Report sections */
+    .report-section{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;margin-bottom:1rem;overflow:hidden;}
+    .report-section-head{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);}
+    .report-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:.5rem;}
+    .score-badge{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:800;padding:3px 10px;border-radius:var(--pill-r);}
+    .score-green{background:#dcfce7;color:#166534;}
+    .score-amber{background:#fef3c7;color:#92400e;}
+    .score-red{background:#fee2e2;color:#b91c1c;}
+    .score-gray{background:#f1f5f9;color:#64748b;}
+
+    .report-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;border-bottom:1px solid #f0ede8;font-size:.83rem;}
+    .report-row:last-child{border-bottom:none;}
+    .report-row-name{color:var(--text);}
+    .report-row-detail{font-size:.76rem;color:var(--muted);}
+    .tag-done{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:var(--pill-r);background:#dcfce7;color:#166534;}
+    .tag-missed{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:var(--pill-r);background:#fee2e2;color:#b91c1c;}
+    .tag-warn{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:var(--pill-r);background:#fef3c7;color:#92400e;}
+    .tag-info{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:var(--pill-r);background:#f1f5f9;color:#64748b;}
+
+    .empty-report{text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;font-style:italic;}
+
+    @media(max-width:600px){
+      .site-switcher{display:none;}
+      .site-dropdown-wrap{display:block;}
+      .topbar,.page-header,.week-nav,.report-wrap{padding-left:1rem;padding-right:1rem;}
+    }
+  </style>
+</head>
+<body>
+  <div id="site-overlay"><div class="overlay-spinner"></div></div>
+
+  <div class="topbar">
+    <div class="site-switcher" id="site-switcher">
+      <button class="site-btn" data-site="C01158">96 Shell</button>
+      <button class="site-btn" data-site="C01288">Riverside Shell</button>
+      <button class="site-btn" data-site="C09066">72 Shell</button>
+    </div>
+    <div class="site-dropdown-wrap" id="site-dropdown-wrap">
+      <button class="site-dropdown-btn" id="site-dropdown-btn">
+        <span id="site-dropdown-label">96 Shell</span>
+        <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="site-dropdown-list" id="site-dropdown-list">
+        <button class="site-dropdown-item" data-site="C01158">96 Shell</button>
+        <button class="site-dropdown-item" data-site="C01288">Riverside Shell</button>
+        <button class="site-dropdown-item" data-site="C09066">72 Shell</button>
+      </div>
+    </div>
+    <button class="hamburger-btn" data-bs-toggle="offcanvas" data-bs-target="#offcanvas-menu">
+      <i class="bi bi-list"></i>
+    </button>
+  </div>
+
+  <div class="offcanvas offcanvas-end" id="offcanvas-menu" tabindex="-1">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Menu</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0" style="position:relative;overflow:hidden;">
+      <div class="menu-label">Navigate</div>
+      <button class="menu-item" onclick="window.location='/dashboard.html'" data-bs-dismiss="offcanvas"><i class="bi bi-grid"></i> All Sections</button>
+      <div class="menu-label">Daily Operations</div>
+      <button class="menu-item" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas"><i class="bi bi-list-check"></i> Daily Checklist</button>
+      <button class="menu-item" onclick="window.location='/shift-checklist.html'" data-bs-dismiss="offcanvas"><i class="bi bi-clipboard-check"></i> Shift Checklist</button>
+      <button class="menu-item" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas"><i class="bi bi-calendar-week"></i> Weekly Checklist</button>
+      <div class="menu-label">Manager</div>
+      <button class="menu-item active-page" onclick="window.location='/weekly-report.html'" data-bs-dismiss="offcanvas"><i class="bi bi-file-earmark-bar-graph"></i> Weekly Report</button>
+      <button class="menu-item" onclick="window.location='/sandwich-tracker.html'" data-bs-dismiss="offcanvas"><i class="bi bi-egg-fried"></i> Sandwich Tracker</button>
+      <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas"><i class="bi bi-calendar-plus"></i> Upload Schedule</button>
+      <div class="menu-footer">
+        <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
+        <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;">
+          abhishekchouhan.dev <i class="bi bi-arrow-up-right" style="font-size:.7rem;"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-header"><h1 id="page-title">Weekly Report</h1></div>
+
+  <div class="week-nav">
+    <div>
+      <div class="week-info" id="week-info">—</div>
+      <div class="week-sub" id="week-sub">—</div>
+    </div>
+    <div class="week-btns">
+      <button class="today-btn" id="btn-today">This Week</button>
+      <button class="nav-btn" id="btn-prev"><i class="bi bi-chevron-left"></i></button>
+      <button class="nav-btn" id="btn-next"><i class="bi bi-chevron-right"></i></button>
+      <button class="print-btn" id="btn-print"><i class="bi bi-download"></i> PDF</button>
+    </div>
+  </div>
+
+  <div class="report-wrap" id="report-wrap">
+    <div class="empty-report">Select a week to generate the report.</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/weekly-report.js"></script>
+</body>
+</html>
