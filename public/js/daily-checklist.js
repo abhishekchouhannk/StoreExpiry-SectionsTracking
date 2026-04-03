@@ -297,8 +297,15 @@ function renderTable(days) {
       <tbody>${tbody}</tbody>
     </table>`;
 
-  // Wire clicks
+  // Wire clicks — only today's cells are interactive
+  const todayKeyNow = dateKey(new Date());
   document.querySelectorAll('.day-cell').forEach((cell) => {
+    const cellDate = cell.dataset.date;
+    if (cellDate !== todayKeyNow) {
+      cell.style.cursor = 'default';
+      cell.title = cellDate < todayKeyNow ? 'Past date — cannot edit' : 'Future date — cannot log ahead';
+      return; // skip click listener
+    }
     cell.addEventListener('click', () => {
       const date  = cell.dataset.date;
       const task  = decodeURIComponent(cell.dataset.task);

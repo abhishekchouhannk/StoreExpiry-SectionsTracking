@@ -295,8 +295,15 @@ function renderTable(days) {
       <tbody>${tbody}</tbody>
     </table>`;
 
-  // Wire up cell clicks
+  // Wire up cell clicks — only today's cells are interactive
+  const todayKeyNow = dateKey(new Date());
   document.querySelectorAll('.shift-cell').forEach((cell) => {
+    const cellDate = cell.dataset.date;
+    if (cellDate !== todayKeyNow) {
+      cell.style.cursor = 'default';
+      cell.title = cellDate < todayKeyNow ? 'Past date — cannot edit' : 'Future date — cannot log ahead';
+      return; // skip click listener
+    }
     cell.addEventListener('click', () => {
       const date  = cell.dataset.date;
       const task  = decodeURIComponent(cell.dataset.task);
@@ -305,13 +312,10 @@ function renderTable(days) {
       const entry = checklistData[key];
 
       if (entry) {
-        // Always open modal for signed cells (edit/delete)
         openSignModal(date, task, shift);
       } else if (activeInitial) {
-        // Quick sign-off — no modal
         quickSign(date, task, shift);
       } else {
-        // No active initial set — open modal to enter one
         openSignModal(date, task, shift);
       }
     });
