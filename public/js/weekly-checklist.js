@@ -122,14 +122,30 @@ function fmtDate(date) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function weekOfMonth(date) { return Math.ceil(date.getDate() / 7); }
+function weekOfMonth(monday) {
+  // Use Sunday's date to determine week number — matches physical calendar feel
+  // e.g. Apr 6-12: Sunday is Apr 12, ceil(12/7) = 2 → Week 2 ✓
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  // If Sunday is in a different month, use Monday's perspective
+  if (sunday.getMonth() !== monday.getMonth()) {
+    return Math.ceil(monday.getDate() / 7);
+  }
+  return Math.ceil(sunday.getDate() / 7);
+}
 
-function weekHeader(start, end) {
-  const startMonth = start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const endMonth   = end.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const week = weekOfMonth(start);
-  if (startMonth === endMonth) return `Week ${week} of ${startMonth}`;
-  return `Week ${week} of ${startMonth} / Week 1 of ${end.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+function weekHeader(weekStart, weekEnd) {
+  const startMonth = weekStart.getMonth();
+  const endMonth   = weekEnd.getMonth();
+  const wk = weekOfMonth(weekStart);
+  const mo = weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (startMonth !== endMonth) {
+    const nextWk = weekOfMonth(weekEnd);
+    const nextMo = weekEnd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    // return `Week ${wk} of ${mo} / Week ${nextWk} of ${nextMo}`;
+    return `Week ${wk} of ${mo}`;
+  }
+  return `Week ${wk} of ${mo}`;
 }
 
 /* ── State ───────────────────────────────────────────── */

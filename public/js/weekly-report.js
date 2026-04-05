@@ -70,7 +70,10 @@ function dateKey(date) {
 
 function fmtDate(str) {
   if (!str) return '—';
-  return new Date(str + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // Handle both ISO strings (from MongoDB Date objects) and plain YYYY-MM-DD strings
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function fmtRange(mon, sun) {
@@ -79,7 +82,28 @@ function fmtRange(mon, sun) {
   return `${s} – ${e}`;
 }
 
-function weekOfMonth(d) { return Math.ceil(new Date(d + 'T12:00:00').getDate() / 7); }
+function weekOfMonth(mondayStr) {
+  const monday = new Date(mondayStr + 'T12:00:00');
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+  if (sunday.getMonth() !== monday.getMonth()) {
+    return Math.ceil(monday.getDate() / 7);
+  }
+  return Math.ceil(sunday.getDate() / 7);
+}
+
+function weekLabel(mondayStr) {
+  const mon = new Date(mondayStr + 'T12:00:00');
+  const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  const wk = weekOfMonth(mondayStr);
+  const mo = mon.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (mon.getMonth() !== sun.getMonth()) {
+    const sunStr = sun.getFullYear() + '-' + String(sun.getMonth()+1).padStart(2,'0') + '-' + String(sun.getDate()).padStart(2,'0');
+    const nextWk = weekOfMonth(sunStr);
+    const nextMo = sun.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return `Week ${wk} of ${mo} / Week ${nextWk} of ${nextMo}`;
+  }
+  return `Week ${wk} of ${mo}`;
+}
 
 /* ── State ───────────────────────────────────────────── */
 let currentWeekStart = getMondayOf(new Date());
@@ -113,9 +137,7 @@ function updateWeekHeader() {
   const sunObj = new Date(currentWeekStart); sunObj.setDate(sunObj.getDate() + 6);
   const sun    = dateKey(sunObj);
   const siteId = getActiveSite();
-  const wk     = weekOfMonth(mon);
-  const mo     = new Date(mon + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  document.getElementById('week-info').textContent = `Week ${wk} of ${mo}`;
+  document.getElementById('week-info').textContent = weekLabel(mon);
   document.getElementById('week-sub').textContent  = `${SITES[siteId]} · ${fmtRange(mon, sun)}`;
 }
 
@@ -290,8 +312,7 @@ function printReport() {
   const sunObj   = new Date(currentWeekStart); sunObj.setDate(sunObj.getDate() + 6);
   const sun      = dateKey(sunObj);
   const content  = document.getElementById('report-wrap').innerHTML;
-  const wk       = weekOfMonth(mon);
-  const mo       = new Date(mon + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const wk       = weekLabel(mon);
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
     <title>Weekly Report — ${siteName} — ${fmtRange(mon, sun)}</title>
@@ -319,7 +340,7 @@ function printReport() {
     </style>
   </head><body>
     <h1>Weekly Store Report — ${siteName} (${siteId})</h1>
-    <div class="sub">Week ${wk} of ${mo} · ${fmtRange(mon, sun)} · Generated ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+    <div class="sub">${wk} · ${fmtRange(mon, sun)} · Generated ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
     ${content}
   </body></html>`;
 
