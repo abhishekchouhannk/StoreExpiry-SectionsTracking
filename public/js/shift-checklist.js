@@ -1,3 +1,8 @@
+/* ── Site helpers (nav.js owns the UI, these are for data fetching) ── */
+const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
+function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
+
 /* ── Checklist tasks definition ──────────────────────── */
 const CHECKLIST = [
   { category: 'Shop',            tasks: ['Remove Expired Product'] },
@@ -9,16 +14,6 @@ const CHECKLIST = [
 ];
 
 const SHIFTS = ['S1', 'S2', 'S3'];
-const SITES  = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
-
-/* ── Site management ─────────────────────────────────── */
-function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
-function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
-
-function syncDropdownLabel(siteId) {
-  const lbl = document.getElementById('site-dropdown-label');
-  if (lbl) lbl.textContent = SITES[siteId];
-}
 
 function initSiteSwitcher() {
   const active = getActiveSite();
@@ -29,8 +24,6 @@ function initSiteSwitcher() {
       document.querySelectorAll('.site-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       syncDropdownLabel(btn.dataset.site);
-      document.getElementById('site-overlay').classList.add('active');
-      setTimeout(() => window.location.reload(), 120);
     });
   });
   const dropBtn  = document.getElementById('site-dropdown-btn');
@@ -51,13 +44,9 @@ function initSiteSwitcher() {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         setActiveSite(item.dataset.site);
-        document.getElementById('site-overlay').classList.add('active');
-        setTimeout(() => window.location.reload(), 120);
       });
     });
   }
-  document.getElementById('page-title').textContent =
-    `Shift Checklist — ${SITES[active]} (${active})`;
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -140,7 +129,6 @@ let activeInitial    = ''; // the "quick tap" initial
 
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  initSiteSwitcher();
   initWeekNav();
   initActiveInitialBar();
   loadWeek();

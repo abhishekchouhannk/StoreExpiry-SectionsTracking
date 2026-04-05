@@ -1,3 +1,8 @@
+/* ── Site helpers (nav.js owns the UI, these are for data fetching) ── */
+const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
+function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
+
 /* ── Daily checklist tasks ───────────────────────────── */
 const CHECKLIST = [
   { category: 'Shop', tasks: [
@@ -47,16 +52,10 @@ const CHECKLIST = [
   ]},
 ];
 
-const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+// Categories temporarily disabled pending renovation — rendered as locked dashes
+const DISABLED_CATEGORIES = ['Hot Cup / Bean to Cup Machine', 'Food Service'];
 
-/* ── Site management ─────────────────────────────────── */
-function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
-function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
 
-function syncDropdownLabel(siteId) {
-  const lbl = document.getElementById('site-dropdown-label');
-  if (lbl) lbl.textContent = SITES[siteId];
-}
 
 function initSiteSwitcher() {
   const active = getActiveSite();
@@ -67,8 +66,6 @@ function initSiteSwitcher() {
       document.querySelectorAll('.site-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       syncDropdownLabel(btn.dataset.site);
-      document.getElementById('site-overlay').classList.add('active');
-      setTimeout(() => window.location.reload(), 120);
     });
   });
   const dropBtn  = document.getElementById('site-dropdown-btn');
@@ -89,13 +86,9 @@ function initSiteSwitcher() {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         setActiveSite(item.dataset.site);
-        document.getElementById('site-overlay').classList.add('active');
-        setTimeout(() => window.location.reload(), 120);
       });
     });
   }
-  document.getElementById('page-title').textContent =
-    `Daily Checklist — ${SITES[active]} (${active})`;
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -178,7 +171,6 @@ let activeInitial    = '';
 
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  initSiteSwitcher();
   initWeekNav();
   initActiveInitialBar();
   loadWeek();
@@ -276,16 +268,19 @@ function renderTable(days) {
   // Body
   let tbody = '';
   CHECKLIST.forEach(({ category, tasks }) => {
-    tbody += `<tr class="cat-row"><td colspan="${1 + orderedDays.length}">${category}</td></tr>`;
+    const isDisabled = DISABLED_CATEGORIES.includes(category);
+    tbody += `<tr class="cat-row"><td colspan="${1 + orderedDays.length}" style="${isDisabled ? 'opacity:.45;' : ''}">${category}${isDisabled ? ' <span style="font-size:.65rem;font-weight:500;letter-spacing:0;text-transform:none;">(renovation pending)</span>' : ''}</td></tr>`;
     tasks.forEach((task) => {
-      tbody += `<tr><td class="task-cell">${task}</td>`;
+      tbody += `<tr><td class="task-cell" style="${isDisabled ? 'color:var(--muted);font-style:italic;' : ''}">${task}</td>`;
       orderedDays.forEach((d) => {
         const dk      = dateKey(d);
         const isToday = dk === todayKey;
         const key     = `${dk}|${task}`;
         const entry   = checklistData[key];
         const base    = isToday ? 'day-cell col-today' : 'day-cell';
-        if (entry) {
+        if (isDisabled) {
+          tbody += `<td class="${base}" style="color:#d0cdc8;cursor:default;" title="Temporarily disabled — renovation pending">—</td>`;
+        } else if (entry) {
           tbody += `<td class="${base} signed"
             data-date="${dk}" data-task="${encodeURIComponent(task)}"
             title="${entry.initials} — tap to edit/delete">${entry.initials}</td>`;

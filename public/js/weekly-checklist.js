@@ -1,3 +1,8 @@
+/* ── Site helpers (nav.js owns the UI, these are for data fetching) ── */
+const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
+function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
+
 /* ── Weekly checklist tasks ──────────────────────────── */
 const CHECKLIST = [
   { category: 'Shop', tasks: [
@@ -38,16 +43,7 @@ const CHECKLIST = [
   ]},
 ];
 
-const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
 
-/* ── Site management ─────────────────────────────────── */
-function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
-function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
-
-function syncDropdownLabel(siteId) {
-  const lbl = document.getElementById('site-dropdown-label');
-  if (lbl) lbl.textContent = SITES[siteId];
-}
 
 function initSiteSwitcher() {
   const active = getActiveSite();
@@ -58,8 +54,6 @@ function initSiteSwitcher() {
       document.querySelectorAll('.site-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       syncDropdownLabel(btn.dataset.site);
-      document.getElementById('site-overlay').classList.add('active');
-      setTimeout(() => window.location.reload(), 120);
     });
   });
   const dropBtn  = document.getElementById('site-dropdown-btn');
@@ -80,13 +74,9 @@ function initSiteSwitcher() {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         setActiveSite(item.dataset.site);
-        document.getElementById('site-overlay').classList.add('active');
-        setTimeout(() => window.location.reload(), 120);
       });
     });
   }
-  document.getElementById('page-title').textContent =
-    `Weekly Checklist — ${SITES[active]} (${active})`;
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -142,8 +132,7 @@ function weekHeader(weekStart, weekEnd) {
   if (startMonth !== endMonth) {
     const nextWk = weekOfMonth(weekEnd);
     const nextMo = weekEnd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    // return `Week ${wk} of ${mo} / Week ${nextWk} of ${nextMo}`;
-    return `Week ${wk} of ${mo}`;
+    return `Week ${wk} of ${mo} / Week ${nextWk} of ${nextMo}`;
   }
   return `Week ${wk} of ${mo}`;
 }
@@ -156,7 +145,6 @@ let activeInitial    = '';
 
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  initSiteSwitcher();
   initWeekNav();
   initActiveInitialBar();
   loadWeek();

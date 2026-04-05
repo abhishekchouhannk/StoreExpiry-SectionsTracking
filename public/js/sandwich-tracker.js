@@ -1,3 +1,8 @@
+/* ── Site helpers (nav.js owns the UI, these are for data fetching) ── */
+const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
+function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
+
 const SANDWICHES = [
   { group: 'Sandwiches', items: [
     'F&L SNDW Egg Salad',
@@ -24,16 +29,7 @@ const COLS = [
   { key: 'sign',         label: 'Sign' },
 ];
 
-const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
 
-/* ── Site management ─────────────────────────────────── */
-function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
-function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
-
-function syncDropdownLabel(siteId) {
-  const lbl = document.getElementById('site-dropdown-label');
-  if (lbl) lbl.textContent = SITES[siteId];
-}
 
 function initSiteSwitcher() {
   const active = getActiveSite();
@@ -44,8 +40,6 @@ function initSiteSwitcher() {
       document.querySelectorAll('.site-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       syncDropdownLabel(btn.dataset.site);
-      document.getElementById('site-overlay').classList.add('active');
-      setTimeout(() => window.location.reload(), 120);
     });
   });
   const dropBtn  = document.getElementById('site-dropdown-btn');
@@ -66,8 +60,6 @@ function initSiteSwitcher() {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         setActiveSite(item.dataset.site);
-        document.getElementById('site-overlay').classList.add('active');
-        setTimeout(() => window.location.reload(), 120);
       });
     });
   }
@@ -130,7 +122,6 @@ let pendingId        = null;
 
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  initSiteSwitcher();
 
   // 72 Shell doesn't do sandwiches — redirect to dashboard
   if (getActiveSite() === 'C09066') {

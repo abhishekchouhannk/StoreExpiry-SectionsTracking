@@ -100,71 +100,9 @@
   </style>
 </head>
 <body>
-  <div id="site-overlay"><div class="overlay-spinner"></div></div>
 
-  <div class="topbar">
-    <div class="site-switcher" id="site-switcher">
-      <button class="site-btn" data-site="C01158">96 Shell</button>
-      <button class="site-btn" data-site="C01288">Riverside Shell</button>
-      <button class="site-btn" data-site="C09066">72 Shell</button>
-    </div>
-    <div class="site-dropdown-wrap" id="site-dropdown-wrap">
-      <button class="site-dropdown-btn" id="site-dropdown-btn">
-        <span id="site-dropdown-label">96 Shell</span>
-        <i class="bi bi-chevron-down"></i>
-      </button>
-      <div class="site-dropdown-list" id="site-dropdown-list">
-        <button class="site-dropdown-item" data-site="C01158">96 Shell</button>
-        <button class="site-dropdown-item" data-site="C01288">Riverside Shell</button>
-        <button class="site-dropdown-item" data-site="C09066">72 Shell</button>
-      </div>
-    </div>
-    <button class="hamburger-btn" data-bs-toggle="offcanvas" data-bs-target="#offcanvas-menu">
-      <i class="bi bi-list"></i>
-    </button>
-  </div>
 
-  <div class="offcanvas offcanvas-end" id="offcanvas-menu" tabindex="-1">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title">Menu</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body p-0" style="position:relative;overflow:hidden;">
-      <div class="menu-label">Navigate</div>
-      <button class="menu-item" onclick="window.location='/dashboard.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-grid"></i> All Sections
-      </button>
-      <div class="menu-label">Daily Operations</div>
-      <button class="menu-item active-page" onclick="window.location='/daily-checklist.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-list-check"></i> Daily Checklist
-      </button>
-      <button class="menu-item" onclick="window.location='/shift-checklist.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-clipboard-check"></i> Shift Checklist
-      </button>
-      <button class="menu-item" onclick="window.location='/weekly-checklist.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-calendar-week"></i> Weekly Checklist
-      </button>
 
-      <div class="menu-label">Manager</div>
-      <button class="menu-item" onclick="window.location='/weekly-report.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-file-earmark-bar-graph"></i> Weekly Report
-      </button>
-      <button class="menu-item" onclick="window.location='/sandwich-tracker.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-egg-fried"></i> Sandwich Tracker
-      </button>
-      <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas">
-        <i class="bi bi-calendar-plus"></i> Upload Schedule
-      </button>
-
-      <div class="menu-footer">
-        <p>Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
-        <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
-           style="display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;">
-          abhishekchouhan.dev <i class="bi bi-arrow-up-right" style="font-size:.7rem;"></i>
-        </a>
-      </div>
-    </div>
-  </div>
 
   <div class="page-header"><h1 id="page-title">Daily Checklist</h1></div>
 
@@ -255,18 +193,10 @@
     </div>
   </div>
 
+  <script>window.NAV_ACTIVE = 'daily-checklist';</script>
+  <script src="js/nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/daily-checklist.js"></script>
 
-  <script>
-    // Hide sandwich tracker nav item for 72 Shell
-    (function() {
-      if (localStorage.getItem('activeSiteId') === 'C09066') {
-        document.querySelectorAll('.menu-item').forEach(btn => {
-          if (btn.textContent.includes('Sandwich Tracker')) btn.style.display = 'none';
-        });
-      }
-    })();
-  </script>
 </body>
 </html>

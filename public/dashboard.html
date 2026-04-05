@@ -56,6 +56,13 @@
       cursor: pointer; transition: all .15s; flex-shrink: 0; color: var(--text);
     }
     .hamburger-btn:hover { border-color: var(--text); background: var(--text); color: #fff; }
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: 9px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .15s; color: var(--muted); font-size: .88rem;
+    }
+    .icon-btn:hover { border-color: var(--text); background: var(--text); color: #fff; }
 
     /* ── OFFCANVAS ── */
     #offcanvas-menu { width: 280px !important; background: var(--bg) !important; border-left: 1px solid var(--border) !important; }
@@ -269,6 +276,13 @@
   <!-- ── TOP BAR ── -->
   <div class="topbar">
     <!-- Pill switcher: tablet+ -->
+    <!-- Home icons -->
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <button class="icon-btn" title="Landing Page" onclick="window.location='/'">
+        <i class="bi bi-house-fill"></i>
+      </button>
+    </div>
+
     <div class="site-switcher" id="site-switcher">
       <button class="site-btn" data-site="C01158">96 Shell</button>
       <button class="site-btn" data-site="C01288">Riverside Shell</button>
@@ -297,7 +311,12 @@
       <h5 class="offcanvas-title">Menu</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
-    <div class="offcanvas-body p-0" style="position:relative;overflow:hidden;">
+    <div class="offcanvas-body p-0" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+      <div style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+      <div class="menu-label">Navigate</div>
+      <button class="menu-item" onclick="window.location='/'" data-bs-dismiss="offcanvas">
+        <i class="bi bi-house"></i> Landing Page
+      </button>
       <div class="menu-label">Actions</div>
       <button class="menu-item" data-bs-dismiss="offcanvas" data-bs-toggle="modal" data-bs-target="#modal-add-section">
         <i class="bi bi-plus-circle"></i> Add Section
@@ -337,13 +356,12 @@
       <button class="menu-item" onclick="window.location='/schedule.html'" data-bs-dismiss="offcanvas">
         <i class="bi bi-calendar-plus"></i> Upload Schedule
       </button>
+      </div><!-- /scroll-area -->
 
-      <div class="menu-footer">
-        <p style="margin:0 0 .5rem;">Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener">Abhishek</a></p>
+      <div style="flex-shrink:0;border-top:1px solid var(--border);padding:1rem 1.4rem;background:var(--bg);">
+<p style="font-size:.76rem;color:var(--muted);margin:0 0 .5rem;">Made by <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener" style="color:var(--text);font-weight:600;text-decoration:none;">Abhishek</a></p>
         <a href="https://www.abhishekchouhan.dev" target="_blank" rel="noopener"
-           style="display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;transition:border-color .15s,background .15s;"
-           onmouseover="this.style.borderColor='var(--text)';this.style.background='var(--bg)'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
+           style="display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:var(--text);text-decoration:none;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;">
           abhishekchouhan.dev <i class="bi bi-arrow-up-right" style="font-size:.7rem;"></i>
         </a>
       </div>

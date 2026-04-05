@@ -1,13 +1,13 @@
-/* ── Site management ─────────────────────────────────── */
+/* ── Site helpers (nav.js owns the UI, these are for data fetching) ── */
 const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell' };
+function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
+function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
+
+/* ── Site management ─────────────────────────────────── */
 
 function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
 function setActiveSite(siteId) { localStorage.setItem('activeSiteId', siteId); }
 
-function syncDropdownLabel(siteId) {
-  const lbl = document.getElementById('site-dropdown-label');
-  if (lbl) lbl.textContent = SITES[siteId];
-}
 
 function initSiteSwitcher() {
   const active = getActiveSite();
@@ -106,8 +106,6 @@ let cleaningData = [], planoData = [];
 /* ── Init ────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
   if (!sectionId) return window.location = '/dashboard.html';
-
-  initSiteSwitcher();
   initTabs();
 
   const p = currentPeriod();
