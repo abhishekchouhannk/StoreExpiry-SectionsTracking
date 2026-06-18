@@ -727,6 +727,127 @@ app.delete('/api/sandwich-tracker/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ═════════════════════════════════════════════════════════
+//  TESTWASH ROUTES (MongoDB native driver version)
+// ═════════════════════════════════════════════════════════
+/**
+ * GET /api/testwash?month=10&year=2025
+ */
+app.get('/api/testwash', async (req, res) => {
+  try {
+    const now = new Date();
+
+    const month = req.query.month !== undefined
+      ? parseInt(req.query.month, 10)
+      : now.getMonth() + 1; // 1–12
+
+    const year = req.query.year !== undefined
+      ? parseInt(req.query.year, 10)
+      : now.getFullYear();
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate   = new Date(year, month, 1);
+
+    const logs = await req.db.collection('testwash_logs')
+      .find({
+        date: { $gte: startDate, $lt: endDate }
+      })
+      .sort({ date: -1, createdAt: -1 })
+      .toArray();
+
+    res.json({
+      success: true,
+      month,
+      year,
+      logs
+    });
+
+  } catch (err) {
+    console.error('Error fetching testwash logs:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch testwash logs'
+    });
+  }
+});
+
+
+/**
+ * POST /api/testwash
+ */
+app.post('/api/testwash', async (req, res) => {
+  try {
+    const { carwashCode, date, time, issuedTo, issuedBy, notes } = req.body;
+
+    if (!carwashCode || !date || !time || !issuedTo || !issuedBy) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
+    }
+
+    const parsedDate = new Date(date);
+
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid date'
+      });
+    }
+
+    const doc = {
+      carwashCode,
+      date: parsedDate,
+      time,
+      issuedTo,
+      issuedBy,
+      notes: notes || '',
+      createdAt: new Date()
+    };
+
+    const result = await req.db.collection('testwash_logs').insertOne(doc);
+
+    res.status(201).json({
+      success: true,
+      entry: { ...doc, _id: result.insertedId }
+    });
+
+  } catch (err) {
+    console.error('Error saving testwash log:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save testwash log'
+    });
+  }
+});
+
+
+/**
+ * DELETE /api/testwash/:id
+ */
+app.delete('/api/testwash/:id', async (req, res) => {
+  try {
+    const result = await req.db.collection('testwash_logs')
+      .deleteOne({ _id: new ObjectId(req.params.id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Entry not found'
+      });
+    }
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error('Error deleting testwash log:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete entry'
+    });
+  }
+});
+
 
 // ═════════════════════════════════════════════════════════
 //  WEEKLY REPORT
