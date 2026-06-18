@@ -7,6 +7,8 @@ const monthNames = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 const twModalEl = document.getElementById('modal-testwash');
 const twModal = new bootstrap.Modal(twModalEl);
+const twWarningEl = document.getElementById('modal-tw-warning');
+const twWarningModal = new bootstrap.Modal(twWarningEl);
 document.addEventListener('DOMContentLoaded', () => {
   populateMonthSelect();
   fetchLogs();
@@ -16,19 +18,47 @@ document.addEventListener('DOMContentLoaded', () => {
     currentMonth = m;
     fetchLogs();
   });
+  document.getElementById('tw-prev-month').addEventListener('click', () => navigateMonth(-1));
+  document.getElementById('tw-next-month').addEventListener('click', () => navigateMonth(1));
+  document.getElementById('tw-today-btn').addEventListener('click', () => {
+    currentMonth = now.getMonth();
+    currentYear = now.getFullYear();
+    populateMonthSelect();
+    fetchLogs();
+  });
   document.getElementById('tw-search').addEventListener('input', renderTable);
   document.querySelector('[data-bs-target="#modal-testwash"]').addEventListener('click', openAddModal);
-  document.getElementById('f-tw-save').addEventListener('click', saveTestwash);
+  document.getElementById('f-tw-save').addEventListener('click', handleSaveClick);
+  document.getElementById('tw-warning-back').addEventListener('click', () => {
+    twWarningModal.hide();
+    twModal.show();
+  });
+  document.getElementById('tw-warning-continue').addEventListener('click', () => {
+    twWarningModal.hide();
+    doSave();
+  });
 });
+function navigateMonth(delta){
+  currentMonth += delta;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  populateMonthSelect();
+  fetchLogs();
+}
 function populateMonthSelect(){
   const select = document.getElementById('tw-month');
   select.innerHTML = '';
-  // current month + 11 back = 1 year of history, plus lets them scroll forward a bit too
   const options = [];
   for (let i = -11; i <= 1; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     options.push({ year: d.getFullYear(), month: d.getMonth() });
   }
+  // Make sure whatever month we've navigated to is always present as an option,
+  // even if it's outside the default -11/+1 range.
+  if (!options.some(o => o.year === currentYear && o.month === currentMonth)) {
+    options.push({ year: currentYear, month: currentMonth });
+  }
+  options.sort((a, b) => (a.year - b.year) || (a.month - b.month));
   options.reverse().forEach(opt => {
     const el = document.createElement('option');
     el.value = `${opt.year}-${opt.month}`;
@@ -78,11 +108,6 @@ function renderTable(){
         <td>${escapeHtml(log.issuedTo)}</td>
         <td>${escapeHtml(log.issuedBy)}</td>
         <td style="color:var(--muted);">${escapeHtml(log.notes || '—')}</td>
-        <td style="text-align:right;">
-          <button class="del-row" onclick="deleteTestwash('${log._id}')" title="Delete">
-            <i class="bi bi-trash"></i>
-          </button>
-        </td>
       </tr>
     `;
   }).join('');
@@ -97,7 +122,6 @@ function renderTable(){
             <th>Issued To</th>
             <th>Issued By</th>
             <th>Notes</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -120,7 +144,53 @@ function openAddModal(){
   document.getElementById('f-tw-date').value = today.toISOString().split('T')[0];
   document.getElementById('f-tw-time').value = today.toTimeString().slice(0,5);
 }
-async function saveTestwash(){
+/**
+ * Normalizes a name for comparison: lowercase + trimmed + collapsed whitespace.
+ */
+function normalizeName(name){
+  return name.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+/**
+ * Checks if the given "issuedTo" name fuzzily matches anyone already
+ * logged this month. Catches exact matches regardless of case,
+ * and partial matches like "john" vs "john sylva".
+ */
+function findPossibleDuplicate(issuedToRaw){
+  const normalized = normalizeName(issuedToRaw);
+  if (!normalized) return null;
+  return currentLogs.find(log => {
+    const existing = normalizeName(log.issuedTo);
+    if (!existing) return false;
+    return existing === normalized
+      || existing.includes(normalized)
+      || normalized.includes(existing);
+  }) || null;
+}
+function handleSaveClick(){
+  const issuedTo = document.getElementById('f-tw-issued-to').value.trim();
+  const carwashCode = document.getElementById('f-tw-code').value.trim();
+  const date = document.getElementById('f-tw-date').value;
+  const time = document.getElementById('f-tw-time').value;
+  const issuedBy = document.getElementById('f-tw-issued-by').value.trim();
+  if (!carwashCode || !date || !time || !issuedTo || !issuedBy) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+  const duplicate = findPossibleDuplicate(issuedTo);
+  if (duplicate) {
+    const sameName = normalizeName(duplicate.issuedTo) === normalizeName(issuedTo);
+    const text = sameName
+      ? `<strong>${escapeHtml(duplicate.issuedTo)}</strong> has already been issued a testwash this month (Code: ${escapeHtml(duplicate.carwashCode)}).`
+      : `<strong>${escapeHtml(duplicate.issuedTo)}</strong> — a similarly named employee — has already been issued a testwash this month. Just making sure this isn't a duplicate entry for the same person.`;
+    document.getElementById('tw-warning-text').innerHTML = text;
+    twModal.hide();
+    // small delay so the bootstrap modal transition doesn't collide
+    setTimeout(() => twWarningModal.show(), 200);
+    return;
+  }
+  doSave();
+}
+async function doSave(){
   const payload = {
     carwashCode: document.getElementById('f-tw-code').value.trim(),
     date: document.getElementById('f-tw-date').value,
@@ -129,10 +199,6 @@ async function saveTestwash(){
     issuedBy: document.getElementById('f-tw-issued-by').value.trim(),
     notes: document.getElementById('f-tw-notes').value.trim()
   };
-  if (!payload.carwashCode || !payload.date || !payload.time || !payload.issuedTo || !payload.issuedBy) {
-    alert('Please fill in all required fields.');
-    return;
-  }
   try {
     const res = await fetch(API_BASE, {
       method: 'POST',
@@ -150,16 +216,5 @@ async function saveTestwash(){
   } catch (err) {
     console.error(err);
     alert(err.message || 'Something went wrong while saving.');
-  }
-}
-async function deleteTestwash(id){
-  try {
-    const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.message || 'Delete failed');
-    fetchLogs();
-  } catch (err) {
-    console.error(err);
-    alert(err.message || 'Failed to delete entry.');
   }
 }
