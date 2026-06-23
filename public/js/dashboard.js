@@ -436,3 +436,31 @@ async function markOrderDone(id, btn) {
     loadDashboard();
   } catch (e) { alert(e.message); }
 }
+
+async function enableNotifications(siteId) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('This browser does not support notifications.');
+    return;
+  }
+  const reg = await navigator.serviceWorker.register('/sw.js');
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+  const { publicKey } = await fetch('/api/push/public-key').then(r => r.json());
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey)
+  });
+  console.log({ siteId, subscription });
+  await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ siteId, subscription })
+  });
+  alert('Notifications enabled on this tablet!');
+}
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}

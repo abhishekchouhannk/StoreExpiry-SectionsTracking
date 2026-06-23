@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const path = require('path');
+const webpush = require('web-push');
 
 const app = express();
 
@@ -1005,6 +1006,95 @@ app.get('/api/weekly-report', async (req, res) => {
     res.json({ sections, cleaning, planogram, expiry, orders });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+
+webpush.setVapidDetails(
+  process.env.VAPID_SUBJECT || 'mailto:developer@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+// ═════════════════════════════════════════════════════════
+//  PUSH SUBSCRIPTIONS
+// ═════════════════════════════════════════════════════════
+// Expose the public key so the client can subscribe
+app.get('/api/push/public-key', (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+// Save a browser subscription (one per device/tablet)
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { siteId, subscription } = req.body;
+    if (!siteId || !subscription?.endpoint) {
+      return res.status(400).json({ error: 'siteId and subscription required' });
+    }
+    // Upsert by endpoint so the same tablet doesn't create duplicates
+    await req.db.collection('push_subscriptions').updateOne(
+      { endpoint: subscription.endpoint },
+      { $set: { siteId, subscription, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// Optional: let a device unsubscribe
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    await req.db.collection('push_subscriptions')
+      .deleteOne({ endpoint: req.body.endpoint });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═════════════════════════════════════════════════════════
+//  SEND EXPIRY REMINDERS  (triggered by cron)
+// ═════════════════════════════════════════════════════════
+app.post('/api/push/send-reminders', async (req, res) => {
+  try {
+    // Protect this endpoint so only your cron can call it
+    // if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+    //   return res.status(401).json({ error: 'unauthorized' });
+    // }
+    console.log('Sending expiry reminders...');
+    const in14 = new Date();
+    in14.setDate(in14.getDate() + 14);
+    // Group expiring items by site
+    const sites = await req.db.collection('push_subscriptions').distinct('siteId');
+    let totalSent = 0;
+    for (const siteId of sites) {
+      const sections = await req.db.collection('sections')
+        .find({ siteId }).toArray();
+      const sectionIds = sections.map(s => s._id.toString());
+      const expiringCount = await req.db.collection('expiry_logs').countDocuments({
+        sectionId: { $in: sectionIds },
+        removed: false,
+        expiryDate: { $lte: in14 }
+      });
+      if (expiringCount === 0) continue; // nothing to remind about
+      const payload = JSON.stringify({
+        title: '⚠️ Expiry Reminder',
+        body: `${expiringCount} item(s) expiring within 2 weeks need to be taken out.`,
+        url: '/dashboard',
+        tag: 'expiry-reminder'
+      });
+      const subs = await req.db.collection('push_subscriptions')
+        .find({ siteId }).toArray();
+      for (const s of subs) {
+        try {
+          await webpush.sendNotification(s.subscription, payload);
+          totalSent++;
+        } catch (err) {
+          // 410 = subscription expired/gone -> clean it up
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await req.db.collection('push_subscriptions')
+              .deleteOne({ endpoint: s.endpoint });
+          }
+        }
+      }
+    }
+    res.json({ success: true, sent: totalSent });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 
 // ── Fallback (SPA) ──────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
