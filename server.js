@@ -204,6 +204,126 @@ app.get('/api/dashboard/cleaning-details', async (req, res) => {
 });
 
 // ═════════════════════════════════════════════════════════
+//  DASHBOARD: PLANOGRAM DETAILS (mirrors cleaning-details)
+// ═════════════════════════════════════════════════════════
+app.get('/api/dashboard/planogram-details', async (req, res) => {
+  try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    // ⚠️ IMPORTANT: this week-calculation MUST match whatever your
+    // existing /api/dashboard/cleaning-details route uses internally.
+    // If that route computes "week" differently, swap this block out
+    // for the exact same logic so both tiles show the same week number.
+    const now   = new Date();
+    const year  = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const week  = Math.min(5, Math.ceil(now.getDate() / 7));
+    const sections   = await req.db.collection('sections')
+      .find({ siteId }).sort({ displayOrder: 1 }).toArray();
+    const sectionIds = sections.map(s => String(s._id));
+    const logs = await req.db.collection('planogram_checks')
+      .find({ sectionId: { $in: sectionIds }, year, month, week })
+      .toArray();
+    const logMap = {};
+    logs.forEach(l => { logMap[l.sectionId] = l; });
+    const details = sections.map(s => {
+      const entry = logMap[String(s._id)] || null;
+      return { section: s, checked: !!entry, entry };
+    });
+    res.json({ currentPeriod: { year, month, week }, details });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// ═════════════════════════════════════════════════════════
+//  DASHBOARD: SECTION HEALTH (neglect tracker)
+// ═════════════════════════════════════════════════════════
+app.get('/api/dashboard/section-health', async (req, res) => {
+  try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const sections   = await req.db.collection('sections')
+      .find({ siteId }).sort({ displayOrder: 1 }).toArray();
+    const sectionIds = sections.map(s => String(s._id));
+    // Most recent cleaning log per section
+    const lastCleans = await req.db.collection('cleaning_logs').aggregate([
+      { $match: { sectionId: { $in: sectionIds } } },
+      { $sort: { dateCleaned: -1 } },
+      { $group: { _id: '$sectionId', doc: { $first: '$$ROOT' } } }
+    ]).toArray();
+    // Most recent planogram check per section
+    const lastPlanos = await req.db.collection('planogram_checks').aggregate([
+      { $match: { sectionId: { $in: sectionIds } } },
+      { $sort: { dateChecked: -1 } },
+      { $group: { _id: '$sectionId', doc: { $first: '$$ROOT' } } }
+    ]).toArray();
+    const cleanMap = {};
+    lastCleans.forEach(c => { cleanMap[c._id] = c.doc; });
+    const planoMap = {};
+    lastPlanos.forEach(p => { planoMap[p._id] = p.doc; });
+    const MS_WEEK   = 7 * 24 * 60 * 60 * 1000;
+    const now       = new Date();
+    const NEVER_SCORE = 999; // pushes "never logged" sections to the very top
+    const health = sections.map(s => {
+      const sid = String(s._id);
+      const lastClean = cleanMap[sid] || null;
+      const lastPlano = planoMap[sid] || null;
+      const cleanWeeks = lastClean ? Math.floor((now - new Date(lastClean.dateCleaned)) / MS_WEEK) : null;
+      const planoWeeks = lastPlano ? Math.floor((now - new Date(lastPlano.dateChecked))  / MS_WEEK) : null;
+      const cleanScore = cleanWeeks === null ? NEVER_SCORE : cleanWeeks;
+      const planoScore = planoWeeks === null ? NEVER_SCORE : planoWeeks;
+      const cleanAtRisk = cleanScore >= 2;
+      const planoAtRisk = planoScore >= 2;
+      return {
+        section: s,
+        cleaning:  { lastDate: lastClean?.dateCleaned || null, weeksSince: cleanWeeks, atRisk: cleanAtRisk },
+        planogram: { lastDate: lastPlano?.dateChecked || null, weeksSince: planoWeeks, atRisk: planoAtRisk },
+        atRisk: cleanAtRisk || planoAtRisk,
+        _cleanScore: cleanScore,
+        _planoScore: planoScore,
+      };
+    });
+    // Cleaning is the deciding factor — sort by that first, planogram as tiebreaker
+    health.sort((a, b) => b._cleanScore - a._cleanScore || b._planoScore - a._planoScore);
+    health.forEach(h => { delete h._cleanScore; delete h._planoScore; });
+    const atRiskCount = health.filter(h => h.atRisk).length;
+    res.json({ atRiskCount, sections: health });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// ═════════════════════════════════════════════════════════
+//  DASHBOARD: MOST ACTIVE EMPLOYEE
+// ═════════════════════════════════════════════════════════
+app.get('/api/dashboard/most-active-employee', async (req, res) => {
+  try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const sections   = await req.db.collection('sections').find({ siteId }).toArray();
+    const sectionIds = sections.map(s => String(s._id));
+    const [cleanDocs, planoDocs, expiryDocs] = await Promise.all([
+      req.db.collection('cleaning_logs')
+        .find({ sectionId: { $in: sectionIds } }).project({ cleanedBy: 1 }).toArray(),
+      req.db.collection('planogram_checks')
+        .find({ sectionId: { $in: sectionIds } }).project({ checkedBy: 1 }).toArray(),
+      req.db.collection('expiry_logs')
+        .find({ sectionId: { $in: sectionIds } }).project({ signOffBy: 1 }).toArray(),
+    ]);
+    const counts = {};
+    const tally = (arr, field) => {
+      arr.forEach(d => {
+        const raw = (d[field] || '').trim();
+        if (!raw) return;
+        const key = raw.toLowerCase();
+        if (!counts[key]) counts[key] = { name: raw, count: 0 };
+        counts[key].count++;
+      });
+    };
+    tally(cleanDocs,  'cleanedBy');
+    tally(planoDocs,  'checkedBy');
+    tally(expiryDocs, 'signOffBy');
+    const leaderboard = Object.values(counts).sort((a, b) => b.count - a.count);
+    res.json({ topEmployee: leaderboard[0] || null, leaderboard: leaderboard.slice(0, 5) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═════════════════════════════════════════════════════════
 //  CLEANING LOGS
 // ═════════════════════════════════════════════════════════
 app.get('/api/cleaning-logs', async (req, res) => {

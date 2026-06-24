@@ -181,6 +181,8 @@ function renderSummary(s) {
   document.getElementById('sum-cleans').innerHTML =
     `<span>${s.cleansThisWeek}</span><span style="font-size:.9em;font-weight:400;opacity:.5;margin:0 1px">/</span><span>${s.totalSections}</span>`;
   document.getElementById('sum-sections').textContent = s.totalSections;
+  loadHealthAndPlanogramTiles();
+  loadMostActiveEmployee();
 }
 
 /* ── Sections ────────────────────────────────────────── */
@@ -414,6 +416,109 @@ function setupDetailModals() {
       body.innerHTML = html;
     } catch (e) { body.innerHTML = `<p class="text-danger">${e.message}</p>`; }
   });
+}
+
+// ── Planogram Detail modal ──
+document.getElementById('modal-plano-detail').addEventListener('show.bs.modal', async () => {
+  const body = document.getElementById('plano-detail-body');
+  body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
+  try {
+    const data = await api(`/api/dashboard/planogram-details?siteId=${getActiveSite()}`);
+    const p = data.currentPeriod;
+    const monthName = new Date(p.year, p.month - 1).toLocaleString('en-US', { month: 'long' });
+    const sorted  = [...data.details].sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? 1 : -1);
+    const notDone = sorted.filter(d => !d.checked).length;
+    const done    = sorted.filter(d =>  d.checked).length;
+    let html = `<p class="text-muted small mb-3">Week ${p.week} of ${monthName} ${p.year} &nbsp;&middot;&nbsp; <span style="color:#b91c1c;font-weight:600;">${notDone} remaining</span> &nbsp;&middot;&nbsp; <span style="color:#166534;font-weight:600;">${done} done</span></p>`;
+    html += '<ul class="list-group list-group-flush">';
+    sorted.forEach((d) => {
+      html += d.checked
+        ? `<li class="list-group-item d-flex align-items-center gap-2" style="flex-wrap:wrap;padding:.65rem 0;">
+             <span>${d.section.icon || '📦'}</span>
+             <strong style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.section.name}</strong>
+             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
+               <span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#166534;">
+                 <i class="bi bi-check-circle-fill me-1"></i>Checked
+               </span>
+               <span style="font-size:.68rem;color:#8a8880;">${d.entry.checkedBy || '—'} · ${fmtDate(d.entry.dateChecked)}</span>
+             </div>
+           </li>`
+        : `<li class="list-group-item d-flex align-items-center gap-2" style="padding:.65rem 0;">
+             <span>${d.section.icon || '📦'}</span>
+             <strong style="flex:1;min-width:0;">${d.section.name}</strong>
+             <span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#fee2e2;color:#b91c1c;flex-shrink:0;">
+               <i class="bi bi-x-circle me-1"></i>Not checked
+             </span>
+           </li>`;
+    });
+    html += '</ul>';
+    body.innerHTML = html;
+  } catch (e) { body.innerHTML = `<p class="text-danger">${e.message}</p>`; }
+});
+// ── Section Health modal ──
+document.getElementById('modal-health-detail').addEventListener('show.bs.modal', async () => {
+  const body = document.getElementById('health-detail-body');
+  body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
+  try {
+    const data = await api(`/api/dashboard/section-health?siteId=${getActiveSite()}`);
+    const n = data.atRiskCount;
+    let html = `<p class="text-muted small mb-3">${
+      n === 0
+        ? '<span style="color:#166534;font-weight:600;">All sections are in good shape ✅</span>'
+        : `<span style="color:#b91c1c;font-weight:600;">${n} section${n === 1 ? '' : 's'} need attention</span>`
+    }</p>`;
+    html += '<ul class="list-group list-group-flush">';
+    data.sections.forEach(h => {
+      const cw = h.cleaning.weeksSince;
+      const pw = h.planogram.weeksSince;
+      const cText = cw === null ? 'Never cleaned'  : `Cleaned ${cw}w ago`;
+      const pText = pw === null ? 'Never checked'  : `Checked ${pw}w ago`;
+      const cColor = h.cleaning.atRisk  ? '#b91c1c' : '#166534';
+      const pColor = h.planogram.atRisk ? '#b91c1c' : '#166534';
+      html += `<li class="list-group-item health-row">
+        <span>${h.section.icon || '📦'}</span>
+        <strong class="health-name">${h.section.name}</strong>
+        ${h.atRisk ? `<span class="health-badge">At Risk</span>` : ''}
+        <div class="health-stats">
+          <span class="health-stat" style="color:${cColor};"><i class="bi bi-droplet me-1"></i>${cText}</span>
+          <span class="health-stat" style="color:${pColor};"><i class="bi bi-grid me-1"></i>${pText}</span>
+        </div>
+      </li>`;
+    });
+    html += '</ul>';
+    body.innerHTML = html;
+  } catch (e) { body.innerHTML = `<p class="text-danger">${e.message}</p>`; }
+});
+// ── Tile value + colour loader (call this inside your existing loadDashboard()) ──
+async function loadHealthAndPlanogramTiles() {
+  // Planogram tile
+  try {
+    const planoData = await api(`/api/dashboard/planogram-details?siteId=${getActiveSite()}`);
+    const doneCount = planoData.details.filter(d => d.checked).length;
+    document.getElementById('sum-planos').textContent = doneCount;
+  } catch { document.getElementById('sum-planos').textContent = '—'; }
+  // Health tile
+  try {
+    const healthData = await api(`/api/dashboard/section-health?siteId=${getActiveSite()}`);
+    const tile = document.getElementById('health-tile');
+    document.getElementById('sum-health').textContent = healthData.atRiskCount;
+    tile.classList.remove('health-ok', 'health-alert');
+    tile.classList.add(healthData.atRiskCount === 0 ? 'health-ok' : 'health-alert');
+  } catch { document.getElementById('sum-health').textContent = '—'; }
+}
+// ── Most Active Employee badge ──
+async function loadMostActiveEmployee() {
+  const badge  = document.getElementById('mae-badge');
+  const nameEl = document.getElementById('mae-name');
+  try {
+    const data = await api(`/api/dashboard/most-active-employee?siteId=${getActiveSite()}`);
+    if (data.topEmployee && data.topEmployee.count > 0) {
+      nameEl.textContent = `${data.topEmployee.name} (${data.topEmployee.count})`;
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+  } catch { badge.classList.remove('show'); }
 }
 
 /* ── Global modal actions ────────────────────────────── */

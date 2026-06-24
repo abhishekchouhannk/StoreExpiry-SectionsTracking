@@ -494,6 +494,55 @@
         color: var(--text);
       }
 
+      /* ── New tile colours ── */
+.t-purple .val { color: #7c3aed; }
+.t-health .val { color: #c47a1a; }               /* default / loading */
+.t-health.health-ok .val   { color: #2a7a4b; }
+.t-health.health-alert .val { color: #d1453b; }
+/* ── Health list rows (inside modal) ── */
+.health-row {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  padding: .65rem 0;
+}
+.health-name {
+  flex: 1; min-width: 0; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.health-badge {
+  font-size: .62rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 999px; background: #fee2e2; color: #b91c1c;
+  flex-shrink: 0; text-transform: uppercase; letter-spacing: .03em;
+}
+.health-stats {
+  display: flex; gap: 12px; width: 100%; justify-content: flex-end;
+}
+.health-stat { font-size: .68rem; font-weight: 600; }
+/* ── Page header + Most Active Employee badge ── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+.mae-badge {
+  display: none;
+  align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #fff7e6, #ffffff);
+  border: 1.5px solid #f3d48a;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: .76rem; font-weight: 600; color: #92400e;
+  white-space: nowrap; flex-shrink: 0;
+}
+.mae-badge.show { display: inline-flex; }
+.mae-badge i { color: #c47a1a; }
+.mae-badge strong { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--text); }
+@media (max-width: 600px) {
+  .page-header { align-items: flex-start; }
+  .mae-badge { font-size: .7rem; padding: 5px 11px; }
+}
+
       /* ── SITE SWITCH OVERLAY ── */
       #site-overlay {
         display: none;
@@ -847,42 +896,36 @@
     </div>
 
     <!-- ── PAGE HEADER ── -->
-    <div class="page-header">
-      <h1 id="page-title">Sections</h1>
-      <p id="page-subtitle">Select a section to manage tasks.</p>
-    </div>
+<div class="page-header">
+  <div>
+    <h1 id="page-title">Sections</h1>
+    <p id="page-subtitle">Select a section to manage tasks.</p>
+  </div>
+  <div class="mae-badge" id="mae-badge">
+    <i class="bi bi-trophy-fill"></i>
+    <span>Most Active: <strong id="mae-name">—</strong></span>
+  </div>
+</div>
 
-    <!-- ── SUMMARY STRIP ── -->
-    <div class="summary-strip">
-      <div
-        class="s-tile t-red"
-        data-bs-toggle="modal"
-        data-bs-target="#modal-expiry-detail"
-      >
-        <div class="val" id="sum-expiry">—</div>
-        <div class="lbl">Expiry Alerts</div>
-      </div>
-      <div
-        class="s-tile t-amber"
-        data-bs-toggle="modal"
-        data-bs-target="#modal-order-detail"
-      >
-        <div class="val" id="sum-orders">—</div>
-        <div class="lbl">Pending Orders</div>
-      </div>
-      <div
-        class="s-tile t-green"
-        data-bs-toggle="modal"
-        data-bs-target="#modal-clean-detail"
-      >
-        <div class="val" id="sum-cleans">—</div>
-        <div class="lbl">Cleans This Week</div>
-      </div>
-      <div class="s-tile t-blue">
-        <div class="val" id="sum-sections">—</div>
-        <div class="lbl">Sections</div>
-      </div>
-    </div>
+ <!-- ── SUMMARY STRIP ── -->
+<div class="summary-strip">
+  <div class="s-tile t-red" data-bs-toggle="modal" data-bs-target="#modal-expiry-detail">
+    <div class="val" id="sum-expiry">—</div>
+    <div class="lbl">Expiry Alerts</div>
+  </div>
+  <div class="s-tile t-green" data-bs-toggle="modal" data-bs-target="#modal-clean-detail">
+    <div class="val" id="sum-cleans">—</div>
+    <div class="lbl">Cleans This Week</div>
+  </div>
+  <div class="s-tile t-purple" data-bs-toggle="modal" data-bs-target="#modal-plano-detail">
+    <div class="val" id="sum-planos">—</div>
+    <div class="lbl">Planograms This Week</div>
+  </div>
+  <div class="s-tile t-health" id="health-tile" data-bs-toggle="modal" data-bs-target="#modal-health-detail">
+    <div class="val" id="sum-health">—</div>
+    <div class="lbl">At-Risk Sections</div>
+  </div>
+</div>
 
     <!-- ── SEARCH BAR ── -->
     <div class="search-wrap">
@@ -1036,6 +1079,35 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══ Modal: Planogram Detail ═══ -->
+<div class="modal fade" id="modal-plano-detail" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-grid text-primary me-2"></i>Planogram Status</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="plano-detail-body">
+        <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══ Modal: Section Health Detail ═══ -->
+<div class="modal fade" id="modal-health-detail" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-heart-pulse text-danger me-2"></i>Section Health</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="health-detail-body">
+        <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/dashboard.js"></script>
