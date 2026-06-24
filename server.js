@@ -1,19 +1,19 @@
-require('dotenv').config();
+require("dotenv").config();
 
-const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
-const path = require('path');
+const express = require("express");
+const { MongoClient, ObjectId } = require("mongodb");
+const path = require("path");
 
 const app = express();
 
 const MONGO_URI = process.env.MONGO_URI;
-const DB_NAME   = process.env.DB_NAME || 'store_manager';
-const PORT      = process.env.PORT    || 3000;
+const DB_NAME = process.env.DB_NAME || "store_manager";
+const PORT = process.env.PORT || 3000;
 
 const SITES = [
-  { id: 'C01158', name: '96 Shell' },
-  { id: 'C01288', name: 'Riverside Shell' },
-  { id: 'C09066', name: '72 Shell' },
+  { id: "C01158", name: "96 Shell" },
+  { id: "C01288", name: "Riverside Shell" },
+  { id: "C09066", name: "72 Shell" },
 ];
 
 // ── Cached connection ───────────────────────────────────
@@ -21,13 +21,13 @@ const SITES = [
 // on the module scope so warm invocations reuse the same connection
 // instead of opening a new one on every request.
 let cachedClient = null;
-let cachedDb     = null;
+let cachedDb = null;
 
 async function getDb() {
   if (cachedDb) return cachedDb;
   const client = await MongoClient.connect(MONGO_URI);
   cachedClient = client;
-  cachedDb     = client.db(DB_NAME);
+  cachedDb = client.db(DB_NAME);
   return cachedDb;
 }
 
@@ -35,31 +35,81 @@ async function getDb() {
 function currentPeriod() {
   const n = new Date();
   return {
-    year:  n.getFullYear(),
+    year: n.getFullYear(),
     month: n.getMonth() + 1,
-    week:  Math.min(Math.ceil(n.getDate() / 7), 4),
+    week: Math.min(Math.ceil(n.getDate() / 7), 4),
   };
 }
 
 // ── One-time seed/migration (runs on first cold start) ──
 async function seedIfNeeded(db) {
   // Backfill any docs missing siteId → C01158
-  const collections = ['sections', 'cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items'];
+  const collections = [
+    "sections",
+    "cleaning_logs",
+    "planogram_checks",
+    "expiry_logs",
+    "order_items",
+  ];
   for (const col of collections) {
-    await db.collection(col).updateMany(
-      { siteId: { $exists: false } },
-      { $set: { siteId: 'C01158' } }
-    );
+    await db
+      .collection(col)
+      .updateMany(
+        { siteId: { $exists: false } },
+        { $set: { siteId: "C01158" } },
+      );
   }
   // Seed default sections for C01158 if none exist
-  const count = await db.collection('sections').countDocuments({ siteId: 'C01158' });
+  const count = await db
+    .collection("sections")
+    .countDocuments({ siteId: "C01158" });
   if (count === 0) {
-    await db.collection('sections').insertMany([
-      { name: 'Chocolate',      slug: 'chocolate',      icon: '🍫', location: 'Aisle 3',   displayOrder: 1, siteId: 'C01158', createdAt: new Date() },
-      { name: 'Novelty Candy',  slug: 'novelty-candy',  icon: '🍬', location: 'Aisle 4',   displayOrder: 2, siteId: 'C01158', createdAt: new Date() },
-      { name: 'Meat Snacks',    slug: 'meat-snacks',    icon: '🥩', location: 'Aisle 5',   displayOrder: 3, siteId: 'C01158', createdAt: new Date() },
-      { name: 'Candy Pegs',     slug: 'candy-pegs',     icon: '🍭', location: 'End Cap A', displayOrder: 4, siteId: 'C01158', createdAt: new Date() },
-      { name: 'Chocolate Pegs', slug: 'chocolate-pegs', icon: '🍫', location: 'End Cap B', displayOrder: 5, siteId: 'C01158', createdAt: new Date() },
+    await db.collection("sections").insertMany([
+      {
+        name: "Chocolate",
+        slug: "chocolate",
+        icon: "🍫",
+        location: "Aisle 3",
+        displayOrder: 1,
+        siteId: "C01158",
+        createdAt: new Date(),
+      },
+      {
+        name: "Novelty Candy",
+        slug: "novelty-candy",
+        icon: "🍬",
+        location: "Aisle 4",
+        displayOrder: 2,
+        siteId: "C01158",
+        createdAt: new Date(),
+      },
+      {
+        name: "Meat Snacks",
+        slug: "meat-snacks",
+        icon: "🥩",
+        location: "Aisle 5",
+        displayOrder: 3,
+        siteId: "C01158",
+        createdAt: new Date(),
+      },
+      {
+        name: "Candy Pegs",
+        slug: "candy-pegs",
+        icon: "🍭",
+        location: "End Cap A",
+        displayOrder: 4,
+        siteId: "C01158",
+        createdAt: new Date(),
+      },
+      {
+        name: "Chocolate Pegs",
+        slug: "chocolate-pegs",
+        icon: "🍫",
+        location: "End Cap B",
+        displayOrder: 5,
+        siteId: "C01158",
+        createdAt: new Date(),
+      },
     ]);
   }
 }
@@ -68,445 +118,732 @@ let seeded = false; // guard so seed only runs once per cold start
 
 // ── Middleware ──────────────────────────────────────────
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Inject db + run seed before every request
 app.use(async (req, res, next) => {
   try {
     const db = await getDb();
-    if (!seeded) { await seedIfNeeded(db); seeded = true; }
+    if (!seeded) {
+      await seedIfNeeded(db);
+      seeded = true;
+    }
     req.db = db;
     next();
   } catch (e) {
-    res.status(500).json({ error: 'Database connection failed: ' + e.message });
+    res.status(500).json({ error: "Database connection failed: " + e.message });
   }
 });
 
 // ── Sites ───────────────────────────────────────────────
-app.get('/api/sites', (req, res) => res.json(SITES));
+app.get("/api/sites", (req, res) => res.json(SITES));
 
 // ═════════════════════════════════════════════════════════
 //  SECTIONS
 // ═════════════════════════════════════════════════════════
-app.get('/api/sections', async (req, res) => {
+app.get("/api/sections", async (req, res) => {
   try {
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    res.json(await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    res.json(
+      await req.db
+        .collection("sections")
+        .find({ siteId })
+        .sort({ displayOrder: 1 })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.get('/api/sections/:id', async (req, res) => {
+app.get("/api/sections/:id", async (req, res) => {
   try {
-    const doc = await req.db.collection('sections').findOne({ _id: new ObjectId(req.params.id) });
-    doc ? res.json(doc) : res.status(404).json({ error: 'Not found' });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    const doc = await req.db
+      .collection("sections")
+      .findOne({ _id: new ObjectId(req.params.id) });
+    doc ? res.json(doc) : res.status(404).json({ error: "Not found" });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/sections', async (req, res) => {
+app.post("/api/sections", async (req, res) => {
   try {
     const { name, icon, location, siteId } = req.body;
-    if (!name)   return res.status(400).json({ error: 'Name required' });
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const n    = await req.db.collection('sections').countDocuments({ siteId });
-    const doc  = { name, slug, icon: icon || '📦', location: location || '', displayOrder: n + 1, siteId, createdAt: new Date() };
-    const r    = await req.db.collection('sections').insertOne(doc);
+    if (!name) return res.status(400).json({ error: "Name required" });
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const n = await req.db.collection("sections").countDocuments({ siteId });
+    const doc = {
+      name,
+      slug,
+      icon: icon || "📦",
+      location: location || "",
+      displayOrder: n + 1,
+      siteId,
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("sections").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/sections/:id', async (req, res) => {
+app.delete("/api/sections/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    await req.db.collection('sections').deleteOne({ _id: new ObjectId(id) });
-    await Promise.all(['cleaning_logs', 'planogram_checks', 'expiry_logs', 'order_items']
-      .map((c) => req.db.collection(c).deleteMany({ sectionId: id })));
+    await req.db.collection("sections").deleteOne({ _id: new ObjectId(id) });
+    await Promise.all(
+      ["cleaning_logs", "planogram_checks", "expiry_logs", "order_items"].map(
+        (c) => req.db.collection(c).deleteMany({ sectionId: id }),
+      ),
+    );
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ═════════════════════════════════════════════════════════
 //  DASHBOARD
 // ═════════════════════════════════════════════════════════
-app.get('/api/dashboard', async (req, res) => {
+app.get("/api/dashboard", async (req, res) => {
   try {
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    const p        = currentPeriod();
-    const sections = await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
-    const summaries = await Promise.all(sections.map(async (s) => {
-      const sid         = s._id.toString();
-      const now14 = new Date(); now14.setDate(now14.getDate() + 14);
-      const expiryCount = await req.db.collection('expiry_logs').countDocuments({
-        sectionId: sid, removed: false,
-        expiryDate: { $lte: now14 }
-      });
-      const orderCount  = await req.db.collection('order_items').countDocuments({ sectionId: sid, ordered: false });
-      const cleaned     = await req.db.collection('cleaning_logs').findOne({ sectionId: sid, year: p.year, month: p.month, week: p.week });
-      return { ...s, expiryCount, orderCount, cleanedThisWeek: !!cleaned };
-    }));
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    const p = currentPeriod();
+    const sections = await req.db
+      .collection("sections")
+      .find({ siteId })
+      .sort({ displayOrder: 1 })
+      .toArray();
+    const summaries = await Promise.all(
+      sections.map(async (s) => {
+        const sid = s._id.toString();
+        const now14 = new Date();
+        now14.setDate(now14.getDate() + 14);
+        const expiryCount = await req.db
+          .collection("expiry_logs")
+          .countDocuments({
+            sectionId: sid,
+            removed: false,
+            expiryDate: { $lte: now14 },
+          });
+        const orderCount = await req.db
+          .collection("order_items")
+          .countDocuments({ sectionId: sid, ordered: false });
+        const cleaned = await req.db
+          .collection("cleaning_logs")
+          .findOne({
+            sectionId: sid,
+            year: p.year,
+            month: p.month,
+            week: p.week,
+          });
+        return { ...s, expiryCount, orderCount, cleanedThisWeek: !!cleaned };
+      }),
+    );
     res.json({
       sections: summaries,
       summary: {
-        expiryAlerts:   summaries.reduce((a, s) => a + s.expiryCount, 0),
-        pendingOrders:  summaries.reduce((a, s) => a + s.orderCount, 0),
+        expiryAlerts: summaries.reduce((a, s) => a + s.expiryCount, 0),
+        pendingOrders: summaries.reduce((a, s) => a + s.orderCount, 0),
         cleansThisWeek: summaries.filter((s) => s.cleanedThisWeek).length,
-        totalSections:  sections.length,
+        totalSections: sections.length,
       },
       currentPeriod: p,
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.get('/api/dashboard/expiry-details', async (req, res) => {
+app.get("/api/dashboard/expiry-details", async (req, res) => {
   try {
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    const sections = await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
-    const out = await Promise.all(sections.map(async (s) => {
-      const items = await req.db.collection('expiry_logs')
-        .find({ sectionId: s._id.toString(), removed: false, expiryDate: { $lte: (() => { const d = new Date(); d.setDate(d.getDate() + 14); return d; })() } })
-        .sort({ expiryDate: 1 }).toArray();
-      return { section: s, items };
-    }));
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    const sections = await req.db
+      .collection("sections")
+      .find({ siteId })
+      .sort({ displayOrder: 1 })
+      .toArray();
+    const out = await Promise.all(
+      sections.map(async (s) => {
+        const items = await req.db
+          .collection("expiry_logs")
+          .find({
+            sectionId: s._id.toString(),
+            removed: false,
+            expiryDate: {
+              $lte: (() => {
+                const d = new Date();
+                d.setDate(d.getDate() + 14);
+                return d;
+              })(),
+            },
+          })
+          .sort({ expiryDate: 1 })
+          .toArray();
+        return { section: s, items };
+      }),
+    );
     res.json(out.filter((d) => d.items.length > 0));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.get('/api/dashboard/order-details', async (req, res) => {
+app.get("/api/dashboard/order-details", async (req, res) => {
   try {
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    const sections = await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
-    const out = await Promise.all(sections.map(async (s) => {
-      const items = await req.db.collection('order_items')
-        .find({ sectionId: s._id.toString(), ordered: false }).sort({ date: -1 }).toArray();
-      return { section: s, items };
-    }));
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    const sections = await req.db
+      .collection("sections")
+      .find({ siteId })
+      .sort({ displayOrder: 1 })
+      .toArray();
+    const out = await Promise.all(
+      sections.map(async (s) => {
+        const items = await req.db
+          .collection("order_items")
+          .find({ sectionId: s._id.toString(), ordered: false })
+          .sort({ date: -1 })
+          .toArray();
+        return { section: s, items };
+      }),
+    );
     res.json(out.filter((d) => d.items.length > 0));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.get('/api/dashboard/cleaning-details', async (req, res) => {
+app.get("/api/dashboard/cleaning-details", async (req, res) => {
   try {
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    const p        = currentPeriod();
-    const sections = await req.db.collection('sections').find({ siteId }).sort({ displayOrder: 1 }).toArray();
-    const out = await Promise.all(sections.map(async (s) => {
-      const entry = await req.db.collection('cleaning_logs')
-        .findOne({ sectionId: s._id.toString(), year: p.year, month: p.month, week: p.week });
-      return { section: s, cleaned: !!entry, entry };
-    }));
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    const p = currentPeriod();
+    const sections = await req.db
+      .collection("sections")
+      .find({ siteId })
+      .sort({ displayOrder: 1 })
+      .toArray();
+    const out = await Promise.all(
+      sections.map(async (s) => {
+        const entry = await req.db
+          .collection("cleaning_logs")
+          .findOne({
+            sectionId: s._id.toString(),
+            year: p.year,
+            month: p.month,
+            week: p.week,
+          });
+        return { section: s, cleaned: !!entry, entry };
+      }),
+    );
     res.json({ details: out, currentPeriod: p });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ═════════════════════════════════════════════════════════
 //  CLEANING LOGS
 // ═════════════════════════════════════════════════════════
-app.get('/api/cleaning-logs', async (req, res) => {
+app.get("/api/cleaning-logs", async (req, res) => {
   try {
     const { sectionId, year, month } = req.query;
-    res.json(await req.db.collection('cleaning_logs')
-      .find({ sectionId, year: +year, month: +month }).sort({ week: 1 }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    res.json(
+      await req.db
+        .collection("cleaning_logs")
+        .find({ sectionId, year: +year, month: +month })
+        .sort({ week: 1 })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/cleaning-logs', async (req, res) => {
+app.post("/api/cleaning-logs", async (req, res) => {
   try {
-    const { sectionId, year, month, week, dateCleaned, cleanedBy, comments } = req.body;
-    const exists = await req.db.collection('cleaning_logs')
+    const { sectionId, year, month, week, dateCleaned, cleanedBy, comments } =
+      req.body;
+    const exists = await req.db
+      .collection("cleaning_logs")
       .findOne({ sectionId, year: +year, month: +month, week: +week });
-    if (exists) return res.status(400).json({ error: 'Entry already exists for this week' });
-    const doc = { sectionId, year: +year, month: +month, week: +week, dateCleaned: new Date(dateCleaned), cleanedBy: cleanedBy || '', comments: comments || '', createdAt: new Date() };
-    const r   = await req.db.collection('cleaning_logs').insertOne(doc);
+    if (exists)
+      return res
+        .status(400)
+        .json({ error: "Entry already exists for this week" });
+    const doc = {
+      sectionId,
+      year: +year,
+      month: +month,
+      week: +week,
+      dateCleaned: new Date(dateCleaned),
+      cleanedBy: cleanedBy || "",
+      comments: comments || "",
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("cleaning_logs").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/cleaning-logs/:id', async (req, res) => {
+app.delete("/api/cleaning-logs/:id", async (req, res) => {
   try {
-    await req.db.collection('cleaning_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("cleaning_logs")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ═════════════════════════════════════════════════════════
 //  PLANOGRAM CHECKS
 // ═════════════════════════════════════════════════════════
-app.get('/api/planogram-checks', async (req, res) => {
+app.get("/api/planogram-checks", async (req, res) => {
   try {
     const { sectionId, year, month } = req.query;
-    res.json(await req.db.collection('planogram_checks')
-      .find({ sectionId, year: +year, month: +month }).sort({ week: 1 }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    res.json(
+      await req.db
+        .collection("planogram_checks")
+        .find({ sectionId, year: +year, month: +month })
+        .sort({ week: 1 })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/planogram-checks', async (req, res) => {
+app.post("/api/planogram-checks", async (req, res) => {
   try {
-    const { sectionId, year, month, week, dateChecked, checkedBy, comments, planogramFixed } = req.body;
-    const exists = await req.db.collection('planogram_checks')
+    const {
+      sectionId,
+      year,
+      month,
+      week,
+      dateChecked,
+      checkedBy,
+      comments,
+      planogramFixed,
+    } = req.body;
+    const exists = await req.db
+      .collection("planogram_checks")
       .findOne({ sectionId, year: +year, month: +month, week: +week });
-    if (exists) return res.status(400).json({ error: 'Entry already exists for this week' });
-    const doc = { sectionId, year: +year, month: +month, week: +week, dateChecked: new Date(dateChecked), checkedBy: checkedBy || '', comments: comments || '', planogramFixed: !!planogramFixed, createdAt: new Date() };
-    const r   = await req.db.collection('planogram_checks').insertOne(doc);
+    if (exists)
+      return res
+        .status(400)
+        .json({ error: "Entry already exists for this week" });
+    const doc = {
+      sectionId,
+      year: +year,
+      month: +month,
+      week: +week,
+      dateChecked: new Date(dateChecked),
+      checkedBy: checkedBy || "",
+      comments: comments || "",
+      planogramFixed: !!planogramFixed,
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("planogram_checks").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/planogram-checks/:id', async (req, res) => {
+app.delete("/api/planogram-checks/:id", async (req, res) => {
   try {
-    await req.db.collection('planogram_checks').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("planogram_checks")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ═════════════════════════════════════════════════════════
 //  EXPIRY LOGS
 // ═════════════════════════════════════════════════════════
-app.get('/api/expiry-logs', async (req, res) => {
+app.get("/api/expiry-logs", async (req, res) => {
   try {
     const { sectionId, filter } = req.query;
     const q = { sectionId };
-    if (filter === 'removed') q.removed = true;
-    else if (filter === 'active') q.removed = false;
-    res.json(await req.db.collection('expiry_logs').find(q).sort({ expiryDate: 1, date: -1 }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    if (filter === "removed") q.removed = true;
+    else if (filter === "active") q.removed = false;
+    res.json(
+      await req.db
+        .collection("expiry_logs")
+        .find(q)
+        .sort({ expiryDate: 1, date: -1 })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/expiry-logs', async (req, res) => {
+app.post("/api/expiry-logs", async (req, res) => {
   try {
     const { sectionId, date, item, expiryDate, signOffBy, removed } = req.body;
-    const doc = { sectionId, date: new Date(date), item: item || '', expiryDate: expiryDate ? new Date(expiryDate) : null, removed: !!removed, signOffBy: signOffBy || '', createdAt: new Date() };
-    const r   = await req.db.collection('expiry_logs').insertOne(doc);
+    const doc = {
+      sectionId,
+      date: new Date(date),
+      item: item || "",
+      expiryDate: expiryDate ? new Date(expiryDate) : null,
+      removed: !!removed,
+      signOffBy: signOffBy || "",
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("expiry_logs").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.put('/api/expiry-logs/:id', async (req, res) => {
+app.put("/api/expiry-logs/:id", async (req, res) => {
   try {
     const u = {};
-    if (req.body.removed   !== undefined) u.removed   = req.body.removed;
+    if (req.body.removed !== undefined) u.removed = req.body.removed;
     if (req.body.signOffBy !== undefined) u.signOffBy = req.body.signOffBy;
-    await req.db.collection('expiry_logs').updateOne({ _id: new ObjectId(req.params.id) }, { $set: u });
+    await req.db
+      .collection("expiry_logs")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: u });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/expiry-logs/:id', async (req, res) => {
+app.delete("/api/expiry-logs/:id", async (req, res) => {
   try {
-    await req.db.collection('expiry_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("expiry_logs")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ═════════════════════════════════════════════════════════
 //  ORDER ITEMS
 // ═════════════════════════════════════════════════════════
-app.get('/api/order-items', async (req, res) => {
+app.get("/api/order-items", async (req, res) => {
   try {
     const { sectionId, filter } = req.query;
     const q = { sectionId };
-    if (filter === 'pending') q.ordered = false;
-    else if (filter === 'ordered') q.ordered = true;
-    res.json(await req.db.collection('order_items').find(q).sort({ date: -1 }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    if (filter === "pending") q.ordered = false;
+    else if (filter === "ordered") q.ordered = true;
+    res.json(
+      await req.db
+        .collection("order_items")
+        .find(q)
+        .sort({ date: -1 })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/order-items', async (req, res) => {
+app.post("/api/order-items", async (req, res) => {
   try {
     const { sectionId, date, item, comments } = req.body;
-    const doc = { sectionId, date: new Date(date), item: item || '', comments: comments || '', ordered: false, createdAt: new Date() };
-    const r   = await req.db.collection('order_items').insertOne(doc);
+    const doc = {
+      sectionId,
+      date: new Date(date),
+      item: item || "",
+      comments: comments || "",
+      ordered: false,
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("order_items").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.put('/api/order-items/:id', async (req, res) => {
+app.put("/api/order-items/:id", async (req, res) => {
   try {
     const u = {};
     if (req.body.ordered !== undefined) u.ordered = req.body.ordered;
-    await req.db.collection('order_items').updateOne({ _id: new ObjectId(req.params.id) }, { $set: u });
+    await req.db
+      .collection("order_items")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: u });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/order-items/:id', async (req, res) => {
+app.delete("/api/order-items/:id", async (req, res) => {
   try {
-    await req.db.collection('order_items').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("order_items")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
-
 
 // ═════════════════════════════════════════════════════════
 //  DAILY CHECKLIST
 // ═════════════════════════════════════════════════════════
-app.get('/api/checklist', async (req, res) => {
+app.get("/api/checklist", async (req, res) => {
   try {
     const { siteId, from, to } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
     const q = { siteId, date: { $gte: from, $lte: to } };
     if (req.query.type) q.type = req.query.type;
-    res.json(await req.db.collection('checklist_logs').find(q).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    res.json(await req.db.collection("checklist_logs").find(q).toArray());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/checklist', async (req, res) => {
+app.post("/api/checklist", async (req, res) => {
   try {
     const { siteId, date, task, shift, initials } = req.body;
     if (!siteId || !date || !task || !shift || !initials)
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: "Missing required fields" });
     // Prevent duplicates (also filter by type if provided)
     const dupQuery = { siteId, date, task, shift };
     if (req.body.type) dupQuery.type = req.body.type;
-    const exists = await req.db.collection('checklist_logs').findOne(dupQuery);
-    if (exists) return res.status(400).json({ error: 'Entry already exists for this cell' });
-    const doc = { siteId, date, task, shift, initials: initials.toUpperCase(), createdAt: new Date() };
-    const r   = await req.db.collection('checklist_logs').insertOne(doc);
+    const exists = await req.db.collection("checklist_logs").findOne(dupQuery);
+    if (exists)
+      return res
+        .status(400)
+        .json({ error: "Entry already exists for this cell" });
+    const doc = {
+      siteId,
+      date,
+      task,
+      shift,
+      initials: initials.toUpperCase(),
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("checklist_logs").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId.toString() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.put('/api/checklist/:id', async (req, res) => {
+app.put("/api/checklist/:id", async (req, res) => {
   try {
     const { initials } = req.body;
-    await req.db.collection('checklist_logs').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: { initials: initials.toUpperCase() } }
-    );
+    await req.db
+      .collection("checklist_logs")
+      .updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { initials: initials.toUpperCase() } },
+      );
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/checklist/:id', async (req, res) => {
+app.delete("/api/checklist/:id", async (req, res) => {
   try {
-    await req.db.collection('checklist_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("checklist_logs")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
-
 
 // ═════════════════════════════════════════════════════════
 //  DAILY CHECKLIST (separate collection from shift checklist)
 // ═════════════════════════════════════════════════════════
-app.get('/api/daily-checklist', async (req, res) => {
+app.get("/api/daily-checklist", async (req, res) => {
   try {
     const { siteId, from, to } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
-    res.json(await req.db.collection('daily_checklist_logs')
-      .find({ siteId, date: { $gte: from, $lte: to } }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
+    res.json(
+      await req.db
+        .collection("daily_checklist_logs")
+        .find({ siteId, date: { $gte: from, $lte: to } })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/daily-checklist', async (req, res) => {
+app.post("/api/daily-checklist", async (req, res) => {
   try {
     const { siteId, date, task, initials } = req.body;
     if (!siteId || !date || !task || !initials)
-      return res.status(400).json({ error: 'Missing required fields' });
-    const exists = await req.db.collection('daily_checklist_logs').findOne({ siteId, date, task });
-    if (exists) return res.status(400).json({ error: 'Entry already exists for this cell' });
-    const doc = { siteId, date, task, initials: initials.toUpperCase(), createdAt: new Date() };
-    const r   = await req.db.collection('daily_checklist_logs').insertOne(doc);
+      return res.status(400).json({ error: "Missing required fields" });
+    const exists = await req.db
+      .collection("daily_checklist_logs")
+      .findOne({ siteId, date, task });
+    if (exists)
+      return res
+        .status(400)
+        .json({ error: "Entry already exists for this cell" });
+    const doc = {
+      siteId,
+      date,
+      task,
+      initials: initials.toUpperCase(),
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("daily_checklist_logs").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId.toString() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.put('/api/daily-checklist/:id', async (req, res) => {
+app.put("/api/daily-checklist/:id", async (req, res) => {
   try {
     const { initials } = req.body;
-    await req.db.collection('daily_checklist_logs').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: { initials: initials.toUpperCase() } }
-    );
+    await req.db
+      .collection("daily_checklist_logs")
+      .updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { initials: initials.toUpperCase() } },
+      );
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/daily-checklist/:id', async (req, res) => {
+app.delete("/api/daily-checklist/:id", async (req, res) => {
   try {
-    await req.db.collection('daily_checklist_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("daily_checklist_logs")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
-
 
 // ═════════════════════════════════════════════════════════
 //  WEEKLY CHECKLIST
 // ═════════════════════════════════════════════════════════
-app.get('/api/weekly-checklist', async (req, res) => {
+app.get("/api/weekly-checklist", async (req, res) => {
   try {
     const { siteId, weekStart } = req.query;
-    if (!siteId || !weekStart) return res.status(400).json({ error: 'siteId and weekStart required' });
-    res.json(await req.db.collection('weekly_checklist_logs').find({ siteId, weekStart }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    if (!siteId || !weekStart)
+      return res.status(400).json({ error: "siteId and weekStart required" });
+    res.json(
+      await req.db
+        .collection("weekly_checklist_logs")
+        .find({ siteId, weekStart })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/weekly-checklist', async (req, res) => {
+app.post("/api/weekly-checklist", async (req, res) => {
   try {
     const { siteId, weekStart, task, initials } = req.body;
     if (!siteId || !weekStart || !task || !initials)
-      return res.status(400).json({ error: 'Missing required fields' });
-    const exists = await req.db.collection('weekly_checklist_logs').findOne({ siteId, weekStart, task });
-    if (exists) return res.status(400).json({ error: 'Entry already exists for this task this week' });
-    const doc = { siteId, weekStart, task, initials: initials.toUpperCase(), createdAt: new Date() };
-    const r   = await req.db.collection('weekly_checklist_logs').insertOne(doc);
+      return res.status(400).json({ error: "Missing required fields" });
+    const exists = await req.db
+      .collection("weekly_checklist_logs")
+      .findOne({ siteId, weekStart, task });
+    if (exists)
+      return res
+        .status(400)
+        .json({ error: "Entry already exists for this task this week" });
+    const doc = {
+      siteId,
+      weekStart,
+      task,
+      initials: initials.toUpperCase(),
+      createdAt: new Date(),
+    };
+    const r = await req.db.collection("weekly_checklist_logs").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId.toString() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.put('/api/weekly-checklist/:id', async (req, res) => {
+app.put("/api/weekly-checklist/:id", async (req, res) => {
   try {
     const { initials } = req.body;
-    await req.db.collection('weekly_checklist_logs').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: { initials: initials.toUpperCase() } }
-    );
+    await req.db
+      .collection("weekly_checklist_logs")
+      .updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { initials: initials.toUpperCase() } },
+      );
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/weekly-checklist/:id', async (req, res) => {
+app.delete("/api/weekly-checklist/:id", async (req, res) => {
   try {
-    await req.db.collection('weekly_checklist_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("weekly_checklist_logs")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
-
 
 // ═════════════════════════════════════════════════════════
 //  SCHEDULE — Claude Vision parsing + storage
 // ═════════════════════════════════════════════════════════
 
 // Parse schedule image with Claude Vision
-app.post('/api/schedule/parse', async (req, res) => {
+app.post("/api/schedule/parse", async (req, res) => {
   try {
     const { image, mimeType, siteId } = req.body;
     if (!image || !mimeType || !siteId)
-      return res.status(400).json({ error: 'image, mimeType and siteId required' });
+      return res
+        .status(400)
+        .json({ error: "image, mimeType and siteId required" });
 
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
+    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: "claude-opus-4-5",
         max_tokens: 2048,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mimeType, data: image }
-            },
-            {
-              type: 'text',
-              text: `You are reading a weekly work schedule image. Extract the schedule and return ONLY a valid JSON object with no markdown, no explanation, no backticks.
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: { type: "base64", media_type: mimeType, data: image },
+              },
+              {
+                type: "text",
+                text: `You are reading a weekly work schedule image. Extract the schedule and return ONLY a valid JSON object with no markdown, no explanation, no backticks.
 
 The JSON must have this exact structure:
 {
@@ -529,92 +866,115 @@ Rules:
 - Convert times to 24h format: "6a" = "6:00", "3p" = "15:00", "10p" = "22:00", "2.30p" = "14:30"
 - Use first name only for "name"
 - If a cell has a non-numeric entry like "OW" or "96_s", treat as hours=0
-- Return ONLY the JSON, nothing else`
-            }
-          ]
-        }]
-      })
+- Return ONLY the JSON, nothing else`,
+              },
+            ],
+          },
+        ],
+      }),
     });
 
     const data = await anthropicRes.json();
-    if (!anthropicRes.ok) throw new Error(data.error?.message || 'Claude API error');
+    if (!anthropicRes.ok)
+      throw new Error(data.error?.message || "Claude API error");
 
     const text = data.content[0].text.trim();
     const parsed = JSON.parse(text);
 
     res.json({ weekStart: parsed.weekStart, schedule: parsed.schedule });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Save parsed schedule
-app.post('/api/schedule', async (req, res) => {
+app.post("/api/schedule", async (req, res) => {
   try {
     const { siteId, schedule } = req.body;
-    if (!siteId || !schedule) return res.status(400).json({ error: 'Missing fields' });
+    if (!siteId || !schedule)
+      return res.status(400).json({ error: "Missing fields" });
 
     // Derive weekStart from schedule data (Monday of the first shift date)
-    const firstDate = schedule[0]?.shifts?.find(s => s.hours > 0)?.date;
-    if (!firstDate) return res.status(400).json({ error: 'No valid shift dates found' });
+    const firstDate = schedule[0]?.shifts?.find((s) => s.hours > 0)?.date;
+    if (!firstDate)
+      return res.status(400).json({ error: "No valid shift dates found" });
 
-    const d = new Date(firstDate + 'T12:00:00');
+    const d = new Date(firstDate + "T12:00:00");
     const day = d.getDay();
     d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-    const weekStart = d.toISOString().split('T')[0];
+    const weekStart = d.toISOString().split("T")[0];
 
     // Upsert — replace existing schedule for this site+week
-    await req.db.collection('schedules').deleteOne({ siteId, weekStart });
+    await req.db.collection("schedules").deleteOne({ siteId, weekStart });
     const doc = { siteId, weekStart, schedule, createdAt: new Date() };
-    const r   = await req.db.collection('schedules').insertOne(doc);
+    const r = await req.db.collection("schedules").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId.toString() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Get schedules for a site (newest first)
-app.get('/api/schedule', async (req, res) => {
+app.get("/api/schedule", async (req, res) => {
   try {
     const { siteId, weekStart } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
     const q = { siteId };
     if (weekStart) q.weekStart = weekStart;
-    const docs = await req.db.collection('schedules').find(q).sort({ weekStart: -1 }).toArray();
+    const docs = await req.db
+      .collection("schedules")
+      .find(q)
+      .sort({ weekStart: -1 })
+      .toArray();
     res.json(docs);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Delete a schedule
-app.delete('/api/schedule/:id', async (req, res) => {
+app.delete("/api/schedule/:id", async (req, res) => {
   try {
-    await req.db.collection('schedules').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("schedules")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
-
 
 // ═════════════════════════════════════════════════════════
 //  SCHEDULE — AI parse + store
 // ═════════════════════════════════════════════════════════
-const Anthropic = require('@anthropic-ai/sdk');
+const Anthropic = require("@anthropic-ai/sdk");
 
-app.post('/api/schedule/parse', async (req, res) => {
+app.post("/api/schedule/parse", async (req, res) => {
   try {
     const { siteId, imageBase64, mediaType } = req.body;
-    if (!siteId || !imageBase64) return res.status(400).json({ error: 'Missing fields' });
+    if (!siteId || !imageBase64)
+      return res.status(400).json({ error: "Missing fields" });
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const message = await client.messages.create({
-      model: 'claude-opus-4-5',
+      model: "claude-opus-4-5",
       max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: mediaType, data: imageBase64 }
-          },
-          {
-            type: 'text',
-            text: `Extract the weekly employee schedule from this image.
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mediaType,
+                data: imageBase64,
+              },
+            },
+            {
+              type: "text",
+              text: `Extract the weekly employee schedule from this image.
 Return ONLY valid JSON in this exact format, nothing else:
 {
   "weekOf": "YYYY-MM-DD",
@@ -630,51 +990,58 @@ Use "off" when someone is off, "na" when not applicable or empty.
 For shifts, use the format shown in the schedule (e.g. "6a-3p", "2.30p-10p", "10p-6a").
 weekOf should be the Sunday (first day) of the week shown.
 First name only for the name field. Do not include rows that are not staff (e.g. "Total Hours", "Cleaning/CW").
-Return only the JSON object, no markdown, no explanation.`
-          }
-        ]
-      }]
+Return only the JSON object, no markdown, no explanation.`,
+            },
+          ],
+        },
+      ],
     });
 
     const raw = message.content[0].text.trim();
     let parsed;
     try {
       parsed = JSON.parse(raw);
-    } catch(e) {
+    } catch (e) {
       // Try extracting JSON from response if there's extra text
       const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) return res.status(500).json({ error: 'AI returned invalid JSON. Try a clearer image.' });
+      if (!match)
+        return res
+          .status(500)
+          .json({ error: "AI returned invalid JSON. Try a clearer image." });
       parsed = JSON.parse(match[0]);
     }
 
     // Save to DB — replace any existing schedule for this site+week
-    await req.db.collection('schedules').deleteMany({ siteId, weekOf: parsed.weekOf });
-    await req.db.collection('schedules').insertOne({
+    await req.db
+      .collection("schedules")
+      .deleteMany({ siteId, weekOf: parsed.weekOf });
+    await req.db.collection("schedules").insertOne({
       siteId,
       weekOf: parsed.weekOf,
       schedule: parsed.schedule,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     res.json({
       weekOf: parsed.weekOf,
       staffCount: parsed.schedule.length,
-      schedule: parsed.schedule
+      schedule: parsed.schedule,
     });
-  } catch(e) {
-    console.error('Schedule parse error:', e);
+  } catch (e) {
+    console.error("Schedule parse error:", e);
     res.status(500).json({ error: e.message });
   }
 });
 
 // Get current week's schedule for a site
-app.get('/api/schedule/current', async (req, res) => {
+app.get("/api/schedule/current", async (req, res) => {
   try {
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    if (!siteId) return res.status(400).json({ error: "siteId required" });
 
     // Find the most recent schedule for this site
-    const doc = await req.db.collection('schedules')
+    const doc = await req.db
+      .collection("schedules")
       .find({ siteId })
       .sort({ weekOf: -1 })
       .limit(1)
@@ -682,49 +1049,71 @@ app.get('/api/schedule/current', async (req, res) => {
 
     if (!doc.length) return res.json({ found: false });
     res.json({ found: true, weekOf: doc[0].weekOf, schedule: doc[0].schedule });
-  } catch(e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
-
 
 // ═════════════════════════════════════════════════════════
 //  SANDWICH TRACKER
 // ═════════════════════════════════════════════════════════
-app.get('/api/sandwich-tracker', async (req, res) => {
+app.get("/api/sandwich-tracker", async (req, res) => {
   try {
     const { siteId, weekStart } = req.query;
-    if (!siteId || !weekStart) return res.status(400).json({ error: 'siteId and weekStart required' });
-    res.json(await req.db.collection('sandwich_logs').find({ siteId, weekStart }).toArray());
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    if (!siteId || !weekStart)
+      return res.status(400).json({ error: "siteId and weekStart required" });
+    res.json(
+      await req.db
+        .collection("sandwich_logs")
+        .find({ siteId, weekStart })
+        .toArray(),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.post('/api/sandwich-tracker', async (req, res) => {
+app.post("/api/sandwich-tracker", async (req, res) => {
   try {
     const { siteId, weekStart, sandwich } = req.body;
-    if (!siteId || !weekStart || !sandwich) return res.status(400).json({ error: 'Missing required fields' });
-    const exists = await req.db.collection('sandwich_logs').findOne({ siteId, weekStart, sandwich });
-    if (exists) return res.status(400).json({ error: 'Entry already exists for this sandwich this week' });
+    if (!siteId || !weekStart || !sandwich)
+      return res.status(400).json({ error: "Missing required fields" });
+    const exists = await req.db
+      .collection("sandwich_logs")
+      .findOne({ siteId, weekStart, sandwich });
+    if (exists)
+      return res
+        .status(400)
+        .json({ error: "Entry already exists for this sandwich this week" });
     const doc = { ...req.body, createdAt: new Date() };
-    const r   = await req.db.collection('sandwich_logs').insertOne(doc);
+    const r = await req.db.collection("sandwich_logs").insertOne(doc);
     res.json({ ...doc, _id: r.insertedId.toString() });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.put('/api/sandwich-tracker/:id', async (req, res) => {
+app.put("/api/sandwich-tracker/:id", async (req, res) => {
   try {
     const { _id, createdAt, ...update } = req.body;
-    await req.db.collection('sandwich_logs').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: update }
-    );
+    await req.db
+      .collection("sandwich_logs")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/api/sandwich-tracker/:id', async (req, res) => {
+app.delete("/api/sandwich-tracker/:id", async (req, res) => {
   try {
-    await req.db.collection('sandwich_logs').deleteOne({ _id: new ObjectId(req.params.id) });
+    await req.db
+      .collection("sandwich_logs")
+      .deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ═════════════════════════════════════════════════════════
@@ -734,24 +1123,27 @@ app.delete('/api/sandwich-tracker/:id', async (req, res) => {
 /**
  * GET /api/testwash?month=0-11&year=YYYY
  */
-app.get('/api/testwash', async (req, res) => {
+app.get("/api/testwash", async (req, res) => {
   try {
     const now = new Date();
 
-    const month = req.query.month !== undefined
-      ? parseInt(req.query.month, 10)
-      : now.getMonth();
+    const month =
+      req.query.month !== undefined
+        ? parseInt(req.query.month, 10)
+        : now.getMonth();
 
-    const year = req.query.year !== undefined
-      ? parseInt(req.query.year, 10)
-      : now.getFullYear();
+    const year =
+      req.query.year !== undefined
+        ? parseInt(req.query.year, 10)
+        : now.getFullYear();
 
     const startDate = new Date(year, month, 1, 0, 0, 0);
-    const endDate   = new Date(year, month + 1, 1, 0, 0, 0);
+    const endDate = new Date(year, month + 1, 1, 0, 0, 0);
 
-    const logs = await req.db.collection('testwash_logs')
+    const logs = await req.db
+      .collection("testwash_logs")
       .find({
-        issuedAt: { $gte: startDate, $lt: endDate }
+        issuedAt: { $gte: startDate, $lt: endDate },
       })
       .sort({ issuedAt: -1 })
       .toArray();
@@ -761,74 +1153,73 @@ app.get('/api/testwash', async (req, res) => {
       data: logs,
       month,
       year,
-      count: logs.length
+      count: logs.length,
     });
-
   } catch (err) {
-    console.error('Error fetching testwash logs:', err);
+    console.error("Error fetching testwash logs:", err);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch testwash logs'
+      message: "Failed to fetch testwash logs",
     });
   }
 });
-
 
 /**
  * GET /api/testwash/months
  */
-app.get('/api/testwash/months', async (req, res) => {
+app.get("/api/testwash/months", async (req, res) => {
   try {
-    const months = await req.db.collection('testwash_logs').aggregate([
-      {
-        $group: {
-          _id: {
-            year: { $year: '$issuedAt' },
-            month: { $month: '$issuedAt' }
+    const months = await req.db
+      .collection("testwash_logs")
+      .aggregate([
+        {
+          $group: {
+            _id: {
+              year: { $year: "$issuedAt" },
+              month: { $month: "$issuedAt" },
+            },
+            count: { $sum: 1 },
           },
-          count: { $sum: 1 }
-        }
-      },
-      {
-        $sort: {
-          '_id.year': -1,
-          '_id.month': -1
-        }
-      }
-    ]).toArray();
+        },
+        {
+          $sort: {
+            "_id.year": -1,
+            "_id.month": -1,
+          },
+        },
+      ])
+      .toArray();
 
-    const formatted = months.map(m => ({
+    const formatted = months.map((m) => ({
       year: m._id.year,
       month: m._id.month - 1, // JS 0-based month
-      count: m.count
+      count: m.count,
     }));
 
     res.json({
       success: true,
-      data: formatted
+      data: formatted,
     });
-
   } catch (err) {
-    console.error('Error fetching months list:', err);
+    console.error("Error fetching months list:", err);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch months list'
+      message: "Failed to fetch months list",
     });
   }
 });
 
-
 /**
  * POST /api/testwash
  */
-app.post('/api/testwash', async (req, res) => {
+app.post("/api/testwash", async (req, res) => {
   try {
     const { carwashCode, issuedTo, issuedBy, date, time, notes } = req.body;
 
     if (!carwashCode || !issuedTo || !issuedBy || !date || !time) {
       return res.status(400).json({
         success: false,
-        message: 'All required fields must be filled'
+        message: "All required fields must be filled",
       });
     }
 
@@ -837,7 +1228,7 @@ app.post('/api/testwash', async (req, res) => {
     if (isNaN(issuedAt.getTime())) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid date or time'
+        message: "Invalid date or time",
       });
     }
 
@@ -846,31 +1237,29 @@ app.post('/api/testwash', async (req, res) => {
       issuedTo,
       issuedBy,
       issuedAt,
-      notes: notes || '',
-      createdAt: new Date()
+      notes: notes || "",
+      createdAt: new Date(),
     };
 
-    const result = await req.db.collection('testwash_logs').insertOne(doc);
+    const result = await req.db.collection("testwash_logs").insertOne(doc);
 
     res.status(201).json({
       success: true,
-      data: { ...doc, _id: result.insertedId }
+      data: { ...doc, _id: result.insertedId },
     });
-
   } catch (err) {
-    console.error('Error creating testwash log:', err);
+    console.error("Error creating testwash log:", err);
     res.status(500).json({
       success: false,
-      message: 'Failed to create testwash log'
+      message: "Failed to create testwash log",
     });
   }
 });
 
-
 /**
  * PUT /api/testwash/:id
  */
-app.put('/api/testwash/:id', async (req, res) => {
+app.put("/api/testwash/:id", async (req, res) => {
   try {
     const { carwashCode, issuedTo, issuedBy, date, time, notes } = req.body;
 
@@ -887,130 +1276,251 @@ app.put('/api/testwash/:id', async (req, res) => {
       if (isNaN(issuedAt.getTime())) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid date or time'
+          message: "Invalid date or time",
         });
       }
 
       update.issuedAt = issuedAt;
     }
 
-    const result = await req.db.collection('testwash_logs').updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { $set: update }
-    );
+    const result = await req.db
+      .collection("testwash_logs")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
 
     if (result.matchedCount === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Log not found'
+        message: "Log not found",
       });
     }
 
     res.json({
       success: true,
-      message: 'Log updated successfully'
+      message: "Log updated successfully",
     });
-
   } catch (err) {
-    console.error('Error updating testwash log:', err);
+    console.error("Error updating testwash log:", err);
     res.status(500).json({
       success: false,
-      message: 'Failed to update testwash log'
+      message: "Failed to update testwash log",
     });
   }
 });
 
-
 /**
  * DELETE /api/testwash/:id
  */
-app.delete('/api/testwash/:id', async (req, res) => {
+app.delete("/api/testwash/:id", async (req, res) => {
   try {
-    const result = await req.db.collection('testwash_logs')
+    const result = await req.db
+      .collection("testwash_logs")
       .deleteOne({ _id: new ObjectId(req.params.id) });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Log not found'
+        message: "Log not found",
       });
     }
 
     res.json({
       success: true,
-      message: 'Log deleted successfully'
+      message: "Log deleted successfully",
     });
-
   } catch (err) {
-    console.error('Error deleting testwash log:', err);
+    console.error("Error deleting testwash log:", err);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete testwash log'
+      message: "Failed to delete testwash log",
     });
   }
 });
 
-
 // ═════════════════════════════════════════════════════════
 //  WEEKLY REPORT
 // ═════════════════════════════════════════════════════════
-app.get('/api/weekly-report', async (req, res) => {
+app.get("/api/weekly-report", async (req, res) => {
   try {
     const { siteId, from, to } = req.query;
-    if (!siteId || !from || !to) return res.status(400).json({ error: 'siteId, from, to required' });
+    if (!siteId || !from || !to)
+      return res.status(400).json({ error: "siteId, from, to required" });
 
     const db = req.db;
 
     // All sections for this site
-    const sections = await db.collection('sections').find({ siteId }).toArray();
+    const sections = await db.collection("sections").find({ siteId }).toArray();
 
     // Current week/month for cleaning & planogram
-    const fromDate = new Date(from + 'T00:00:00');
-    const month    = fromDate.getMonth() + 1;
-    const year     = fromDate.getFullYear();
-    const week     = Math.ceil(fromDate.getDate() / 7);
+    const fromDate = new Date(from + "T00:00:00");
+    const month = fromDate.getMonth() + 1;
+    const year = fromDate.getFullYear();
+    const week = Math.ceil(fromDate.getDate() / 7);
 
     // Cleaning — one entry per section for this week
-    const cleaningLogs = await db.collection('cleaning_logs')
-      .find({ sectionId: { $in: sections.map(s => s._id.toString()) }, year, month, week })
+    const cleaningLogs = await db
+      .collection("cleaning_logs")
+      .find({
+        sectionId: { $in: sections.map((s) => s._id.toString()) },
+        year,
+        month,
+        week,
+      })
       .toArray();
 
-    const cleaning = sections.map(section => {
-      const entry = cleaningLogs.find(c => c.sectionId === section._id.toString());
-      return { section: { name: section.name, icon: section.icon }, cleaned: !!entry, entry: entry || null };
+    const cleaning = sections.map((section) => {
+      const entry = cleaningLogs.find(
+        (c) => c.sectionId === section._id.toString(),
+      );
+      return {
+        section: { name: section.name, icon: section.icon },
+        cleaned: !!entry,
+        entry: entry || null,
+      };
     });
 
     // Planogram — one entry per section for this week
-    const planogramLogs = await db.collection('planogram_checks')
-      .find({ sectionId: { $in: sections.map(s => s._id.toString()) }, year, month, week })
+    const planogramLogs = await db
+      .collection("planogram_checks")
+      .find({
+        sectionId: { $in: sections.map((s) => s._id.toString()) },
+        year,
+        month,
+        week,
+      })
       .toArray();
 
-    const planogram = sections.map(section => {
-      const entry = planogramLogs.find(p => p.sectionId === section._id.toString());
-      return { section: { name: section.name, icon: section.icon }, checked: !!entry, entry: entry || null };
+    const planogram = sections.map((section) => {
+      const entry = planogramLogs.find(
+        (p) => p.sectionId === section._id.toString(),
+      );
+      return {
+        section: { name: section.name, icon: section.icon },
+        checked: !!entry,
+        entry: entry || null,
+      };
     });
 
     // Expiry — all items flagged during this week (by date found)
-    const expiry = await db.collection('expiry_logs')
-      .find({ sectionId: { $in: sections.map(s => s._id.toString()) }, date: { $gte: from, $lte: to } })
+    const expiry = await db
+      .collection("expiry_logs")
+      .find({
+        sectionId: { $in: sections.map((s) => s._id.toString()) },
+        date: { $gte: from, $lte: to },
+      })
       .sort({ expiryDate: 1 })
       .toArray();
 
     // Orders — all orders added during this week
-    const orders = await db.collection('order_items')
-      .find({ sectionId: { $in: sections.map(s => s._id.toString()) }, date: { $gte: from, $lte: to } })
+    const orders = await db
+      .collection("order_items")
+      .find({
+        sectionId: { $in: sections.map((s) => s._id.toString()) },
+        date: { $gte: from, $lte: to },
+      })
       .sort({ date: -1 })
       .toArray();
 
     res.json({ sections, cleaning, planogram, expiry, orders });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════
+//  ACTIVITY STATUS (last performed + streaks, across all months)
+// ═════════════════════════════════════════════════════════
+app.get("/api/activity-status", async (req, res) => {
+  try {
+    const { sectionId } = req.query;
+    if (!sectionId)
+      return res.status(400).json({ error: "sectionId required" });
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const nowWeek = Math.floor(Date.now() / weekMs);
+    const lookback = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000); // ~6 months of history for streaks
+    const daysAgo = (date) =>
+      date == null
+        ? null
+        : Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+    const computeStreak = (dates) => {
+      const weeks = new Set(
+        dates
+          .filter(Boolean)
+          .map((d) => Math.floor(new Date(d).getTime() / weekMs)),
+      );
+      let streak = 0,
+        w = nowWeek;
+      while (weeks.has(w)) {
+        streak++;
+        w--;
+      }
+      return streak;
+    };
+    const cleaningDocs = await req.db
+      .collection("cleaning_logs")
+      .find({ sectionId, dateCleaned: { $gte: lookback } })
+      .sort({ dateCleaned: -1 })
+      .toArray();
+    const lastCleaning = cleaningDocs[0] || null;
+    const planoDocs = await req.db
+      .collection("planogram_checks")
+      .find({ sectionId, dateChecked: { $gte: lookback } })
+      .sort({ dateChecked: -1 })
+      .toArray();
+    const lastPlano = planoDocs[0] || null;
+    const lastExpiryArr = await req.db
+      .collection("expiry_logs")
+      .find({ sectionId })
+      .sort({ date: -1 })
+      .limit(1)
+      .toArray();
+    const lastExpiry = lastExpiryArr[0] || null;
+    const activeCount = await req.db
+      .collection("expiry_logs")
+      .countDocuments({ sectionId, removed: false });
+    const overdueCount = await req.db
+      .collection("expiry_logs")
+      .countDocuments({
+        sectionId,
+        removed: false,
+        expiryDate: { $lt: new Date() },
+      });
+    res.json({
+      cleaning: {
+        lastDate: lastCleaning?.dateCleaned ?? null,
+        lastBy: lastCleaning?.cleanedBy ?? null,
+        lastComments: lastCleaning?.comments ?? null,
+        daysAgo: daysAgo(lastCleaning?.dateCleaned),
+        streak: computeStreak(cleaningDocs.map((d) => d.dateCleaned)),
+      },
+      planogram: {
+        lastDate: lastPlano?.dateChecked ?? null,
+        lastBy: lastPlano?.checkedBy ?? null,
+        lastComments: lastPlano?.comments ?? null,
+        lastFixed: lastPlano?.planogramFixed ?? null,
+        daysAgo: daysAgo(lastPlano?.dateChecked),
+        streak: computeStreak(planoDocs.map((d) => d.dateChecked)),
+      },
+      expiry: {
+        lastDate: lastExpiry?.date ?? null,
+        lastItem: lastExpiry?.item ?? null,
+        lastSignOff: lastExpiry?.signOffBy ?? null,
+        daysAgo: daysAgo(lastExpiry?.date),
+        activeCount,
+        overdueCount,
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ── Fallback (SPA) ──────────────────────────────────────
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get("*", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html")),
+);
 
 // ── Local dev server (not used by Vercel) ──────────────
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
 }
 
