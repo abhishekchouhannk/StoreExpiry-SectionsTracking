@@ -18,7 +18,6 @@
     }
     * { box-sizing: border-box; }
     body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
-
     /* ── TOP BAR ── */
     .topbar {
       position: sticky; top: 0; z-index: 100;
@@ -43,7 +42,6 @@
       cursor: pointer; transition: all .15s; flex-shrink: 0; color: var(--text);
     }
     .hamburger-btn:hover { border-color: var(--text); background: var(--text); color: #fff; }
-
     /* ── OFFCANVAS ── */
     #offcanvas-menu { width: 280px !important; background: var(--bg) !important; border-left: 1px solid var(--border) !important; }
     #offcanvas-menu .offcanvas-header { border-bottom: 1px solid var(--border); padding: 1.1rem 1.4rem; }
@@ -56,7 +54,6 @@
     .menu-footer p { font-size: .76rem; color: var(--muted); margin: 0 0 .5rem; line-height: 1.7; }
     .menu-footer a { color: var(--text); font-weight: 600; text-decoration: none; }
     .menu-footer a:hover { text-decoration: underline; }
-
     /* ── SITE SWITCH OVERLAY ── */
     #site-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
@@ -71,17 +68,20 @@
       border-radius: 50%; animation: spin .65s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     /* ── SECTION HERO ── */
     .sec-hero {
       background: var(--surface); border-bottom: 1px solid var(--border);
       padding: 1.2rem 1.4rem 1.1rem;
     }
+    .hero-top-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .7rem;
+    }
     .back-link {
       display: inline-flex; align-items: center; gap: .35rem;
       font-size: .76rem; font-weight: 600; color: var(--muted);
       text-decoration: none; text-transform: uppercase; letter-spacing: .06em;
-      font-family: 'Syne', sans-serif; margin-bottom: .7rem;
+      font-family: 'Syne', sans-serif;
       transition: color .12s;
     }
     .back-link:hover { color: var(--text); }
@@ -89,7 +89,79 @@
     .hero-icon { font-size: 2rem; line-height: 1; }
     .hero-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; letter-spacing: -.02em; margin: 0 0 .15rem; }
     .hero-loc { font-size: .78rem; color: var(--muted); margin: 0; }
-
+    /* ── ACTIVITY BUTTON ── */
+    .btn-activity {
+      position: relative;
+      font-family: 'Syne', sans-serif; font-size: .68rem; font-weight: 700;
+      letter-spacing: .05em; text-transform: uppercase;
+      padding: 5px 13px; border-radius: var(--pill-r);
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--muted); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+      white-space: nowrap; transition: all .15s;
+    }
+    .btn-activity:hover { border-color: var(--text); color: var(--text); }
+    .btn-activity .act-dot {
+      display: none;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #ef4444; border: 1.5px solid var(--surface);
+      position: absolute; top: -3px; right: -3px;
+    }
+    .btn-activity.has-alert .act-dot { display: block; }
+    .btn-activity.has-alert { border-color: #fca5a5; color: #dc2626; }
+    .btn-activity.has-alert:hover { border-color: #ef4444; }
+    /* ── ACTIVITY MODAL CARDS ── */
+    .act-grid { display: flex; flex-direction: column; gap: .55rem; }
+    .act-subtitle {
+      font-size: .77rem; color: var(--muted); margin: 0 0 .9rem;
+      line-height: 1.55;
+    }
+    .act-card {
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: .8rem 1rem;
+      border-left: 3.5px solid var(--border);
+      transition: border-color .15s;
+    }
+    .act-card.lvl-green  { border-left-color: #22c55e; }
+    .act-card.lvl-amber  { border-left-color: #f59e0b; }
+    .act-card.lvl-red    { border-left-color: #ef4444; }
+    .act-card.lvl-grey   { border-left-color: #cbd5e1; }
+    .act-head {
+      display: flex; align-items: center; gap: .55rem;
+      margin-bottom: .45rem;
+    }
+    .act-ico {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; flex-shrink: 0;
+    }
+    .ico-clean  { background: #dbeafe; color: #2563eb; }
+    .ico-plano  { background: #ede9fe; color: #7c3aed; }
+    .ico-expiry { background: #fee2e2; color: #dc2626; }
+    .act-name {
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: .8rem;
+    }
+    .act-badge {
+      margin-left: auto; font-size: .62rem; font-weight: 700;
+      padding: 2px 9px; border-radius: var(--pill-r);
+      text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+    }
+    .ab-green  { background: #dcfce7; color: #166534; }
+    .ab-amber  { background: #fef3c7; color: #92400e; }
+    .ab-red    { background: #fee2e2; color: #b91c1c; }
+    .ab-grey   { background: #f1f5f9; color: #64748b; }
+    .act-rows { padding-left: calc(30px + .55rem); }
+    .act-r {
+      display: flex; gap: .5rem; font-size: .77rem;
+      margin-bottom: .15rem;
+    }
+    .act-r:last-child { margin-bottom: 0; }
+    .act-rk { color: var(--muted); font-weight: 500; width: 78px; flex-shrink: 0; }
+    .act-rv { color: var(--text); }
+    .act-never {
+      font-size: .78rem; color: var(--muted); font-style: italic;
+      padding-left: calc(30px + .55rem);
+    }
     /* ── TAB BAR ── */
     .tab-bar {
       background: var(--surface); border-bottom: 1px solid var(--border);
@@ -106,17 +178,14 @@
     }
     .tab-btn:hover { color: var(--text); }
     .tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
-
     /* ── CONTENT ── */
     .tab-content-area { padding: 1.4rem; }
     .tab-pane-custom { display: none; }
     .tab-pane-custom.active { display: block; }
-
     /* Toolbar */
     .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem; gap: .75rem; }
     .toolbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .88rem; margin: 0; }
     .toolbar-right { display: flex; align-items: center; gap: .5rem; }
-
     /* Buttons */
     .btn-solid { background: var(--text); color: #fff; border: none; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: .74rem; font-weight: 700; letter-spacing: .04em; padding: .4rem .9rem; cursor: pointer; transition: background .15s; white-space: nowrap; }
     .btn-solid:hover { background: #333; color: #fff; }
@@ -126,7 +195,6 @@
     .btn-solid-amber:hover { background: #a66515; }
     .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); border-radius: 9px; font-size: .78rem; padding: .38rem .85rem; cursor: pointer; }
     .btn-ghost:hover { border-color: #aaa; color: var(--text); }
-
     /* Select */
     .form-select-sm-custom {
       font-size: .78rem; padding: .35rem .7rem; border-radius: 9px;
@@ -134,7 +202,6 @@
       cursor: pointer;
     }
     .form-select-sm-custom:focus { outline: none; border-color: var(--text); }
-
     /* ── WEEK CARDS ── */
     .week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
     .week-card {
@@ -172,7 +239,6 @@
     .wr-key { color: var(--muted); font-weight: 500; width: 90px; flex-shrink: 0; }
     .wr-val { color: var(--text); }
     .week-empty { font-size: .8rem; color: var(--muted); font-style: italic; }
-
     /* ── TABLE CARD ── */
     .table-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; overflow: hidden; }
     .table-card table { margin: 0; }
@@ -183,13 +249,11 @@
     .del-row { background: none; border: none; cursor: pointer; color: var(--muted); opacity: 0; padding: 2px 5px; transition: opacity .12s; }
     .table-card tbody tr:hover .del-row { opacity: 1; }
     .del-row:hover { color: #d1453b; }
-
     /* Pills in table */
     .tag { font-size: .7rem; font-weight: 500; padding: 2px 8px; border-radius: var(--pill-r); }
     .tag-green  { background: #dcfce7; color: #166534; }
     .tag-red    { background: #fee2e2; color: #b91c1c; }
     .tag-amber  { background: #fef3c7; color: #92400e; }
-
     /* ── MODALS ── */
     .modal-content { border: 1.5px solid var(--border) !important; border-radius: 18px !important; box-shadow: 0 20px 60px rgba(0,0,0,.12) !important; }
     .modal-header { border-bottom: 1px solid var(--border); padding: 1rem 1.3rem; }
@@ -204,10 +268,8 @@
     .form-check-input:checked { background-color: var(--text); border-color: var(--text); }
     .form-check-label { font-size: .84rem; }
     .mb-3 { margin-bottom: .85rem !important; }
-
     /* Empty state */
     .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--muted); font-size: .85rem; font-style: italic; }
-
     /* ── MOBILE SITE DROPDOWN ── */
     .site-dropdown-wrap { display: none; position: relative; }
     .site-dropdown-btn {
@@ -236,23 +298,32 @@
     .site-dropdown-item:hover { background: var(--bg); color: var(--text); }
     .site-dropdown-item.active { color: var(--text); font-weight: 800; }
     .site-dropdown-item.active::before { content: '✓ '; }
-
     @media (max-width: 600px) {
       .site-switcher { display: none; }
       .site-dropdown-wrap { display: block; }
       .topbar { padding: 0 1rem; }
       .tab-content-area { padding: 1rem; }
       .sec-hero { padding: 1rem; }
+      .btn-activity span { display: none; }         /* icon-only on tiny screens */
+      .btn-activity { padding: 5px 9px; gap: 0; }
     }
   </style>
 </head>
 <body>
-
-
-
   <!-- ── SECTION HERO ── -->
   <div class="sec-hero">
-    <a href="/dashboard.html" class="back-link" onclick="event.preventDefault();window.location='/dashboard.html'"><i class="bi bi-arrow-left"></i> All Sections</a>
+    <div class="hero-top-row">
+      <a href="/dashboard.html" class="back-link"
+         onclick="event.preventDefault();window.location='/dashboard.html'">
+        <i class="bi bi-arrow-left"></i> All Sections
+      </a>
+      <button class="btn-activity" id="btn-activity"
+              data-bs-toggle="modal" data-bs-target="#modal-activity">
+        <i class="bi bi-clipboard2-pulse"></i>
+        <span>Activity</span>
+        <span class="act-dot"></span>
+      </button>
+    </div>
     <div class="hero-row">
       <div class="hero-icon" id="sec-icon">📦</div>
       <div>
@@ -261,7 +332,6 @@
       </div>
     </div>
   </div>
-
   <!-- ── TAB BAR ── -->
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" data-tab="cleaning"><i class="bi bi-droplet me-1"></i>Cleaning</button>
@@ -269,10 +339,8 @@
     <button class="tab-btn" data-tab="expiry"><i class="bi bi-calendar-x me-1"></i>Expiry</button>
     <button class="tab-btn" data-tab="orders"><i class="bi bi-cart me-1"></i>Orders</button>
   </div>
-
   <!-- ── TAB CONTENT ── -->
   <div class="tab-content-area">
-
     <!-- CLEANING -->
     <div class="tab-pane-custom active" id="tab-cleaning">
       <div class="toolbar">
@@ -282,11 +350,8 @@
           <button class="btn-solid" data-bs-toggle="modal" data-bs-target="#modal-cleaning"><i class="bi bi-plus-lg me-1"></i>Log Clean</button>
         </div>
       </div>
-      <div class="week-grid" id="cleaning-weeks">
-        <div class="empty-state">Loading…</div>
-      </div>
+      <div class="week-grid" id="cleaning-weeks"><div class="empty-state">Loading…</div></div>
     </div>
-
     <!-- PLANOGRAM -->
     <div class="tab-pane-custom" id="tab-planogram">
       <div class="toolbar">
@@ -296,11 +361,8 @@
           <button class="btn-solid" data-bs-toggle="modal" data-bs-target="#modal-planogram"><i class="bi bi-plus-lg me-1"></i>Log Check</button>
         </div>
       </div>
-      <div class="week-grid" id="plano-weeks">
-        <div class="empty-state">Loading…</div>
-      </div>
+      <div class="week-grid" id="plano-weeks"><div class="empty-state">Loading…</div></div>
     </div>
-
     <!-- EXPIRY -->
     <div class="tab-pane-custom" id="tab-expiry">
       <div class="toolbar">
@@ -316,7 +378,6 @@
       </div>
       <div id="expiry-table-wrap"><div class="empty-state">Loading…</div></div>
     </div>
-
     <!-- ORDERS -->
     <div class="tab-pane-custom" id="tab-orders">
       <div class="toolbar">
@@ -332,9 +393,7 @@
       </div>
       <div id="order-table-wrap"><div class="empty-state">Loading…</div></div>
     </div>
-
   </div>
-
   <!-- ═══ Modal: Log Clean ═══ -->
   <div class="modal fade" id="modal-cleaning" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -356,7 +415,6 @@
       </div>
     </div>
   </div>
-
   <!-- ═══ Modal: Log Planogram ═══ -->
   <div class="modal fade" id="modal-planogram" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -382,7 +440,6 @@
       </div>
     </div>
   </div>
-
   <!-- ═══ Modal: Flag Expiry ═══ -->
   <div class="modal fade" id="modal-expiry" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -416,7 +473,6 @@
       </div>
     </div>
   </div>
-
   <!-- ═══ Modal: Add Order ═══ -->
   <div class="modal fade" id="modal-order" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -437,11 +493,138 @@
       </div>
     </div>
   </div>
-
+  <!-- ═══ Modal: Section Activity ═══ -->
+  <div class="modal fade" id="modal-activity" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i>Section Activity</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="activity-body">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
   <script>window.NAV_ACTIVE = 'section';</script>
   <script src="js/nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/section.js"></script>
-
+  <!-- ═══ Section Activity JS ═══ -->
+  <script>
+  (function () {
+    /* ── helpers ── */
+    const QS   = new URLSearchParams(window.location.search);
+    const SID  = QS.get('id');
+    const BODY = document.getElementById('activity-body');
+    const BTN  = document.getElementById('btn-activity');
+    function daysBetween(a, b) { return Math.floor((a - b) / 86400000); }
+    function timeAgo(dateStr) {
+      if (!dateStr) return { text: 'Never logged', lvl: 'grey' };
+      const d    = new Date(dateStr);
+      const days = daysBetween(new Date(), d);
+      if (days < 0)  return { text: 'Upcoming',               lvl: 'green' };
+      if (days === 0) return { text: 'Today',                  lvl: 'green' };
+      if (days === 1) return { text: 'Yesterday',              lvl: 'green' };
+      if (days < 7)   return { text: days + ' days ago',       lvl: 'green' };
+      if (days < 10)  return { text: '1 week ago',             lvl: 'green' };
+      if (days < 15)  return { text: '2 weeks ago',            lvl: 'amber' };
+      const w = Math.floor(days / 7);
+      if (w < 5)      return { text: w + ' weeks ago',         lvl: 'red' };
+      const m = Math.floor(days / 30);
+      if (m === 1)    return { text: '1 month ago',            lvl: 'red' };
+      return           { text: m + ' months ago',              lvl: 'red' };
+    }
+    function fmtDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    /* ── card builder ── */
+    function card({ icon, icoCls, name, dateVal, byVal, extraRows, total }) {
+      const ago  = timeAgo(dateVal);
+      const has  = !!dateVal;
+      let rows = '';
+      if (has) {
+        rows += `<div class="act-r"><span class="act-rk">Date</span><span class="act-rv">${fmtDate(dateVal)}</span></div>`;
+        if (byVal)
+          rows += `<div class="act-r"><span class="act-rk">By</span><span class="act-rv">${byVal}</span></div>`;
+        if (extraRows)
+          extraRows.forEach(r => {
+            rows += `<div class="act-r"><span class="act-rk">${r.k}</span><span class="act-rv">${r.v}</span></div>`;
+          });
+        rows += `<div class="act-r"><span class="act-rk">Total logs</span><span class="act-rv">${total}</span></div>`;
+      }
+      return `
+        <div class="act-card lvl-${ago.lvl}">
+          <div class="act-head">
+            <div class="act-ico ${icoCls}"><i class="bi ${icon}"></i></div>
+            <span class="act-name">${name}</span>
+            <span class="act-badge ab-${ago.lvl}">${ago.text}</span>
+          </div>
+          ${has
+            ? `<div class="act-rows">${rows}</div>`
+            : `<p class="act-never">No activity recorded yet</p>`}
+        </div>`;
+    }
+    /* ── fetch + render ── */
+    async function fetchActivity() {
+      if (!SID) return null;
+      const res = await fetch('/api/section-activity?sectionId=' + encodeURIComponent(SID));
+      if (!res.ok) throw new Error(res.statusText);
+      return res.json();
+    }
+    function render(data) {
+      const c = data.cleaning  || {};
+      const p = data.planogram || {};
+      const e = data.expiry    || {};
+      const cL = c.last, pL = p.last, eL = e.last;
+      let html = `<p class="act-subtitle">At-a-glance view of when each task was last performed for this section.</p>`;
+      html += '<div class="act-grid">';
+      html += card({
+        icon: 'bi-droplet-fill', icoCls: 'ico-clean', name: 'Cleaning',
+        dateVal: cL?.dateCleaned, byVal: cL?.cleanedBy,
+        extraRows: cL?.comments ? [{ k: 'Notes', v: cL.comments }] : null,
+        total: c.total || 0,
+      });
+      html += card({
+        icon: 'bi-grid-fill', icoCls: 'ico-plano', name: 'Planogram',
+        dateVal: pL?.dateChecked, byVal: pL?.checkedBy,
+        extraRows: pL ? [{ k: 'Fixed', v: pL.planogramFixed ? 'Yes' : 'No' }] : null,
+        total: p.total || 0,
+      });
+      html += card({
+        icon: 'bi-calendar-x-fill', icoCls: 'ico-expiry', name: 'Expiry Check',
+        dateVal: eL?.date, byVal: eL?.signOffBy,
+        extraRows: eL?.item ? [{ k: 'Last item', v: eL.item }] : null,
+        total: e.total || 0,
+      });
+      html += '</div>';
+      BODY.innerHTML = html;
+    }
+    /* ── open modal → load data ── */
+    document.getElementById('modal-activity')
+      .addEventListener('show.bs.modal', async () => {
+        BODY.innerHTML = '<div class="empty-state">Loading…</div>';
+        try { render(await fetchActivity()); }
+        catch { BODY.innerHTML = '<div class="empty-state">Unable to load activity data</div>'; }
+      });
+    /* ── page-load health check (red dot on button) ── */
+    (async () => {
+      try {
+        const data = await fetchActivity();
+        if (!data) return;
+        const now  = new Date();
+        const OVERDUE_DAYS = 14;
+        let alert = false;
+        const cDate = data.cleaning?.last?.dateCleaned;
+        const pDate = data.planogram?.last?.dateChecked;
+        if (!cDate || daysBetween(now, new Date(cDate)) > OVERDUE_DAYS) alert = true;
+        if (!pDate || daysBetween(now, new Date(pDate)) > OVERDUE_DAYS) alert = true;
+        if (alert) BTN.classList.add('has-alert');
+      } catch { /* silent */ }
+    })();
+  })();
+  </script>
 </body>
 </html>
