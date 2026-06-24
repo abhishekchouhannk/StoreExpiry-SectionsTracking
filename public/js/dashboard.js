@@ -177,10 +177,10 @@ async function loadDashboard(withOverlay = false) {
 /* ── Summary ─────────────────────────────────────────── */
 function renderSummary(s) {
   document.getElementById('sum-expiry').textContent   = s.expiryAlerts;
-  document.getElementById('sum-orders').textContent   = s.pendingOrders;
+  // document.getElementById('sum-orders').textContent   = s.pendingOrders;
   document.getElementById('sum-cleans').innerHTML =
     `<span>${s.cleansThisWeek}</span><span style="font-size:.9em;font-weight:400;opacity:.5;margin:0 1px">/</span><span>${s.totalSections}</span>`;
-  document.getElementById('sum-sections').textContent = s.totalSections;
+  // document.getElementById('sum-sections').textContent = s.totalSections;
   loadHealthAndPlanogramTiles();
   loadMostActiveEmployee();
 }
