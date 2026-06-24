@@ -1429,68 +1429,42 @@ app.get("/api/weekly-report", async (req, res) => {
 // ═════════════════════════════════════════════════════════
 //  ACTIVITY STATUS (last performed + streaks, across all months)
 // ═════════════════════════════════════════════════════════
-app.get("/api/activity-status", async (req, res) => {
+app.get('/api/activity-status', async (req, res) => {
   try {
     const { sectionId } = req.query;
-    if (!sectionId)
-      return res.status(400).json({ error: "sectionId required" });
+    if (!sectionId) return res.status(400).json({ error: 'sectionId required' });
     const weekMs = 7 * 24 * 60 * 60 * 1000;
     const nowWeek = Math.floor(Date.now() / weekMs);
     const lookback = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000); // ~6 months of history for streaks
-    const daysAgo = (date) =>
-      date == null
-        ? null
-        : Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+    const daysAgo = (date) => date == null ? null : Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
     const computeStreak = (dates) => {
-      const weeks = new Set(
-        dates
-          .filter(Boolean)
-          .map((d) => Math.floor(new Date(d).getTime() / weekMs)),
-      );
-      let streak = 0,
-        w = nowWeek;
-      while (weeks.has(w)) {
-        streak++;
-        w--;
-      }
+      const weeks = new Set(dates.filter(Boolean).map(d => Math.floor(new Date(d).getTime() / weekMs)));
+      let streak = 0, w = nowWeek;
+      while (weeks.has(w)) { streak++; w--; }
       return streak;
     };
-    const cleaningDocs = await req.db
-      .collection("cleaning_logs")
+    const cleaningDocs = await req.db.collection('cleaning_logs')
       .find({ sectionId, dateCleaned: { $gte: lookback } })
-      .sort({ dateCleaned: -1 })
-      .toArray();
+      .sort({ dateCleaned: -1 }).toArray();
     const lastCleaning = cleaningDocs[0] || null;
-    const planoDocs = await req.db
-      .collection("planogram_checks")
+    const planoDocs = await req.db.collection('planogram_checks')
       .find({ sectionId, dateChecked: { $gte: lookback } })
-      .sort({ dateChecked: -1 })
-      .toArray();
+      .sort({ dateChecked: -1 }).toArray();
     const lastPlano = planoDocs[0] || null;
-    const lastExpiryArr = await req.db
-      .collection("expiry_logs")
-      .find({ sectionId })
-      .sort({ date: -1 })
-      .limit(1)
-      .toArray();
+    const lastExpiryArr = await req.db.collection('expiry_logs')
+      .find({ sectionId }).sort({ date: -1 }).limit(1).toArray();
     const lastExpiry = lastExpiryArr[0] || null;
-    const activeCount = await req.db
-      .collection("expiry_logs")
+    const activeCount = await req.db.collection('expiry_logs')
       .countDocuments({ sectionId, removed: false });
-    const overdueCount = await req.db
-      .collection("expiry_logs")
-      .countDocuments({
-        sectionId,
-        removed: false,
-        expiryDate: { $lt: new Date() },
-      });
+    const overdueCount = await req.db.collection('expiry_logs')
+      .countDocuments({ sectionId, removed: false, expiryDate: { $lt: new Date() } });
     res.json({
       cleaning: {
         lastDate: lastCleaning?.dateCleaned ?? null,
         lastBy: lastCleaning?.cleanedBy ?? null,
         lastComments: lastCleaning?.comments ?? null,
         daysAgo: daysAgo(lastCleaning?.dateCleaned),
-        streak: computeStreak(cleaningDocs.map((d) => d.dateCleaned)),
+        streak: computeStreak(cleaningDocs.map(d => d.dateCleaned))
       },
       planogram: {
         lastDate: lastPlano?.dateChecked ?? null,
@@ -1498,7 +1472,7 @@ app.get("/api/activity-status", async (req, res) => {
         lastComments: lastPlano?.comments ?? null,
         lastFixed: lastPlano?.planogramFixed ?? null,
         daysAgo: daysAgo(lastPlano?.dateChecked),
-        streak: computeStreak(planoDocs.map((d) => d.dateChecked)),
+        streak: computeStreak(planoDocs.map(d => d.dateChecked))
       },
       expiry: {
         lastDate: lastExpiry?.date ?? null,
@@ -1506,12 +1480,10 @@ app.get("/api/activity-status", async (req, res) => {
         lastSignOff: lastExpiry?.signOffBy ?? null,
         daysAgo: daysAgo(lastExpiry?.date),
         activeCount,
-        overdueCount,
-      },
+        overdueCount
+      }
     });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── Fallback (SPA) ──────────────────────────────────────
