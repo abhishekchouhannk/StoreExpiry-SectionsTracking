@@ -436,3 +436,155 @@ async function markOrderDone(id, btn) {
     loadDashboard();
   } catch (e) { alert(e.message); }
 }
+
+// ═════════════════════════════════════════════════════════
+//  PUSH NOTIFICATION — Client-Side Manager
+// ═════════════════════════════════════════════════════════
+const PushManager = {
+  // Convert the VAPID key from base64 string to Uint8Array
+  urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw     = window.atob(base64);
+    const arr     = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  },
+  // Check if push is supported on this browser
+  isSupported() {
+    return 'serviceWorker' in navigator
+        && 'PushManager'   in window
+        && 'Notification'  in window;
+  },
+  // Get current permission state
+  getPermissionState() {
+    if (!this.isSupported()) return 'unsupported';
+    return Notification.permission; // 'default', 'granted', 'denied'
+  },
+  // Register SW + subscribe to push + save to server
+  async subscribe(siteId, deviceLabel) {
+    if (!this.isSupported()) {
+      throw new Error('Push notifications are not supported on this browser.');
+    }
+    // 1. Request permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      throw new Error('Notification permission denied.');
+    }
+    // 2. Register service worker
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    // 3. Get VAPID public key from server
+    const keyRes   = await fetch('/api/push/vapid-public-key');
+    const keyData  = await keyRes.json();
+    const vapidKey = this.urlBase64ToUint8Array(keyData.publicKey);
+    // 4. Subscribe to push
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKey,
+      });
+    }
+    // 5. Send subscription to server
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        siteId,
+        subscription: subscription.toJSON(),
+        label: deviceLabel || `${navigator.platform} - ${new Date().toLocaleDateString()}`,
+      }),
+    });
+    return subscription;
+  },
+  // Unsubscribe from push
+  async unsubscribe() {
+    const registration  = await navigator.serviceWorker.ready;
+    const subscription  = await registration.pushManager.getSubscription();
+    if (subscription) {
+      const endpoint = subscription.endpoint;
+      await subscription.unsubscribe();
+      await fetch('/api/push/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint }),
+      });
+    }
+  },
+  // Check if currently subscribed
+  async isSubscribed() {
+    if (!this.isSupported()) return false;
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return false;
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
+  },
+  // Send a test notification
+  async sendTest(siteId) {
+    const res  = await fetch('/api/push/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteId }),
+    });
+    return res.json();
+  },
+};
+
+(async function initPushUI() {
+  const SITE_ID     = getActiveSite(); // pull from your app context
+  const statusEl    = document.getElementById('push-status');
+  const enableBtn   = document.getElementById('btn-push-enable');
+  const disableBtn  = document.getElementById('btn-push-disable');
+  const testBtn     = document.getElementById('btn-push-test');
+  if (!PushManager.isSupported()) {
+    statusEl.textContent = '❌ Push notifications are not supported on this browser.';
+    return;
+  }
+  async function updateUI() {
+    const subscribed = await PushManager.isSubscribed();
+    const permission = PushManager.getPermissionState();
+    if (permission === 'denied') {
+      statusEl.textContent = '🚫 Notifications blocked. Please allow in browser settings.';
+      enableBtn.style.display  = 'none';
+      disableBtn.style.display = 'none';
+      testBtn.style.display    = 'none';
+    } else if (subscribed) {
+      statusEl.textContent = '✅ Notifications are ON. You\'ll be alerted 4 times daily for expiring items.';
+      enableBtn.style.display  = 'none';
+      disableBtn.style.display = 'inline-block';
+      testBtn.style.display    = 'inline-block';
+    } else {
+      statusEl.textContent = '📵 Notifications are OFF. Enable to get expiry reminders.';
+      enableBtn.style.display  = 'inline-block';
+      disableBtn.style.display = 'none';
+      testBtn.style.display    = 'none';
+    }
+  }
+
+  enableBtn.onclick = async () => {
+    try {
+      enableBtn.disabled    = true;
+      enableBtn.textContent = '⏳ Enabling...';
+      const label = prompt('Name this device (e.g. "Front Counter Tablet"):', 'Store Tablet');
+      await PushManager.subscribe(SITE_ID, label);
+      await updateUI();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      enableBtn.disabled    = false;
+      enableBtn.textContent = '✅ Enable Notifications';
+    }
+  };
+  disableBtn.onclick = async () => {
+    await PushManager.unsubscribe();
+    await updateUI();
+  };
+  testBtn.onclick = async () => {
+    testBtn.disabled = true;
+    const result     = await PushManager.sendTest(SITE_ID);
+    alert(`Test sent to ${result.sent} device(s)`);
+    testBtn.disabled = false;
+  };
+  await updateUI();
+})();

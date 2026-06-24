@@ -1006,6 +1006,248 @@ app.get('/api/weekly-report', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ═════════════════════════════════════════════════════════
+//  WEB PUSH SETUP
+// ═════════════════════════════════════════════════════════
+const webpush = require('web-push');
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL || 'mailto:admin@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+// ═════════════════════════════════════════════════════════
+//  PUSH SUBSCRIPTION ENDPOINTS
+// ═════════════════════════════════════════════════════════
+// Client calls this to register their browser for push
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { siteId, subscription, label } = req.body;
+    if (!siteId || !subscription || !subscription.endpoint) {
+      return res.status(400).json({ error: 'siteId and subscription required' });
+    }
+    await req.db.collection('push_subscriptions').updateOne(
+      { endpoint: subscription.endpoint },
+      {
+        $set: {
+          siteId,
+          subscription,              // { endpoint, keys: { p256dh, auth } }
+          label: label || 'Unknown',  // e.g. "Front Counter Tablet"
+          active: true,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+// Client calls this to unsubscribe
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
+    await req.db.collection('push_subscriptions').deleteOne({ endpoint });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+// List active subscriptions for a site (admin view)
+app.get('/api/push/subscriptions', async (req, res) => {
+  try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const subs = await req.db.collection('push_subscriptions')
+      .find({ siteId, active: true })
+      .project({ endpoint: 1, label: 1, createdAt: 1 }) // don't expose keys
+      .toArray();
+    res.json(subs);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+// Expose the public key so the client can subscribe
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+// ═════════════════════════════════════════════════════════
+//  CRON: SEND EXPIRY NOTIFICATIONS
+//  Called by Vercel Cron at 9am, 3pm, 8pm, 3am
+// ═════════════════════════════════════════════════════════
+app.get('/api/cron/expiry-notifications', async (req, res) => {
+  try {
+    console.log('Running expiry notification cron job...');
+    // ── Verify this is a legitimate cron call ──
+    // const authHeader = req.headers.authorization;
+    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    //   return res.status(401).json({ error: 'Unauthorized' });
+    // }
+    // ── Find all non-removed items expiring within 14 days ──
+    const now       = new Date();
+    const in14Days  = new Date();
+    in14Days.setDate(in14Days.getDate() + 14);
+    const expiringItems = await req.db.collection('expiry_logs').find({
+      removed: false,
+      expiryDate: { $lte: in14Days },
+    }).sort({ expiryDate: 1 }).toArray();
+    if (expiringItems.length === 0) {
+      return res.json({ message: 'No expiring items found', sent: 0 });
+    }
+    // ── Look up which section belongs to which site ──
+    const sectionIds = [...new Set(expiringItems.map((i) => i.sectionId))];
+    const sections   = await req.db.collection('sections').find({
+      _id: { $in: sectionIds.map((id) => new ObjectId(id)) },
+    }).toArray();
+    const sectionMap = {};
+    sections.forEach((s) => { sectionMap[s._id.toString()] = s; });
+    // ── Group items by siteId ──
+    const siteGroups = {};
+    expiringItems.forEach((item) => {
+      const section = sectionMap[item.sectionId];
+      if (!section) return;
+      const sid = section.siteId;
+      if (!siteGroups[sid]) siteGroups[sid] = [];
+      siteGroups[sid].push({
+        ...item,
+        sectionName: section.name || section.title || 'Unknown',
+      });
+    });
+    // ── Determine time-of-day label ──
+    const hour = now.getUTCHours(); // adjust if you store timezone
+    let timeLabel = 'Reminder';
+    if (hour >= 8  && hour < 12)  timeLabel = 'Morning Check';
+    if (hour >= 12 && hour < 17)  timeLabel = 'Afternoon Check';
+    if (hour >= 17 && hour < 22)  timeLabel = 'Evening Check';
+    if (hour >= 0  && hour < 6)   timeLabel = 'Overnight Alert';
+    // ── Send notifications for each site ──
+    let totalSent   = 0;
+    let totalFailed = 0;
+    const staleEndpoints = [];
+    for (const [siteId, items] of Object.entries(siteGroups)) {
+      const subscriptions = await req.db.collection('push_subscriptions')
+        .find({ siteId, active: true })
+        .toArray();
+      if (subscriptions.length === 0) continue;
+      // Categorize items
+      const alreadyExpired = items.filter((i) => new Date(i.expiryDate) <= now);
+      const expiringSoon   = items.filter((i) => new Date(i.expiryDate) > now);
+      // Build per-section summary for the body
+      const sectionSummary = {};
+      items.forEach((i) => {
+        if (!sectionSummary[i.sectionName]) sectionSummary[i.sectionName] = 0;
+        sectionSummary[i.sectionName]++;
+      });
+      const summaryLines = Object.entries(sectionSummary)
+        .map(([name, count]) => `  • ${name}: ${count}`)
+        .join('\n');
+      const bodyText = [
+        alreadyExpired.length > 0
+          ? `🔴 ${alreadyExpired.length} EXPIRED`
+          : null,
+        expiringSoon.length > 0
+          ? `🟡 ${expiringSoon.length} expiring within 14 days`
+          : null,
+        '',
+        summaryLines,
+        '',
+        'Tap to review and mark items as removed.',
+      ].filter(Boolean).join('\n');
+      const payload = JSON.stringify({
+        title: `⚠️ ${timeLabel}: ${items.length} item(s) need attention`,
+        body:  bodyText,
+        icon:  '/icons/icon-192.png',
+        badge: '/icons/badge-72.png',
+        url:   `/dashboard?siteId=${siteId}`,
+        tag:   `expiry-${siteId}-${now.toISOString().slice(0, 13)}`, // 1 per hour per site (deduplication)
+        timestamp: Date.now(),
+        data: {
+          siteId,
+          expiredCount:  alreadyExpired.length,
+          expiringCount: expiringSoon.length,
+        },
+      });
+      // Send to every subscribed device for this site
+      for (const sub of subscriptions) {
+        try {
+          await webpush.sendNotification(sub.subscription, payload);
+          totalSent++;
+        } catch (err) {
+          totalFailed++;
+          // 410 Gone or 404 = subscription is no longer valid
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            staleEndpoints.push(sub._id);
+          } else {
+            console.error('Push failed:', err.statusCode, err.message);
+          }
+        }
+      }
+    }
+    // ── Clean up stale subscriptions ──
+    if (staleEndpoints.length > 0) {
+      await req.db.collection('push_subscriptions').deleteMany({
+        _id: { $in: staleEndpoints },
+      });
+    }
+    // ── Log this cron run ──
+    await req.db.collection('notification_logs').insertOne({
+      ranAt:          now,
+      itemsFound:     expiringItems.length,
+      notificationsSent:   totalSent,
+      notificationsFailed: totalFailed,
+      staleRemoved:   staleEndpoints.length,
+    });
+    res.json({
+      message: 'Cron complete',
+      itemsFound:     expiringItems.length,
+      sent:           totalSent,
+      failed:         totalFailed,
+      staleRemoved:   staleEndpoints.length,
+    });
+  } catch (e) {
+    console.error('Cron error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+// ═════════════════════════════════════════════════════════
+//  MANUAL TEST: Send a test notification to verify setup
+// ═════════════════════════════════════════════════════════
+app.post('/api/push/test', async (req, res) => {
+  try {
+    const { siteId } = req.body;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const subs = await req.db.collection('push_subscriptions')
+      .find({ siteId, active: true }).toArray();
+    if (subs.length === 0) {
+      return res.json({ message: 'No subscriptions for this site', sent: 0 });
+    }
+    const payload = JSON.stringify({
+      title: '🔔 Test Notification',
+      body:  'Push notifications are working! Expiry alerts will appear here.',
+      icon:  '/icons/icon-192.png',
+      badge: '/icons/badge-72.png',
+      url:   `/dashboard?siteId=${siteId}`,
+      tag:   'test-notification',
+    });
+    let sent = 0;
+    for (const sub of subs) {
+      try {
+        await webpush.sendNotification(sub.subscription, payload);
+        sent++;
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await req.db.collection('push_subscriptions').deleteOne({ _id: sub._id });
+        }
+      }
+    }
+    res.json({ message: 'Test sent', sent, totalSubscriptions: subs.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Fallback (SPA) ──────────────────────────────────────
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
