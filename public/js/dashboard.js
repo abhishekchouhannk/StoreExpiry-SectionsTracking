@@ -16,6 +16,87 @@ function setActiveSite(siteId) {
 function initSiteSwitcher() {
   const active = getActiveSite();
 
+  function isValidEmployeeName(raw) {
+  if (!raw) return false;
+  const trimmed = String(raw).trim();
+  if (trimmed.length < 2) return false;
+  if (/^[-_.\s]+$/.test(trimmed)) return false;
+  const INVALID = new Set([
+    'staff', 'n a', 'na', 'none', 'nil', 'test', 'employee',
+    'unknown', 'anonymous', 'tbd', 'x', 'xx', 'xxx'
+  ]);
+  const stripped = trimmed.toLowerCase().replace(/[^a-z]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (INVALID.has(stripped)) return false;
+  return true;
+}
+
+
+  // employee data handler
+  async function fetchEmployees(siteId) {
+  const res = await fetch(`/api/employees?siteId=${siteId}`);
+  if (!res.ok) throw new Error('Failed to load employees');
+  return res.json();
+}
+async function createEmployee(payload) {
+  const res = await fetch('/api/employees', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to save');
+  return data;
+}
+async function deleteEmployee(id) {
+  const res = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete');
+  return res.json();
+}
+async function loadEmployeeList() {
+  const wrap = document.getElementById('emp-list');
+  wrap.innerHTML = '<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm"></div></div>';
+  try {
+    const list = await fetchEmployees(getActiveSite());
+    if (!list.length) {
+      wrap.innerHTML = '<p class="text-muted small mb-0">No employees added yet.</p>';
+      return;
+    }
+    wrap.innerHTML = list.map(emp => `
+      <div class="emp-row">
+        <div class="emp-row-info">
+          <div class="emp-row-name">${emp.canonicalName}</div>
+          <div class="emp-row-aliases">matches: ${(emp.aliases || []).join(', ')}</div>
+        </div>
+        <button class="emp-row-del" data-id="${emp._id}"><i class="bi bi-trash"></i></button>
+      </div>
+    `).join('');
+    wrap.querySelectorAll('.emp-row-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remove this employee?')) return;
+        await deleteEmployee(btn.dataset.id);
+        loadEmployeeList();
+        loadMostActiveEmployee();
+      });
+    });
+  } catch (e) {
+    wrap.innerHTML = `<p class="text-danger small">${e.message}</p>`;
+  }
+}
+document.getElementById('modal-employees').addEventListener('show.bs.modal', loadEmployeeList);
+document.getElementById('f-emp-save').addEventListener('click', async () => {
+  const nameInput  = document.getElementById('f-emp-name');
+  const aliasInput = document.getElementById('f-emp-aliases');
+  const name = nameInput.value.trim();
+  if (!isValidEmployeeName(name)) { alert('Please enter a valid employee name.'); return; }
+  const extraAliases = aliasInput.value.split(',').map(s => s.trim()).filter(Boolean);
+  try {
+    const res = await createEmployee({ siteId: getActiveSite(), canonicalName: name, extraAliases });
+    if (res.warnings?.length) alert(res.warnings.join('\n'));
+    nameInput.value = '';
+    aliasInput.value = '';
+    loadEmployeeList();
+    loadMostActiveEmployee();
+  } catch (e) { alert(e.message); }
+});
+
   // ── Pill switcher (tablet+) ──
   document.querySelectorAll('.site-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.site === active);
@@ -508,12 +589,15 @@ async function loadHealthAndPlanogramTiles() {
 }
 // ── Most Active Employee badge ──
 async function loadMostActiveEmployee() {
-  const badge  = document.getElementById('mae-badge');
-  const nameEl = document.getElementById('mae-name');
+  const badge   = document.getElementById('mae-badge');
+  const nameEl  = document.getElementById('mae-name');
+  const countEl = document.getElementById('mae-count');
   try {
-    const data = await api(`/api/dashboard/most-active-employee?siteId=${getActiveSite()}`);
+    const res  = await fetch(`/api/dashboard/most-active-employee?siteId=${getActiveSite()}`);
+    const data = await res.json();
     if (data.topEmployee && data.topEmployee.count > 0) {
-      nameEl.textContent = `${data.topEmployee.name} (${data.topEmployee.count})`;
+      nameEl.textContent  = data.topEmployee.name;
+      countEl.textContent = `· ${data.topEmployee.count} logs`;
       badge.classList.add('show');
     } else {
       badge.classList.remove('show');

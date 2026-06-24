@@ -494,6 +494,23 @@
         color: var(--text);
       }
 
+      .emp-hint { font-size: .78rem; color: var(--muted); line-height: 1.5; margin-bottom: 1rem; }
+.emp-divider { border-color: var(--border); margin: 1rem 0; }
+.emp-list { display: flex; flex-direction: column; gap: .5rem; max-height: 220px; overflow-y: auto; }
+.emp-row {
+  display: flex; align-items: center; gap: .6rem;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: .55rem .75rem;
+}
+.emp-row-info { flex: 1; min-width: 0; }
+.emp-row-name { font-weight: 600; font-size: .84rem; }
+.emp-row-aliases {
+  font-size: .7rem; color: var(--muted); margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.emp-row-del { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 5px; flex-shrink: 0; }
+.emp-row-del:hover { color: #d1453b; }
+
       /* ── New tile colours ── */
 .t-purple .val { color: #7c3aed; }
 .t-health .val { color: #c47a1a; }               /* default / loading */
@@ -519,25 +536,32 @@
 .health-stat { font-size: .68rem; font-weight: 600; }
 /* ── Page header + Most Active Employee badge ── */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: .6rem;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  flex-wrap: wrap; gap: .6rem;
 }
+.mae-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .mae-badge {
   display: none;
   align-items: center; gap: 6px;
-  background: linear-gradient(135deg, #fff7e6, #ffffff);
-  border: 1.5px solid #f3d48a;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
   border-radius: 999px;
   padding: 6px 14px;
-  font-size: .76rem; font-weight: 600; color: #92400e;
-  white-space: nowrap; flex-shrink: 0;
+  font-size: .76rem;
+  white-space: nowrap;
 }
 .mae-badge.show { display: inline-flex; }
-.mae-badge i { color: #c47a1a; }
-.mae-badge strong { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--text); }
+.mae-badge i { font-size: .78rem; color: #c47a1a; }
+.mae-label { color: var(--muted); font-weight: 500; }
+.mae-name  { color: var(--text); font-weight: 600; }
+.mae-count { color: var(--muted); font-size: .68rem; }
+.mae-manage-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--muted); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: all .15s;
+}
+.mae-manage-btn:hover { border-color: var(--text); color: var(--text); }
 @media (max-width: 600px) {
   .page-header { align-items: flex-start; }
   .mae-badge { font-size: .7rem; padding: 5px 11px; }
@@ -901,9 +925,16 @@
     <h1 id="page-title">Sections</h1>
     <p id="page-subtitle">Select a section to manage tasks.</p>
   </div>
-  <div class="mae-badge" id="mae-badge">
-    <i class="bi bi-trophy-fill"></i>
-    <span>Most Active: <strong id="mae-name">—</strong></span>
+  <div class="mae-wrap">
+    <div class="mae-badge" id="mae-badge">
+      <i class="bi bi-award"></i>
+      <span class="mae-label">Most active</span>
+      <span class="mae-name" id="mae-name">—</span>
+      <span class="mae-count" id="mae-count"></span>
+    </div>
+    <button class="mae-manage-btn" data-bs-toggle="modal" data-bs-target="#modal-employees" title="Manage employees">
+      <i class="bi bi-gear"></i>
+    </button>
   </div>
 </div>
 
@@ -1104,6 +1135,40 @@
       </div>
       <div class="modal-body" id="health-detail-body">
         <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal: Manage Employees ═══ -->
+<div class="modal fade" id="modal-employees" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-people me-2"></i>Manage Employees</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="emp-hint">
+          Add staff here so the app recognises their different name variants
+          (e.g. "Satveer Kaur", "Satveer", "SK") as the same person. First name
+          and initials are detected automatically.
+        </p>
+        <div id="emp-list" class="emp-list">
+          <div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm"></div></div>
+        </div>
+        <hr class="emp-divider"/>
+        <div class="mb-2">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-control" id="f-emp-name" placeholder="e.g. Satveer Kaur"/>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Other names they sometimes use (optional)</label>
+          <input type="text" class="form-control" id="f-emp-aliases" placeholder="e.g. Sat, Vee — comma separated"/>
+        </div>
+        <button class="btn-solid" id="f-emp-save" style="width:100%;">
+          <i class="bi bi-plus-lg me-1"></i>Add Employee
+        </button>
       </div>
     </div>
   </div>

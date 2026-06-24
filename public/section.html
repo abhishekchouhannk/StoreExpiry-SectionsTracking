@@ -298,6 +298,8 @@
     .site-dropdown-item:hover { background: var(--bg); color: var(--text); }
     .site-dropdown-item.active { color: var(--text); font-weight: 800; }
     .site-dropdown-item.active::before { content: '✓ '; }
+    .field-error { font-size: .72rem; color: #d1453b; margin: .3rem 0 0; display: none; }
+.form-control.is-invalid { border-color: #d1453b !important; }
     @media (max-width: 600px) {
       .site-switcher { display: none; }
       .site-dropdown-wrap { display: block; }
@@ -405,7 +407,7 @@
         <div class="modal-body">
           <div class="mb-3"><label class="form-label">Week</label><select class="form-select" id="f-clean-week"></select></div>
           <div class="mb-3"><label class="form-label">Date Cleaned</label><input type="date" class="form-control" id="f-clean-date"/></div>
-          <div class="mb-3"><label class="form-label">Cleaned By</label><input type="text" class="form-control" id="f-clean-by" placeholder="Staff name"/></div>
+          <div class="mb-3"><label class="form-label">Cleaned By</label><input type="text" class="form-control" id="f-clean-by" placeholder="Staff name"/><p class="field-error" id="err-clean-by"></p></div>
           <div class="mb-3"><label class="form-label">Comments</label><textarea class="form-control" rows="2" id="f-clean-comments" placeholder="Notes…"></textarea></div>
         </div>
         <div class="modal-footer">
@@ -426,7 +428,7 @@
         <div class="modal-body">
           <div class="mb-3"><label class="form-label">Week</label><select class="form-select" id="f-plano-week"></select></div>
           <div class="mb-3"><label class="form-label">Date Checked</label><input type="date" class="form-control" id="f-plano-date"/></div>
-          <div class="mb-3"><label class="form-label">Checked By</label><input type="text" class="form-control" id="f-plano-by" placeholder="Staff name"/></div>
+          <div class="mb-3"><label class="form-label">Checked By</label><input type="text" class="form-control" id="f-plano-by" placeholder="Staff name"/><p class="field-error" id="err-plano-by"></p></div>
           <div class="mb-3"><label class="form-label">Comments</label><textarea class="form-control" rows="2" id="f-plano-comments" placeholder="Issues noted…"></textarea></div>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="f-plano-fixed"/>
@@ -460,7 +462,7 @@
               <button type="button" id="btn-add-exp-date" style="background:var(--text);color:#fff;border:none;border-radius:9px;padding:.4rem .85rem;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">+ Add</button>
             </div>
           </div>
-          <div class="mb-3"><label class="form-label">Sign Off By</label><input type="text" class="form-control" id="f-exp-sign" placeholder="Staff name"/></div>
+          <div class="mb-3"><label class="form-label">Sign Off By</label><input type="text" class="form-control" id="f-exp-sign" placeholder="Staff name"/><p class="field-error" id="err-exp-sign"></p></div>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="f-exp-removed"/>
             <label class="form-check-label" for="f-exp-removed">Item has been removed from shelf</label>

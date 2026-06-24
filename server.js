@@ -297,21 +297,26 @@ app.get('/api/dashboard/most-active-employee', async (req, res) => {
     if (!siteId) return res.status(400).json({ error: 'siteId required' });
     const sections   = await req.db.collection('sections').find({ siteId }).toArray();
     const sectionIds = sections.map(s => String(s._id));
+    const employees  = await req.db.collection('employees').find({ siteId }).toArray();
+    const aliasMap = {};
+    employees.forEach(emp => (emp.aliases || []).forEach(a => { aliasMap[a] = emp.canonicalName; }));
     const [cleanDocs, planoDocs, expiryDocs] = await Promise.all([
-      req.db.collection('cleaning_logs')
-        .find({ sectionId: { $in: sectionIds } }).project({ cleanedBy: 1 }).toArray(),
-      req.db.collection('planogram_checks')
-        .find({ sectionId: { $in: sectionIds } }).project({ checkedBy: 1 }).toArray(),
-      req.db.collection('expiry_logs')
-        .find({ sectionId: { $in: sectionIds } }).project({ signOffBy: 1 }).toArray(),
+      req.db.collection('cleaning_logs').find({ sectionId: { $in: sectionIds } }).project({ cleanedBy: 1 }).toArray(),
+      req.db.collection('planogram_checks').find({ sectionId: { $in: sectionIds } }).project({ checkedBy: 1 }).toArray(),
+      req.db.collection('expiry_logs').find({ sectionId: { $in: sectionIds } }).project({ signOffBy: 1 }).toArray(),
     ]);
     const counts = {};
+    const resolve = (raw) => {
+      if (!isValidEmployeeName(raw)) return null;
+      const norm = normalizeName(raw);
+      return aliasMap[norm] || raw.trim(); // unregistered name → counted on its own
+    };
     const tally = (arr, field) => {
       arr.forEach(d => {
-        const raw = (d[field] || '').trim();
-        if (!raw) return;
-        const key = raw.toLowerCase();
-        if (!counts[key]) counts[key] = { name: raw, count: 0 };
+        const canonical = resolve(d[field]);
+        if (!canonical) return;
+        const key = canonical.toLowerCase();
+        if (!counts[key]) counts[key] = { name: canonical, count: 0 };
         counts[key].count++;
       });
     };
@@ -340,6 +345,9 @@ app.post('/api/cleaning-logs', async (req, res) => {
     const exists = await req.db.collection('cleaning_logs')
       .findOne({ sectionId, year: +year, month: +month, week: +week });
     if (exists) return res.status(400).json({ error: 'Entry already exists for this week' });
+    if (!isValidEmployeeName(cleanedBy)) {
+  return res.status(400).json({ error: 'Please enter a valid staff name (not blank, "-", or "Staff").' });
+}
     const doc = { sectionId, year: +year, month: +month, week: +week, dateCleaned: new Date(dateCleaned), cleanedBy: cleanedBy || '', comments: comments || '', createdAt: new Date() };
     const r   = await req.db.collection('cleaning_logs').insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
@@ -370,6 +378,9 @@ app.post('/api/planogram-checks', async (req, res) => {
     const exists = await req.db.collection('planogram_checks')
       .findOne({ sectionId, year: +year, month: +month, week: +week });
     if (exists) return res.status(400).json({ error: 'Entry already exists for this week' });
+    if (!isValidEmployeeName(checkedBy)) {
+  return res.status(400).json({ error: 'Please enter a valid staff name (not blank, "-", or "Staff").' });
+}
     const doc = { sectionId, year: +year, month: +month, week: +week, dateChecked: new Date(dateChecked), checkedBy: checkedBy || '', comments: comments || '', planogramFixed: !!planogramFixed, createdAt: new Date() };
     const r   = await req.db.collection('planogram_checks').insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
@@ -399,6 +410,9 @@ app.get('/api/expiry-logs', async (req, res) => {
 app.post('/api/expiry-logs', async (req, res) => {
   try {
     const { sectionId, date, item, expiryDate, signOffBy, removed } = req.body;
+    if (!isValidEmployeeName(signOffBy)) {
+  return res.status(400).json({ error: 'Please enter a valid staff name (not blank, "-", or "Staff").' });
+}
     const doc = { sectionId, date: new Date(date), item: item || '', expiryDate: expiryDate ? new Date(expiryDate) : null, removed: !!removed, signOffBy: signOffBy || '', createdAt: new Date() };
     const r   = await req.db.collection('expiry_logs').insertOne(doc);
     res.json({ ...doc, _id: r.insertedId });
@@ -1149,6 +1163,99 @@ app.get('/api/section-activity', async (req, res) => {
       planogram: { last: planoArr[0]  || null, total: planoTotal },
       expiry:    { last: expiryArr[0] || null, total: expiryTotal },
     });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═════════════════════════════════════════════════════════
+//  EMPLOYEE NAME VALIDATION + REGISTRY
+// ═════════════════════════════════════════════════════════
+const INVALID_NAME_TOKENS = new Set([
+  'staff', 'n a', 'na', 'none', 'nil', 'test', 'employee',
+  'unknown', 'anonymous', 'tbd', 'x', 'xx', 'xxx'
+]);
+function isValidEmployeeName(raw) {
+  if (!raw) return false;
+  const trimmed = String(raw).trim();
+  if (trimmed.length < 2) return false;
+  if (/^[-_.\s]+$/.test(trimmed)) return false;                 // just dashes/dots/spaces
+  const stripped = trimmed.toLowerCase().replace(/[^a-z]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (INVALID_NAME_TOKENS.has(stripped)) return false;
+  return true;
+}
+function normalizeName(s) {
+  return String(s).trim().toLowerCase().replace(/\s+/g, ' ');
+}
+function buildAutoAliases(canonicalName) {
+  const full  = normalizeName(canonicalName);
+  const parts = full.split(' ').filter(Boolean);
+  const out   = new Set([full]);
+  if (parts.length)     out.add(parts[0]);                       // first name
+  if (parts.length > 1) out.add(parts.map(p => p[0]).join(''));  // initials
+  return Array.from(out);
+}
+// ── CRUD ──
+app.get('/api/employees', async (req, res) => {
+  try {
+    const { siteId } = req.query;
+    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    const list = await req.db.collection('employees').find({ siteId }).sort({ canonicalName: 1 }).toArray();
+    res.json(list);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/employees', async (req, res) => {
+  try {
+    const { siteId, canonicalName, extraAliases } = req.body;
+    if (!siteId || !canonicalName) return res.status(400).json({ error: 'siteId and canonicalName required' });
+    if (!isValidEmployeeName(canonicalName)) return res.status(400).json({ error: 'Please enter a valid employee name' });
+    const others = await req.db.collection('employees').find({ siteId }).toArray();
+    const taken = new Set();
+    others.forEach(o => (o.aliases || []).forEach(a => taken.add(a)));
+    const proposed = new Set([
+      ...buildAutoAliases(canonicalName),
+      ...(extraAliases || []).map(normalizeName).filter(Boolean),
+    ]);
+    const warnings = [];
+    const finalAliases = [];
+    proposed.forEach(a => {
+      if (taken.has(a)) warnings.push(`Alias "${a}" already used by another employee — skipped.`);
+      else finalAliases.push(a);
+    });
+    const doc = { siteId, canonicalName: canonicalName.trim(), aliases: finalAliases, createdAt: new Date() };
+    const r = await req.db.collection('employees').insertOne(doc);
+    res.json({ ...doc, _id: r.insertedId, warnings });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/employees/:id', async (req, res) => {
+  try {
+    const { canonicalName, extraAliases } = req.body;
+    const existing = await req.db.collection('employees').findOne({ _id: new ObjectId(req.params.id) });
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (!isValidEmployeeName(canonicalName)) return res.status(400).json({ error: 'Please enter a valid employee name' });
+    const others = await req.db.collection('employees')
+      .find({ siteId: existing.siteId, _id: { $ne: existing._id } }).toArray();
+    const taken = new Set();
+    others.forEach(o => (o.aliases || []).forEach(a => taken.add(a)));
+    const proposed = new Set([
+      ...buildAutoAliases(canonicalName),
+      ...(extraAliases || []).map(normalizeName).filter(Boolean),
+    ]);
+    const warnings = [];
+    const finalAliases = [];
+    proposed.forEach(a => {
+      if (taken.has(a)) warnings.push(`Alias "${a}" already used by another employee — skipped.`);
+      else finalAliases.push(a);
+    });
+    await req.db.collection('employees').updateOne(
+      { _id: existing._id },
+      { $set: { canonicalName: canonicalName.trim(), aliases: finalAliases } }
+    );
+    res.json({ success: true, warnings });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/employees/:id', async (req, res) => {
+  try {
+    await req.db.collection('employees').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

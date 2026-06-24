@@ -3,6 +3,34 @@ const SITES = { C01158: '96 Shell', C01288: 'Riverside Shell', C09066: '72 Shell
 function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
 function setActiveSite(id) { localStorage.setItem('activeSiteId', id); }
 
+
+const INVALID_NAME_TOKENS = new Set([
+  'staff', 'n a', 'na', 'none', 'nil', 'test', 'employee',
+  'unknown', 'anonymous', 'tbd', 'x', 'xx', 'xxx'
+]);
+function isValidEmployeeName(raw) {
+  if (!raw) return false;
+  const trimmed = String(raw).trim();
+  if (trimmed.length < 2) return false;
+  if (/^[-_.\s]+$/.test(trimmed)) return false;
+  const stripped = trimmed.toLowerCase().replace(/[^a-z]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (INVALID_NAME_TOKENS.has(stripped)) return false;
+  return true;
+}
+function validateNameField(inputId, errorId) {
+  const input = document.getElementById(inputId);
+  const error = document.getElementById(errorId);
+  if (!isValidEmployeeName(input.value)) {
+    input.classList.add('is-invalid');
+    error.textContent = 'Enter a real name — not blank, "-", or "Staff".';
+    error.style.display = 'block';
+    return false;
+  }
+  input.classList.remove('is-invalid');
+  error.style.display = 'none';
+  return true;
+}
+
 /* ── Site management ─────────────────────────────────── */
 
 function getActiveSite() { return localStorage.getItem('activeSiteId') || 'C01158'; }
@@ -344,6 +372,7 @@ function wireFormHandlers() {
     const week = +document.getElementById('f-clean-week').value;
     const date = document.getElementById('f-clean-date').value;
     const by   = document.getElementById('f-clean-by').value.trim();
+    if (!validateNameField('f-clean-by', 'err-clean-by')) return;
     const comments = document.getElementById('f-clean-comments').value.trim();
     if (!week || !date) return alert('Week and date are required.');
     try {
@@ -363,6 +392,7 @@ function wireFormHandlers() {
     const comments = document.getElementById('f-plano-comments').value.trim();
     const fixed    = document.getElementById('f-plano-fixed').checked;
     if (!week || !date) return alert('Week and date are required.');
+    if (!validateNameField('f-plano-by', 'err-plano-by')) return;
     try {
       await api('/api/planogram-checks', { method: 'POST', body: { sectionId, year: viewYear, month: viewMonth, week, dateChecked: date, checkedBy: by, comments, planogramFixed: fixed } });
       bootstrap.Modal.getInstance(document.getElementById('modal-planogram')).hide();
@@ -423,6 +453,7 @@ function wireFormHandlers() {
     const sign    = document.getElementById('f-exp-sign').value.trim();
     const removed = document.getElementById('f-exp-removed').checked;
     if (!item) return alert('Item name is required.');
+    if (!validateNameField('f-exp-sign', 'err-exp-sign')) return;
     if (selectedExpiryDates.length === 0) return alert('Add at least one expiry date.');
     try {
       // Fire one API call per expiry date
