@@ -35,4 +35,16 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+router.patch('/:id/planogram-link', async (req, res) => {
+  try {
+    const { planogramFileId } = req.body;
+    if (!planogramFileId) return res.status(400).json({ error: 'planogramFileId required' });
+    await req.db.collection('sections').updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { planogramFileId, planogramUpdatedAt: new Date() } }
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 module.exports = router;

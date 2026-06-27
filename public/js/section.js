@@ -146,6 +146,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('sec-title').textContent    = sec.name;
     document.getElementById('sec-location').textContent = sec.location || '';
     document.title = `${sec.name} — Store Manager`;
+
+    window.setCurrentSectionForPlanogram(sec);
   } catch { return window.location = '/dashboard.html'; }
 
   buildMonthSelectors();

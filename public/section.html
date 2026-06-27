@@ -309,6 +309,8 @@
       .btn-activity span { display: none; }         /* icon-only on tiny screens */
       .btn-activity { padding: 5px 9px; gap: 0; }
     }
+    .plano-viewer-bar { margin-top: 14px; }
+#modal-view-planogram .modal-header { flex-wrap: wrap; gap: .5rem; }
   </style>
 </head>
 <body>
@@ -364,6 +366,12 @@
         </div>
       </div>
       <div class="week-grid" id="plano-weeks"><div class="empty-state">Loading…</div></div>
+        <!-- at bottom of Planogram tab, after week-grid -->
+<div class="plano-viewer-bar">
+  <button class="btn-ghost" id="btn-view-planogram" style="width:100%;margin-top:10px;">
+    <i class="bi bi-file-earmark-pdf me-1"></i> View Planogram
+  </button>
+</div>
     </div>
     <!-- EXPIRY -->
     <div class="tab-pane-custom" id="tab-expiry">
@@ -442,6 +450,33 @@
       </div>
     </div>
   </div>
+  <!-- ═══ Modal: View Planogram ═══ -->
+<div class="modal fade" id="modal-view-planogram" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" style="max-width:900px;">
+    <div class="modal-content" style="height:85vh;">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Planogram — <span id="plano-view-title"></span></h5>
+        <div class="d-flex align-items-center gap-2">
+          <a id="plano-open-new-tab" href="#" target="_blank" class="btn-ghost" style="text-decoration:none;font-size:.75rem;padding:.3rem .7rem;">
+            <i class="bi bi-box-arrow-up-right"></i> Open in Drive
+          </a>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0" style="flex:1;overflow:hidden;">
+        <div id="plano-no-file" class="empty-state" style="display:none;padding-top:3rem;">
+          <p>No planogram file linked to this section yet.</p>
+          <div style="max-width:420px;margin:1rem auto;text-align:left;">
+            <label class="form-label">Paste Google Drive Link</label>
+            <input type="text" class="form-control" id="plano-link-input" placeholder="https://drive.google.com/file/d/.../view"/>
+            <button class="btn-solid mt-2" id="plano-link-save" style="width:100%;">Save Link</button>
+          </div>
+        </div>
+        <iframe id="plano-iframe" src="" style="width:100%;height:100%;border:none;display:none;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
   <!-- ═══ Modal: Flag Expiry ═══ -->
   <div class="modal fade" id="modal-expiry" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -627,6 +662,76 @@
       } catch { /* silent */ }
     })();
   })();
+  </script>
+  <script>
+    (function () {
+  const QS  = new URLSearchParams(window.location.search);
+  const SID = QS.get('id');
+  let currentSection = null; // populate this from your existing section-fetch logic
+  function extractDriveFileId(url) {
+    // Handles /file/d/FILE_ID/... and open?id=FILE_ID and uc?id=FILE_ID
+    const patterns = [
+      /\/file\/d\/([a-zA-Z0-9_-]+)/,
+      /[?&]id=([a-zA-Z0-9_-]+)/
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  }
+  async function openPlanogramViewer() {
+    const modalEl   = document.getElementById('modal-view-planogram');
+    const iframe    = document.getElementById('plano-iframe');
+    const noFileBox = document.getElementById('plano-no-file');
+    const openTab   = document.getElementById('plano-open-new-tab');
+    const titleEl   = document.getElementById('plano-view-title');
+    titleEl.textContent = currentSection?.name || '';
+    if (currentSection?.planogramFileId) {
+      iframe.src = `https://drive.google.com/file/d/${currentSection.planogramFileId}/preview`;
+      iframe.style.display = 'block';
+      noFileBox.style.display = 'none';
+      openTab.href = `https://drive.google.com/file/d/${currentSection.planogramFileId}/view`;
+      openTab.style.display = 'inline-flex';
+    } else {
+      iframe.style.display = 'none';
+      iframe.src = '';
+      noFileBox.style.display = 'block';
+      openTab.style.display = 'none';
+    }
+    new bootstrap.Modal(modalEl).show();
+  }
+  document.getElementById('btn-view-planogram')
+    .addEventListener('click', openPlanogramViewer);
+  document.getElementById('plano-link-save')
+    .addEventListener('click', async () => {
+      const val = document.getElementById('plano-link-input').value.trim();
+      const fileId = extractDriveFileId(val) || (val.length > 15 && !val.includes('/') ? val : null);
+      if (!fileId) {
+        alert('Could not detect a valid Google Drive file link/ID.');
+        return;
+      }
+      try {
+        const res = await fetch(`/api/sections/${SID}/planogram-link`, {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ planogramFileId: fileId })
+});
+        if (!res.ok) throw new Error();
+        currentSection.planogramFileId = fileId;
+        openPlanogramViewer(); // re-render with the iframe now
+      } catch {
+        alert('Failed to save planogram link. Try again.');
+      }
+    });
+  // Clear iframe src when modal closes to stop it loading in background
+  document.getElementById('modal-view-planogram')
+    .addEventListener('hidden.bs.modal', () => {
+      document.getElementById('plano-iframe').src = '';
+    });
+  // Expose a hook so your existing section-load code can set currentSection
+  window.setCurrentSectionForPlanogram = (sec) => { currentSection = sec; };
+})();
   </script>
 </body>
 </html>
