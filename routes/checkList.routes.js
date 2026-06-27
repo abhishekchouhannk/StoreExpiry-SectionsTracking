@@ -117,3 +117,5 @@ weeklyRouter.delete('/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 module.exports = { shiftRouter, dailyRouter, weeklyRouter };
+
+// fixed filename causing route to crash
