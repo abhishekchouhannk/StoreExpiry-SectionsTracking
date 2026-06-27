@@ -704,26 +704,38 @@
   document.getElementById('btn-view-planogram')
     .addEventListener('click', openPlanogramViewer);
   document.getElementById('plano-link-save')
-    .addEventListener('click', async () => {
-      const val = document.getElementById('plano-link-input').value.trim();
-      const fileId = extractDriveFileId(val) || (val.length > 15 && !val.includes('/') ? val : null);
-      if (!fileId) {
-        alert('Could not detect a valid Google Drive file link/ID.');
-        return;
-      }
-      try {
-        const res = await fetch(`/api/sections/${SID}/planogram-link`, {
-  method: 'PATCH',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ planogramFileId: fileId })
-});
-        if (!res.ok) throw new Error();
-        currentSection.planogramFileId = fileId;
-        openPlanogramViewer(); // re-render with the iframe now
-      } catch {
-        alert('Failed to save planogram link. Try again.');
-      }
-    });
+  .addEventListener('click', async () => {
+    const val = document.getElementById('plano-link-input').value.trim();
+    const fileId = extractDriveFileId(val) || (val.length > 15 && !val.includes('/') ? val : null);
+    if (!fileId) {
+      alert('Could not detect a valid Google Drive file link/ID.');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/sections/${SID}/planogram-link`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planogramFileId: fileId })
+      });
+      if (!res.ok) throw new Error();
+      currentSection.planogramFileId = fileId;
+
+      // ✅ Just swap the content inside the already-open modal
+      //    No need to close and reopen anything
+      const iframe    = document.getElementById('plano-iframe');
+      const noFileBox = document.getElementById('plano-no-file');
+      const openTab   = document.getElementById('plano-open-new-tab');
+
+      iframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
+      iframe.style.display = 'block';
+      noFileBox.style.display = 'none';
+      openTab.href = `https://drive.google.com/file/d/${fileId}/view`;
+      openTab.style.display = 'inline-flex';
+
+    } catch {
+      alert('Failed to save planogram link. Try again.');
+    }
+  });
   // Clear iframe src when modal closes to stop it loading in background
   document.getElementById('modal-view-planogram')
     .addEventListener('hidden.bs.modal', () => {
