@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { shiftRouter, dailyRouter, weeklyRouter } = require('./checklist.routes');
+const { shiftRouter, dailyRouter, weeklyRouter } = require('./checkList.routes');
 router.use('/sites', require('./sites.routes'));
 router.use('/sections', require('./sections.routes'));
 router.use('/dashboard', require('./dashboard.routes'));
