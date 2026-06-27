@@ -334,6 +334,10 @@
 .plano-viewer .modal-body { background: #525659; }
 #plano-frame { width: 100%; height: 100%; border: 0; display: block; }
 .plano-viewer .btn-ghost { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+  .plano-ref-text { display: flex; flex-direction: column; min-width: 0; }
+.plano-ref-text span { font-size: .84rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plano-ref-text small { font-size: .7rem; color: var(--muted); }
+  
   </style>
 </head>
 <body>
@@ -389,20 +393,22 @@
     </div>
   </div>
   <div class="week-grid" id="plano-weeks"><div class="empty-state">Loading…</div></div>
-  <!-- Planogram reference footer -->
+<!-- Planogram reference footer -->
 <div class="plano-ref-bar" id="plano-ref-bar">
   <div class="plano-ref-info">
     <i class="bi bi-file-earmark-pdf"></i>
-    <span id="plano-ref-label">No planogram uploaded yet</span>
+    <div class="plano-ref-text">
+      <span id="plano-ref-label">No planogram file uploaded yet</span>
+      <small id="plano-ref-sub"></small>
+    </div>
   </div>
   <div class="plano-ref-actions">
-        <button class="btn-ghost" id="btn-upload-plano">
-      <i class="bi bi-upload"></i> <span id="btn-upload-plano-txt">Upload file</span>
-    </button>
     <button class="btn-solid" id="btn-view-plano" disabled>
       <i class="bi bi-eye me-1"></i>View Planogram
     </button>
-
+    <button class="btn-ghost" id="btn-set-plano">
+      <i class="bi bi-upload"></i> <span id="btn-set-plano-txt">Upload File</span>
+    </button>
   </div>
 </div>
 </div>
@@ -484,7 +490,7 @@
     </div>
   </div>
 
-<!-- ═══ Modal: View Planogram (fullscreen) ═══ -->
+<!-- Modal: View Planogram (unchanged from before) -->
 <div class="modal fade" id="modal-view-plano" tabindex="-1">
   <div class="modal-dialog modal-fullscreen">
     <div class="modal-content plano-viewer">
@@ -492,7 +498,7 @@
         <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Planogram</h5>
         <div class="d-flex align-items-center gap-2">
           <a href="#" target="_blank" rel="noopener" class="btn-ghost" id="plano-open-new">
-            <i class="bi bi-box-arrow-up-right"></i> Open in new tab
+            <i class="bi bi-box-arrow-up-right"></i> Open Full Size
           </a>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
@@ -503,25 +509,27 @@
     </div>
   </div>
 </div>
-<!-- ═══ Modal: Upload Planogram ═══ -->
-<div class="modal fade" id="modal-upload-plano" tabindex="-1">
+<!-- Modal: Upload Planogram -->
+<div class="modal fade" id="modal-set-plano" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Upload Planogram</h5>
+        <h5 class="modal-title" id="modal-upload-title">Upload Planogram</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label">Planogram PDF</label>
+          <label class="form-label">PDF File</label>
           <input type="file" class="form-control" id="f-plano-file" accept="application/pdf"/>
           <p class="field-error" id="err-plano-file"></p>
-          <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem;line-height:1.5;">
-            PDF only, up to 15 MB. Uploading a new file replaces the current one.
+          <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem;">
+            Max 8MB. Uploading a new file replaces the current one for this section.
           </p>
         </div>
-        <div class="progress" id="plano-progress-wrap" style="display:none;height:8px;border-radius:999px;">
-          <div class="progress-bar" id="plano-progress-bar" style="width:0%;background:var(--text);"></div>
+        <div id="plano-upload-progress" style="display:none;">
+          <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+            <div id="plano-progress-bar" style="height:100%;width:0%;background:var(--text);transition:width .15s;"></div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -719,110 +727,118 @@
   </script>
 <script>
 (function () {
-  const API = '/api/sections';                          // adjust if mounted elsewhere
   const QS  = new URLSearchParams(window.location.search);
   const SID = QS.get('id');
+  const API_BASE = '/api/sections'; // adjust to match your mount path
   const refLabel   = document.getElementById('plano-ref-label');
+  const refSub     = document.getElementById('plano-ref-sub');
   const viewBtn    = document.getElementById('btn-view-plano');
-  const uploadTxt  = document.getElementById('btn-upload-plano-txt');
+  const setBtnTxt  = document.getElementById('btn-set-plano-txt');
+  const modalTitle = document.getElementById('modal-upload-title');
   const frame      = document.getElementById('plano-frame');
   const openNew    = document.getElementById('plano-open-new');
   const fileInput  = document.getElementById('f-plano-file');
   const fileErr    = document.getElementById('err-plano-file');
-  const saveBtn    = document.getElementById('f-plano-upload-save');
-  const progWrap   = document.getElementById('plano-progress-wrap');
+  const uploadBtn  = document.getElementById('f-plano-upload-save');
+  const progWrap   = document.getElementById('plano-upload-progress');
   const progBar    = document.getElementById('plano-progress-bar');
-  let currentPlano = null;   // { url, fileName, ... }
-  function applyPlanogram(p) {
-    currentPlano = p && p.url ? p : null;
-    if (currentPlano) {
-      refLabel.textContent = currentPlano.fileName || 'Planogram uploaded';
-      refLabel.title = currentPlano.fileName || '';
+  let currentUrl = null;
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function applyState(section) {
+    currentUrl = section?.planogramUrl || null;
+    if (currentUrl) {
+      refLabel.textContent = section.planogramFileName || 'Planogram file uploaded';
+      refSub.textContent = section.planogramUpdatedAt
+        ? 'Updated ' + fmtDate(section.planogramUpdatedAt) : '';
       viewBtn.disabled = false;
-      uploadTxt.textContent = 'Upload New';
+      setBtnTxt.textContent = 'Upload New';
+      modalTitle.textContent = 'Upload New Planogram';
     } else {
-      refLabel.textContent = 'No planogram uploaded yet';
+      refLabel.textContent = 'No planogram file uploaded yet';
+      refSub.textContent = '';
       viewBtn.disabled = true;
-      uploadTxt.textContent = 'Upload file';
+      setBtnTxt.textContent = 'Upload File';
+      modalTitle.textContent = 'Upload Planogram';
     }
   }
-  async function loadPlanogram() {
+  async function loadSection() {
     try {
-      const res = await fetch(`${API}/${encodeURIComponent(SID)}`);
-      if (res.ok) {
-        const section = await res.json();
-        applyPlanogram(section.planogram);
-        return;
-      }
+      const res = await fetch(`${API_BASE}/${SID}`);
+      if (res.ok) applyState(await res.json());
     } catch (_) {}
-    applyPlanogram(null);
   }
-  /* ── View ── */
+  /* ── View button ── */
   viewBtn.addEventListener('click', () => {
-    if (!currentPlano) return;
-    frame.src = currentPlano.url;
-    openNew.href = currentPlano.url;
+    if (!currentUrl) return;
+    frame.src = currentUrl;
+    openNew.href = currentUrl;
     new bootstrap.Modal(document.getElementById('modal-view-plano')).show();
   });
   document.getElementById('modal-view-plano')
     .addEventListener('hidden.bs.modal', () => { frame.src = ''; });
-  /* ── Open upload modal ── */
-  document.getElementById('btn-upload-plano').addEventListener('click', () => {
+  /* ── Upload button → open modal ── */
+  document.getElementById('btn-set-plano').addEventListener('click', () => {
     fileInput.value = '';
     fileErr.style.display = 'none';
+    fileInput.classList.remove('is-invalid');
     progWrap.style.display = 'none';
     progBar.style.width = '0%';
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Upload';
-    new bootstrap.Modal(document.getElementById('modal-upload-plano')).show();
+    new bootstrap.Modal(document.getElementById('modal-set-plano')).show();
   });
-  /* ── Upload (XHR for progress) ── */
-  saveBtn.addEventListener('click', () => {
+  /* ── Submit upload (XHR used for progress events) ── */
+  uploadBtn.addEventListener('click', () => {
     const file = fileInput.files[0];
-    fileErr.style.display = 'none';
     if (!file) {
       fileErr.textContent = 'Please choose a PDF file.';
-      fileErr.style.display = 'block'; return;
+      fileErr.style.display = 'block';
+      fileInput.classList.add('is-invalid');
+      return;
     }
     if (file.type !== 'application/pdf') {
       fileErr.textContent = 'Only PDF files are allowed.';
-      fileErr.style.display = 'block'; return;
+      fileErr.style.display = 'block';
+      fileInput.classList.add('is-invalid');
+      return;
     }
-    const fd = new FormData();
-    fd.append('file', file);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${API}/${encodeURIComponent(SID)}/planogram`);
+    fileErr.style.display = 'none';
+    fileInput.classList.remove('is-invalid');
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading…';
     progWrap.style.display = 'block';
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Uploading…';
+    const formData = new FormData();
+    formData.append('file', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_BASE}/${SID}/planogram`);
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         progBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
       }
     };
     xhr.onload = () => {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload';
       if (xhr.status >= 200 && xhr.status < 300) {
-        const p = JSON.parse(xhr.responseText);
-        applyPlanogram(p);
-        bootstrap.Modal.getInstance(document.getElementById('modal-upload-plano')).hide();
+        const data = JSON.parse(xhr.responseText);
+        applyState(data);
+        bootstrap.Modal.getInstance(document.getElementById('modal-set-plano')).hide();
       } else {
         let msg = 'Upload failed.';
         try { msg = JSON.parse(xhr.responseText).error || msg; } catch (_) {}
         fileErr.textContent = msg;
         fileErr.style.display = 'block';
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Upload';
       }
     };
     xhr.onerror = () => {
-      fileErr.textContent = 'Network error during upload.';
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload';
+      fileErr.textContent = 'Network error — please try again.';
       fileErr.style.display = 'block';
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Upload';
     };
-    xhr.send(fd);
+    xhr.send(formData);
   });
-  loadPlanogram();
+  loadSection();
 })();
 </script>
 </body>
