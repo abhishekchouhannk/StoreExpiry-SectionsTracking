@@ -389,21 +389,22 @@
     </div>
   </div>
   <div class="week-grid" id="plano-weeks"><div class="empty-state">Loading…</div></div>
-  <!-- NEW: Planogram reference footer -->
-  <div class="plano-ref-bar" id="plano-ref-bar">
-    <div class="plano-ref-info">
-      <i class="bi bi-file-earmark-pdf"></i>
-      <span id="plano-ref-label">No planogram file linked yet</span>
-    </div>
-    <div class="plano-ref-actions">
-      <button class="btn-solid" id="btn-view-plano" disabled>
-        <i class="bi bi-eye me-1"></i>View Planogram
-      </button>
-      <button class="btn-ghost" id="btn-set-plano">
-        <i class="bi bi-link-45deg"></i> <span id="btn-set-plano-txt">Link file</span>
-      </button>
-    </div>
+  <!-- Planogram reference footer -->
+<div class="plano-ref-bar" id="plano-ref-bar">
+  <div class="plano-ref-info">
+    <i class="bi bi-file-earmark-pdf"></i>
+    <span id="plano-ref-label">No planogram uploaded yet</span>
   </div>
+  <div class="plano-ref-actions">
+        <button class="btn-ghost" id="btn-upload-plano">
+      <i class="bi bi-upload"></i> <span id="btn-upload-plano-txt">Upload file</span>
+    </button>
+    <button class="btn-solid" id="btn-view-plano" disabled>
+      <i class="bi bi-eye me-1"></i>View Planogram
+    </button>
+
+  </div>
+</div>
 </div>
     <!-- EXPIRY -->
     <div class="tab-pane-custom" id="tab-expiry">
@@ -483,7 +484,7 @@
     </div>
   </div>
 
-  <!-- ═══ Modal: View Planogram (fullscreen) ═══ -->
+<!-- ═══ Modal: View Planogram (fullscreen) ═══ -->
 <div class="modal fade" id="modal-view-plano" tabindex="-1">
   <div class="modal-dialog modal-fullscreen">
     <div class="modal-content plano-viewer">
@@ -491,40 +492,41 @@
         <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Planogram</h5>
         <div class="d-flex align-items-center gap-2">
           <a href="#" target="_blank" rel="noopener" class="btn-ghost" id="plano-open-new">
-            <i class="bi bi-box-arrow-up-right"></i> Open in Drive
+            <i class="bi bi-box-arrow-up-right"></i> Open in new tab
           </a>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
       </div>
       <div class="modal-body p-0">
-        <iframe id="plano-frame" src="" allow="autoplay" title="Planogram PDF"></iframe>
+        <iframe id="plano-frame" src="" title="Planogram PDF"></iframe>
       </div>
     </div>
   </div>
 </div>
-<!-- ═══ Modal: Set Planogram Link ═══ -->
-<div class="modal fade" id="modal-set-plano" tabindex="-1">
+<!-- ═══ Modal: Upload Planogram ═══ -->
+<div class="modal fade" id="modal-upload-plano" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Link Planogram File</h5>
+        <h5 class="modal-title">Upload Planogram</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label">Google Drive Link</label>
-          <input type="text" class="form-control" id="f-plano-url"
-                 placeholder="Paste the Google Drive share link…"/>
-          <p class="field-error" id="err-plano-url"></p>
+          <label class="form-label">Planogram PDF</label>
+          <input type="file" class="form-control" id="f-plano-file" accept="application/pdf"/>
+          <p class="field-error" id="err-plano-file"></p>
           <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem;line-height:1.5;">
-            Open the PDF in Google Drive → <b>Share</b> → set access to
-            “Anyone with the link” → <b>Copy link</b>, then paste it here.
+            PDF only, up to 15 MB. Uploading a new file replaces the current one.
           </p>
+        </div>
+        <div class="progress" id="plano-progress-wrap" style="display:none;height:8px;border-radius:999px;">
+          <div class="progress-bar" id="plano-progress-bar" style="width:0%;background:var(--text);"></div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn-solid" id="f-plano-url-save">Save</button>
+        <button class="btn-solid" id="f-plano-upload-save">Upload</button>
       </div>
     </div>
   </div>
@@ -715,101 +717,110 @@
     })();
   })();
   </script>
-  <script>
+<script>
 (function () {
+  const API = '/api/sections';                          // adjust if mounted elsewhere
   const QS  = new URLSearchParams(window.location.search);
   const SID = QS.get('id');
-  const refLabel  = document.getElementById('plano-ref-label');
-  const viewBtn   = document.getElementById('btn-view-plano');
-  const setTxt    = document.getElementById('btn-set-plano-txt');
-  const frame     = document.getElementById('plano-frame');
-  const openNew   = document.getElementById('plano-open-new');
-  const urlInput  = document.getElementById('f-plano-url');
-  const urlErr    = document.getElementById('err-plano-url');
-  let currentFileId = null;
-  /* Extract the Drive file ID from any common Drive URL format */
-  function parseDriveId(url) {
-    if (!url) return null;
-    url = url.trim();
-    // .../file/d/FILE_ID/view
-    let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (m) return m[1];
-    // ...?id=FILE_ID  or  &id=FILE_ID
-    m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    if (m) return m[1];
-    // bare id pasted
-    if (/^[a-zA-Z0-9_-]{20,}$/.test(url)) return url;
-    return null;
-  }
-  function applyFileId(fileId) {
-    currentFileId = fileId;
-    if (fileId) {
-      refLabel.textContent = 'Planogram file linked';
+  const refLabel   = document.getElementById('plano-ref-label');
+  const viewBtn    = document.getElementById('btn-view-plano');
+  const uploadTxt  = document.getElementById('btn-upload-plano-txt');
+  const frame      = document.getElementById('plano-frame');
+  const openNew    = document.getElementById('plano-open-new');
+  const fileInput  = document.getElementById('f-plano-file');
+  const fileErr    = document.getElementById('err-plano-file');
+  const saveBtn    = document.getElementById('f-plano-upload-save');
+  const progWrap   = document.getElementById('plano-progress-wrap');
+  const progBar    = document.getElementById('plano-progress-bar');
+  let currentPlano = null;   // { url, fileName, ... }
+  function applyPlanogram(p) {
+    currentPlano = p && p.url ? p : null;
+    if (currentPlano) {
+      refLabel.textContent = currentPlano.fileName || 'Planogram uploaded';
+      refLabel.title = currentPlano.fileName || '';
       viewBtn.disabled = false;
-      setTxt.textContent = 'Change link';
+      uploadTxt.textContent = 'Upload New';
     } else {
-      refLabel.textContent = 'No planogram file linked yet';
+      refLabel.textContent = 'No planogram uploaded yet';
       viewBtn.disabled = true;
-      setTxt.textContent = 'Link file';
+      uploadTxt.textContent = 'Upload file';
     }
   }
-  /* ── Load the section's saved planogram link ──
-     Wire this to your backend. Example assumes the section record
-     has a `planogramUrl` field returned by your section API.      */
   async function loadPlanogram() {
     try {
-      const res = await fetch('/api/section?id=' + encodeURIComponent(SID));
+      const res = await fetch(`${API}/${encodeURIComponent(SID)}`);
       if (res.ok) {
-        const s = await res.json();
-        applyFileId(parseDriveId(s.planogramUrl));
+        const section = await res.json();
+        applyPlanogram(section.planogram);
         return;
       }
     } catch (_) {}
-    // fallback while you wire the backend: localStorage
-    applyFileId(parseDriveId(localStorage.getItem('plano_' + SID)));
+    applyPlanogram(null);
   }
-  async function savePlanogram(url) {
-    const fileId = parseDriveId(url);
-    if (!fileId) {
-      urlErr.textContent = 'That doesn’t look like a valid Google Drive link.';
-      urlErr.style.display = 'block';
-      urlInput.classList.add('is-invalid');
-      return false;
-    }
-    // Persist to backend (adjust endpoint/method to your API):
-    try {
-      await fetch('/api/section?id=' + encodeURIComponent(SID), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planogramUrl: url.trim() })
-      });
-    } catch (_) {}
-    // fallback store
-    localStorage.setItem('plano_' + SID, url.trim());
-    applyFileId(fileId);
-    return true;
-  }
-  /* ── View button → open fullscreen iframe ── */
+  /* ── View ── */
   viewBtn.addEventListener('click', () => {
-    if (!currentFileId) return;
-    frame.src = `https://drive.google.com/file/d/${currentFileId}/preview`;
-    openNew.href = `https://drive.google.com/file/d/${currentFileId}/view`;
+    if (!currentPlano) return;
+    frame.src = currentPlano.url;
+    openNew.href = currentPlano.url;
     new bootstrap.Modal(document.getElementById('modal-view-plano')).show();
   });
-  // stop the iframe when the viewer closes (frees memory)
   document.getElementById('modal-view-plano')
     .addEventListener('hidden.bs.modal', () => { frame.src = ''; });
-  /* ── Set link button ── */
-  document.getElementById('btn-set-plano').addEventListener('click', () => {
-    urlInput.value = '';
-    urlErr.style.display = 'none';
-    urlInput.classList.remove('is-invalid');
-    new bootstrap.Modal(document.getElementById('modal-set-plano')).show();
+  /* ── Open upload modal ── */
+  document.getElementById('btn-upload-plano').addEventListener('click', () => {
+    fileInput.value = '';
+    fileErr.style.display = 'none';
+    progWrap.style.display = 'none';
+    progBar.style.width = '0%';
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Upload';
+    new bootstrap.Modal(document.getElementById('modal-upload-plano')).show();
   });
-  document.getElementById('f-plano-url-save').addEventListener('click', async () => {
-    if (await savePlanogram(urlInput.value)) {
-      bootstrap.Modal.getInstance(document.getElementById('modal-set-plano')).hide();
+  /* ── Upload (XHR for progress) ── */
+  saveBtn.addEventListener('click', () => {
+    const file = fileInput.files[0];
+    fileErr.style.display = 'none';
+    if (!file) {
+      fileErr.textContent = 'Please choose a PDF file.';
+      fileErr.style.display = 'block'; return;
     }
+    if (file.type !== 'application/pdf') {
+      fileErr.textContent = 'Only PDF files are allowed.';
+      fileErr.style.display = 'block'; return;
+    }
+    const fd = new FormData();
+    fd.append('file', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API}/${encodeURIComponent(SID)}/planogram`);
+    progWrap.style.display = 'block';
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Uploading…';
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        progBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const p = JSON.parse(xhr.responseText);
+        applyPlanogram(p);
+        bootstrap.Modal.getInstance(document.getElementById('modal-upload-plano')).hide();
+      } else {
+        let msg = 'Upload failed.';
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (_) {}
+        fileErr.textContent = msg;
+        fileErr.style.display = 'block';
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Upload';
+      }
+    };
+    xhr.onerror = () => {
+      fileErr.textContent = 'Network error during upload.';
+      fileErr.style.display = 'block';
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Upload';
+    };
+    xhr.send(fd);
   });
   loadPlanogram();
 })();
