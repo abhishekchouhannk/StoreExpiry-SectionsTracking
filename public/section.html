@@ -309,6 +309,31 @@
       .btn-activity span { display: none; }         /* icon-only on tiny screens */
       .btn-activity { padding: 5px 9px; gap: 0; }
     }
+
+    /* ── PLANOGRAM REFERENCE BAR ── */
+.plano-ref-bar {
+  margin-top: 1.1rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: .85rem 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; flex-wrap: wrap;
+}
+.plano-ref-info {
+  display: flex; align-items: center; gap: .6rem;
+  font-size: .84rem; color: var(--text); min-width: 0;
+}
+.plano-ref-info i { font-size: 1.2rem; color: #7c3aed; flex-shrink: 0; }
+.plano-ref-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plano-ref-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+.btn-solid:disabled { opacity: .45; cursor: not-allowed; }
+.plano-ref-actions .btn-ghost { display: inline-flex; align-items: center; gap: 4px; }
+/* ── PLANOGRAM VIEWER ── */
+.plano-viewer .modal-header { padding: .7rem 1rem; }
+.plano-viewer .modal-body { background: #525659; }
+#plano-frame { width: 100%; height: 100%; border: 0; display: block; }
+.plano-viewer .btn-ghost { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -355,16 +380,31 @@
       <div class="week-grid" id="cleaning-weeks"><div class="empty-state">Loading…</div></div>
     </div>
     <!-- PLANOGRAM -->
-    <div class="tab-pane-custom" id="tab-planogram">
-      <div class="toolbar">
-        <p class="toolbar-title">Planogram Integrity</p>
-        <div class="toolbar-right">
-          <select class="form-select-sm-custom" id="plano-month"></select>
-          <button class="btn-solid" data-bs-toggle="modal" data-bs-target="#modal-planogram"><i class="bi bi-plus-lg me-1"></i>Log Check</button>
-        </div>
-      </div>
-      <div class="week-grid" id="plano-weeks"><div class="empty-state">Loading…</div></div>
+<div class="tab-pane-custom" id="tab-planogram">
+  <div class="toolbar">
+    <p class="toolbar-title">Planogram Integrity</p>
+    <div class="toolbar-right">
+      <select class="form-select-sm-custom" id="plano-month"></select>
+      <button class="btn-solid" data-bs-toggle="modal" data-bs-target="#modal-planogram"><i class="bi bi-plus-lg me-1"></i>Log Check</button>
     </div>
+  </div>
+  <div class="week-grid" id="plano-weeks"><div class="empty-state">Loading…</div></div>
+  <!-- NEW: Planogram reference footer -->
+  <div class="plano-ref-bar" id="plano-ref-bar">
+    <div class="plano-ref-info">
+      <i class="bi bi-file-earmark-pdf"></i>
+      <span id="plano-ref-label">No planogram file linked yet</span>
+    </div>
+    <div class="plano-ref-actions">
+      <button class="btn-solid" id="btn-view-plano" disabled>
+        <i class="bi bi-eye me-1"></i>View Planogram
+      </button>
+      <button class="btn-ghost" id="btn-set-plano">
+        <i class="bi bi-link-45deg"></i> <span id="btn-set-plano-txt">Link file</span>
+      </button>
+    </div>
+  </div>
+</div>
     <!-- EXPIRY -->
     <div class="tab-pane-custom" id="tab-expiry">
       <div class="toolbar">
@@ -442,6 +482,53 @@
       </div>
     </div>
   </div>
+
+  <!-- ═══ Modal: View Planogram (fullscreen) ═══ -->
+<div class="modal fade" id="modal-view-plano" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content plano-viewer">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Planogram</h5>
+        <div class="d-flex align-items-center gap-2">
+          <a href="#" target="_blank" rel="noopener" class="btn-ghost" id="plano-open-new">
+            <i class="bi bi-box-arrow-up-right"></i> Open in Drive
+          </a>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="plano-frame" src="" allow="autoplay" title="Planogram PDF"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══ Modal: Set Planogram Link ═══ -->
+<div class="modal fade" id="modal-set-plano" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Link Planogram File</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Google Drive Link</label>
+          <input type="text" class="form-control" id="f-plano-url"
+                 placeholder="Paste the Google Drive share link…"/>
+          <p class="field-error" id="err-plano-url"></p>
+          <p style="font-size:.74rem;color:var(--muted);margin-top:.5rem;line-height:1.5;">
+            Open the PDF in Google Drive → <b>Share</b> → set access to
+            “Anyone with the link” → <b>Copy link</b>, then paste it here.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-solid" id="f-plano-url-save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
   <!-- ═══ Modal: Flag Expiry ═══ -->
   <div class="modal fade" id="modal-expiry" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -628,5 +715,104 @@
     })();
   })();
   </script>
+  <script>
+(function () {
+  const QS  = new URLSearchParams(window.location.search);
+  const SID = QS.get('id');
+  const refLabel  = document.getElementById('plano-ref-label');
+  const viewBtn   = document.getElementById('btn-view-plano');
+  const setTxt    = document.getElementById('btn-set-plano-txt');
+  const frame     = document.getElementById('plano-frame');
+  const openNew   = document.getElementById('plano-open-new');
+  const urlInput  = document.getElementById('f-plano-url');
+  const urlErr    = document.getElementById('err-plano-url');
+  let currentFileId = null;
+  /* Extract the Drive file ID from any common Drive URL format */
+  function parseDriveId(url) {
+    if (!url) return null;
+    url = url.trim();
+    // .../file/d/FILE_ID/view
+    let m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    // ...?id=FILE_ID  or  &id=FILE_ID
+    m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    // bare id pasted
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(url)) return url;
+    return null;
+  }
+  function applyFileId(fileId) {
+    currentFileId = fileId;
+    if (fileId) {
+      refLabel.textContent = 'Planogram file linked';
+      viewBtn.disabled = false;
+      setTxt.textContent = 'Change link';
+    } else {
+      refLabel.textContent = 'No planogram file linked yet';
+      viewBtn.disabled = true;
+      setTxt.textContent = 'Link file';
+    }
+  }
+  /* ── Load the section's saved planogram link ──
+     Wire this to your backend. Example assumes the section record
+     has a `planogramUrl` field returned by your section API.      */
+  async function loadPlanogram() {
+    try {
+      const res = await fetch('/api/section?id=' + encodeURIComponent(SID));
+      if (res.ok) {
+        const s = await res.json();
+        applyFileId(parseDriveId(s.planogramUrl));
+        return;
+      }
+    } catch (_) {}
+    // fallback while you wire the backend: localStorage
+    applyFileId(parseDriveId(localStorage.getItem('plano_' + SID)));
+  }
+  async function savePlanogram(url) {
+    const fileId = parseDriveId(url);
+    if (!fileId) {
+      urlErr.textContent = 'That doesn’t look like a valid Google Drive link.';
+      urlErr.style.display = 'block';
+      urlInput.classList.add('is-invalid');
+      return false;
+    }
+    // Persist to backend (adjust endpoint/method to your API):
+    try {
+      await fetch('/api/section?id=' + encodeURIComponent(SID), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planogramUrl: url.trim() })
+      });
+    } catch (_) {}
+    // fallback store
+    localStorage.setItem('plano_' + SID, url.trim());
+    applyFileId(fileId);
+    return true;
+  }
+  /* ── View button → open fullscreen iframe ── */
+  viewBtn.addEventListener('click', () => {
+    if (!currentFileId) return;
+    frame.src = `https://drive.google.com/file/d/${currentFileId}/preview`;
+    openNew.href = `https://drive.google.com/file/d/${currentFileId}/view`;
+    new bootstrap.Modal(document.getElementById('modal-view-plano')).show();
+  });
+  // stop the iframe when the viewer closes (frees memory)
+  document.getElementById('modal-view-plano')
+    .addEventListener('hidden.bs.modal', () => { frame.src = ''; });
+  /* ── Set link button ── */
+  document.getElementById('btn-set-plano').addEventListener('click', () => {
+    urlInput.value = '';
+    urlErr.style.display = 'none';
+    urlInput.classList.remove('is-invalid');
+    new bootstrap.Modal(document.getElementById('modal-set-plano')).show();
+  });
+  document.getElementById('f-plano-url-save').addEventListener('click', async () => {
+    if (await savePlanogram(urlInput.value)) {
+      bootstrap.Modal.getInstance(document.getElementById('modal-set-plano')).hide();
+    }
+  });
+  loadPlanogram();
+})();
+</script>
 </body>
 </html>
