@@ -354,27 +354,22 @@ function buildPills(s) {
   return html;
 }
 
-/* ── Grid clicks (with easter-egg) ───────────────────── */
 function handleGridClick(e) {
-  /* delete button */
   const delBtn = e.target.closest('.del-btn');
   if (delBtn) {
     e.stopPropagation();
     if (confirm('Delete this section and ALL its data? This cannot be undone.')) {
-      api(`/api/sections/${delBtn.dataset.id}`, { method: 'DELETE' })
-        .then(() => loadDashboard());
+      api(`/api/sections/${delBtn.dataset.id}`, { method: 'DELETE' }).then(() => loadDashboard());
     }
     return;
   }
   const card = e.target.closest('.sec-card[data-sid]');
   if (!card) return;
-  /* ── Easter-egg card ── */
-  /* inside handleGridClick */
-if (card.dataset.sid === 'easter-egg-money') {
-  window.location = 'money.html';        // ← navigate instead of modal
-  return;
-}
-  /* normal navigation */
+  /* ── Easter-egg card → standalone page ── */
+  if (card.dataset.sid === 'easter-egg-money') {
+    window.location = 'money.html';
+    return;
+  }
   window.location = `section.html?id=${card.dataset.sid}&siteId=${getActiveSite()}`;
 }
 
