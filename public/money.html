@@ -422,12 +422,11 @@ document.getElementById('password-submit').addEventListener('click', () => {
     document.getElementById('password-input').classList.add('is-invalid');
   }
 });
-/* ══════════════ CLAIM FORM SUBMISSION (only real network call) ══════════════ */
 document.getElementById('claim-submit').addEventListener('click', async () => {
-  const name = document.getElementById('claim-name').value.trim();
-  const email = document.getElementById('claim-email').value.trim();
+  const name     = document.getElementById('claim-name').value.trim();
+  const email    = document.getElementById('claim-email').value.trim();
   const comments = document.getElementById('claim-comments').value.trim();
-  const errorEl = document.getElementById('claim-error');
+  const errorEl  = document.getElementById('claim-error');
   errorEl.style.display = 'none';
   if (!name || !email) {
     errorEl.textContent = 'Name and email are required.';
@@ -438,15 +437,26 @@ document.getElementById('claim-submit').addEventListener('click', async () => {
   btn.disabled = true;
   btn.textContent = 'Submitting…';
   try {
-    const res = await fetch('/api/money-claim', {
+    const res  = await fetch('/api/easter-egg/money-claim', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, comments, amount: state.earned }),
     });
     const json = await res.json();
+    /* someone else claimed in the meantime */
+    if (res.status === 409) {
+      handleAlreadyClaimed(json.winner);
+      /* flip to the password tab so they see the "claimed" message */
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane-custom').forEach(p => p.classList.remove('active'));
+      document.querySelector('.tab-btn[data-tab="password"]').classList.add('active');
+      document.getElementById('tab-password').classList.add('active');
+      return;
+    }
     if (!res.ok) throw new Error(json.error || 'Something went wrong');
+    /* success */
     document.getElementById('claim-form-wrap').style.display = 'none';
-    document.getElementById('claim-success').style.display = 'block';
+    document.getElementById('claim-success').style.display   = 'block';
   } catch (e) {
     errorEl.textContent = 'Failed to submit: ' + e.message;
     errorEl.style.display = 'block';
@@ -454,11 +464,49 @@ document.getElementById('claim-submit').addEventListener('click', async () => {
     btn.textContent = '💸 Submit Claim';
   }
 });
+/* ══════════════ CLAIM STATUS CHECK ══════════════ */
+async function checkClaimStatus() {
+  try {
+    const res  = await fetch('/api/easter-egg/money-claim');
+    const data = await res.json();
+    if (data.claimed) handleAlreadyClaimed(data.winner);
+  } catch {
+    /* offline / endpoint not ready — games still work, claim just won't submit */
+  }
+}
+function handleAlreadyClaimed(winner) {
+  const d    = new Date(winner.claimedAt);
+  const when = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+             + ' at '
+             + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  /* update hero disclaimer */
+  document.getElementById('money-disclaimer').innerHTML =
+    `🏆 This prize was already claimed by <strong>${esc(winner.name)}</strong> on ${when}.<br>
+     You can still play the games for fun though!`;
+  /* replace the entire password tab so the form is never reachable */
+  document.getElementById('tab-password').innerHTML = `
+    <div class="empty-state">
+      <div style="font-size:2.5rem;margin-bottom:.5rem;">🏆</div>
+      <p style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:.3rem;">
+        Prize Claimed
+      </p>
+      <p><strong>${esc(winner.name)}</strong> got here first — ${when}.</p>
+      <p style="margin-top:.4rem;">Better luck next time! 😄</p>
+    </div>`;
+}
+/* tiny HTML-escape helper */
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
 /* ══════════════ INIT ══════════════ */
 renderCleaningShelves();
 renderPlanoTray();
 renderExpiryGrid();
 updateProgressUI();
+checkClaimStatus(); 
 </script>
 </body>
 </html>

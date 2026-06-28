@@ -13,6 +13,19 @@ function setActiveSite(siteId) {
   localStorage.setItem('activeSiteId', siteId);
 }
 
+/* ── Easter-egg claim cache (lazy-loaded once) ────────── */
+let _moneyClaimCache = null;
+async function fetchMoneyClaimStatus() {
+  if (_moneyClaimCache !== null) return _moneyClaimCache;
+  try {
+    const res = await fetch('/api/easter-egg/money-claim');
+    _moneyClaimCache = await res.json();
+  } catch {
+    _moneyClaimCache = { claimed: false };
+  }
+  return _moneyClaimCache;
+}
+
 function initSiteSwitcher() {
   const active = getActiveSite();
 
@@ -219,16 +232,14 @@ function setupSearch() {
 function filterSections(q) {
   const grid = document.getElementById('sections-grid');
   if (!grid) return;
-  const cards    = grid.querySelectorAll('.sec-card[data-sid]');
-  const empty    = grid.querySelector('.search-empty');
-  let moneyCard  = grid.querySelector('.sec-card[data-sid="easter-egg-money"]');
+  const cards   = grid.querySelectorAll('.sec-card[data-sid]');
+  const empty   = grid.querySelector('.search-empty');
+  let moneyCard = grid.querySelector('.sec-card[data-sid="easter-egg-money"]');
   /* ── Easter-egg trigger ── */
   if (q === 'the money') {
-    // hide every real section card
     cards.forEach(c => {
       if (c.dataset.sid !== 'easter-egg-money') c.style.display = 'none';
     });
-    // create the special card once
     if (!moneyCard) {
       moneyCard = document.createElement('div');
       moneyCard.className = 'sec-card money-card';
@@ -244,16 +255,30 @@ function filterSections(q) {
         </div>`;
       const addCard = grid.querySelector('.add-card');
       grid.insertBefore(moneyCard, addCard || null);
+      /* ── async: swap pills if already claimed ── */
+      fetchMoneyClaimStatus().then(data => {
+        if (!data.claimed) return;
+        const g  = document.getElementById('sections-grid');
+        const mc = g && g.querySelector('.sec-card[data-sid="easter-egg-money"]');
+        if (!mc) return;
+        const w    = data.winner;
+        const when = new Date(w.claimedAt).toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+        });
+        mc.querySelector('.sec-pills').innerHTML = `
+          <span class="pill p-green"><i class="bi bi-trophy-fill"></i> Won by ${w.name}</span>
+          <span class="pill p-gray"><i class="bi bi-clock"></i> ${when}</span>
+          <span class="pill p-green"><i class="bi bi-check-circle-fill"></i> Claimed</span>`;
+      });
     }
     moneyCard.style.display = '';
     if (empty) empty.style.display = 'none';
     const addCard = grid.querySelector('.add-card');
     if (addCard) addCard.style.display = 'none';
-    return;                                       // ← skip normal logic
+    return;
   }
-  /* ── Not the magic phrase → tear down easter-egg card ── */
+  /* ── Not the magic phrase ── */
   if (moneyCard) moneyCard.remove();
-  /* ── Normal filtering (unchanged) ── */
   let visible = 0;
   cards.forEach((card) => {
     const name = (card.querySelector('.sec-name')?.textContent || '').toLowerCase();
@@ -662,3 +687,4 @@ async function markOrderDone(id, btn) {
     loadDashboard();
   } catch (e) { alert(e.message); }
 }
+
