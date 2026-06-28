@@ -215,25 +215,58 @@ function setupSearch() {
   }
 }
 
+/* ── Filter (with easter-egg) ────────────────────────── */
 function filterSections(q) {
-  const grid  = document.getElementById('sections-grid');
+  const grid = document.getElementById('sections-grid');
   if (!grid) return;
-  const cards = grid.querySelectorAll('.sec-card[data-sid]');
-  const empty = grid.querySelector('.search-empty');
+  const cards    = grid.querySelectorAll('.sec-card[data-sid]');
+  const empty    = grid.querySelector('.search-empty');
+  let moneyCard  = grid.querySelector('.sec-card[data-sid="easter-egg-money"]');
+  /* ── Easter-egg trigger ── */
+  if (q === 'the money') {
+    // hide every real section card
+    cards.forEach(c => {
+      if (c.dataset.sid !== 'easter-egg-money') c.style.display = 'none';
+    });
+    // create the special card once
+    if (!moneyCard) {
+      moneyCard = document.createElement('div');
+      moneyCard.className = 'sec-card money-card';
+      moneyCard.dataset.sid = 'easter-egg-money';
+      moneyCard.innerHTML = `
+        <div class="sec-icon">💰</div>
+        <p class="sec-name">The Money</p>
+        <p class="sec-loc">App</p>
+        <div class="sec-pills">
+          <span class="pill p-green"><i class="bi bi-currency-dollar"></i> Never expires</span>
+          <span class="pill p-amber"><i class="bi bi-ticket-perforated"></i> 1 claim left</span>
+          <span class="pill p-green"><i class="bi bi-stars"></i> Self-cleaning</span>
+        </div>`;
+      const addCard = grid.querySelector('.add-card');
+      grid.insertBefore(moneyCard, addCard || null);
+    }
+    moneyCard.style.display = '';
+    if (empty) empty.style.display = 'none';
+    const addCard = grid.querySelector('.add-card');
+    if (addCard) addCard.style.display = 'none';
+    return;                                       // ← skip normal logic
+  }
+  /* ── Not the magic phrase → tear down easter-egg card ── */
+  if (moneyCard) moneyCard.remove();
+  /* ── Normal filtering (unchanged) ── */
   let visible = 0;
-
   cards.forEach((card) => {
     const name = (card.querySelector('.sec-name')?.textContent || '').toLowerCase();
-    const loc  = (card.querySelector('.sec-loc')?.textContent || '').toLowerCase();
+    const loc  = (card.querySelector('.sec-loc')?.textContent  || '').toLowerCase();
     const show = !q || name.includes(q) || loc.includes(q);
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
-
   if (empty) empty.style.display = (visible === 0 && q) ? 'block' : 'none';
   const addCard = grid.querySelector('.add-card');
   if (addCard) addCard.style.display = '';
 }
+
 
 /* ── Overlay ─────────────────────────────────────────── */
 function showOverlay() { document.getElementById('site-overlay').classList.add('active'); }
@@ -321,19 +354,28 @@ function buildPills(s) {
   return html;
 }
 
+/* ── Grid clicks (with easter-egg) ───────────────────── */
 function handleGridClick(e) {
+  /* delete button */
   const delBtn = e.target.closest('.del-btn');
   if (delBtn) {
     e.stopPropagation();
     if (confirm('Delete this section and ALL its data? This cannot be undone.')) {
-      api(`/api/sections/${delBtn.dataset.id}`, { method: 'DELETE' }).then(() => loadDashboard());
+      api(`/api/sections/${delBtn.dataset.id}`, { method: 'DELETE' })
+        .then(() => loadDashboard());
     }
     return;
   }
   const card = e.target.closest('.sec-card[data-sid]');
-  if (card) {
-    window.location = `section.html?id=${card.dataset.sid}&siteId=${getActiveSite()}`;
+  if (!card) return;
+  /* ── Easter-egg card ── */
+  if (card.dataset.sid === 'easter-egg-money') {
+    const m = document.getElementById('modal-money');
+    if (m) new bootstrap.Modal(m).show();
+    return;
   }
+  /* normal navigation */
+  window.location = `section.html?id=${card.dataset.sid}&siteId=${getActiveSite()}`;
 }
 
 /* ── Add Section ─────────────────────────────────────── */

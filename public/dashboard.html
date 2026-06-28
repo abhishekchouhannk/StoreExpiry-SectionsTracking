@@ -691,6 +691,34 @@
           padding: 0 1rem 2.5rem;
         }
       }
+
+          /* ─── Easter Egg: Home-icon breathing ─── */
+@keyframes home-breathe {
+  0%, 100% { background-color: #fff;  color: #6b7280; }
+  50%      { background-color: #111;  color: #fff;     }
+}
+.icon-btn.home-breathe {
+  animation: home-breathe 4s ease-in-out infinite;
+}
+/* force the <i> inside to inherit the animated color */
+.icon-btn.home-breathe > i { color: inherit !important; }
+/* ─── Easter Egg: Money card ─── */
+.sec-card.money-card {
+  border: 1.5px solid #ffd700;
+  background: linear-gradient(135deg, #fffef5 0%, #fff8e1 100%);
+  animation: money-appear .45s ease-out;
+}
+@keyframes money-appear {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+.money-card .sec-icon {
+  animation: money-pulse 1.6s ease-in-out infinite;
+}
+@keyframes money-pulse {
+  0%, 100% { transform: scale(1);    }
+  50%      { transform: scale(1.18); }
+}
     </style>
   </head>
   <body>
@@ -702,7 +730,7 @@
       <!-- Home icons -->
       <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0">
         <button
-          class="icon-btn"
+          class="icon-btn home-breathe"
           title="Landing Page"
           onclick="window.location = '/'"
         >
@@ -1040,6 +1068,31 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══ Modal: Easter Egg – The Money ═══ -->
+<div class="modal fade" id="modal-money" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="text-align:center; border:2px solid #ffd700;">
+      <div class="modal-body" style="padding:2.2rem 1.4rem;">
+        <div style="font-size:3rem; margin-bottom:.4rem;">🎉💰🎉</div>
+        <h5 style="font-weight:700; margin-bottom:.65rem;">You Found The Money!</h5>
+        <p style="color:var(--muted); font-size:.84rem; line-height:1.6;">
+          Take a screenshot of this screen and show&nbsp;it to
+          <strong>[Your&nbsp;Name]</strong> to claim your
+          <strong>$15</strong>.<br />
+          <em style="opacity:.65;">First come, first&nbsp;serve!</em>
+        </p>
+        <button
+          class="btn btn-solid"
+          data-bs-dismiss="modal"
+          style="margin-top:1rem;"
+        >
+          💸 Nice!
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- ═══ Modal: Expiry Detail ═══ -->
     <div class="modal fade" id="modal-expiry-detail" tabindex="-1">

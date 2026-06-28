@@ -199,6 +199,24 @@
       .card { padding: 2rem 1.4rem; border-radius: 20px; }
       .greeting { font-size: 1.3rem; }
     }
+
+    /* ─── Easter-egg puzzle hint ─── */
+.puzzle-hint {
+  margin: 22px auto 6px;
+  padding: 14px 20px;
+  max-width: 320px;
+  border: 1.5px dashed rgba(128, 128, 128, .35);
+  border-radius: 14px;
+  background: rgba(128, 128, 128, .045);
+  text-align: center;
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.puzzle-hint .puzzle-icon {
+  display: block;
+  font-size: 1.3rem;
+  margin-bottom: 2px;
+}
   </style>
 </head>
 <body>
@@ -207,6 +225,15 @@
     <span class="face" id="face">☀️</span>
     <h1 class="greeting" id="greeting">Good Morning</h1>
     <p class="quote" id="quote">"Loading…"</p>
+
+    <!-- Easter-egg hint -->
+<div class="puzzle-hint" id="puzzle-hint">
+  <span class="puzzle-icon">🧩</span>
+  <strong>Fun Puzzle</strong><br />
+  <strong>$15</strong> is hidden somewhere in this app.<br />
+  Search for <em>&lsquo;the money&rsquo;</em> to claim&nbsp;it.<br />
+  First come, first serve &amp; good&nbsp;luck! 🍀
+</div>
 
     <div class="divider">
       <span>Select a site to begin</span>
