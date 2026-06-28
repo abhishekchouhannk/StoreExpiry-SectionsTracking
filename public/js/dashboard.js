@@ -369,11 +369,11 @@ function handleGridClick(e) {
   const card = e.target.closest('.sec-card[data-sid]');
   if (!card) return;
   /* ── Easter-egg card ── */
-  if (card.dataset.sid === 'easter-egg-money') {
-    const m = document.getElementById('modal-money');
-    if (m) new bootstrap.Modal(m).show();
-    return;
-  }
+  /* inside handleGridClick */
+if (card.dataset.sid === 'easter-egg-money') {
+  window.location = 'money.html';        // ← navigate instead of modal
+  return;
+}
   /* normal navigation */
   window.location = `section.html?id=${card.dataset.sid}&siteId=${getActiveSite()}`;
 }

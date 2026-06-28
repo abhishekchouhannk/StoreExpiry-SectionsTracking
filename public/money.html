@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>💰 The Money</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+/* ═══ TOKENS ═══ */
+:root{--bg:#f5f4f0;--surface:#fff;--border:#e4e2dc;--text:#1a1a18;--muted:#8a8880;--pill-r:999px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;
+     -webkit-tap-highlight-color:transparent}
+.me-1{margin-right:.25rem}.mb-3{margin-bottom:.85rem!important}
+/* ═══ HERO ═══ */
+.sec-hero{background:var(--surface);border-bottom:1px solid var(--border);padding:1.2rem 1.4rem 1.1rem}
+.hero-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
+.back-link{display:inline-flex;align-items:center;gap:.35rem;font-size:.76rem;font-weight:600;
+  color:var(--muted);text-decoration:none;text-transform:uppercase;letter-spacing:.06em;
+  font-family:'Syne',sans-serif;transition:color .12s}
+.back-link:hover{color:var(--text)}
+.hero-row{display:flex;align-items:center;gap:.9rem}
+.hero-icon{font-size:2rem;line-height:1}
+.hero-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;margin:0 0 .15rem}
+.hero-loc{font-size:.78rem;color:var(--muted);margin:0}
+/* money badge */
+.money-badge{display:inline-flex;align-items:center;gap:5px;font-family:'Syne',sans-serif;
+  font-weight:800;font-size:.85rem;background:linear-gradient(135deg,#fef9c3,#fde68a);
+  border:1.5px solid #fcd34d;border-radius:var(--pill-r);padding:4px 14px;color:#92400e}
+.money-of{font-weight:600;opacity:.5;font-size:.72rem}
+/* disclaimer */
+.disclaimer{margin-top:12px;padding:10px 14px;background:#fef3c7;border:1px solid #fde68a;
+  border-radius:10px;font-size:.8rem;color:#92400e;line-height:1.55}
+/* ═══ TAB BAR ═══ */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.4rem;
+  display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;padding:.75rem .9rem;border:none;background:none;color:var(--muted);
+  border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;
+  display:inline-flex;align-items:center}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--text)}
+.tab-check{display:none;color:#22c55e;font-size:.65rem;margin-left:4px}
+.tab-check.done{display:inline;animation:pop .3s ease-out}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+/* ═══ CONTENT ═══ */
+.tab-content-area{padding:1.4rem}
+.tab-pane-custom{display:none}.tab-pane-custom.active{display:block}
+/* ═══ SHARED GAME ═══ */
+.game-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.game-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;margin:0}
+.game-reward{font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;color:#166534;
+  background:#dcfce7;padding:3px 10px;border-radius:var(--pill-r)}
+.game-instruction{font-size:.82rem;color:var(--muted);margin:4px 0 14px;line-height:1.5}
+.game-done{display:none;text-align:center;padding:1.2rem;margin-top:14px;background:#dcfce7;
+  border:1.5px solid #86efac;border-radius:14px;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:.88rem;color:#166534}
+.game-done.show{display:block;animation:slideU .4s ease-out}
+@keyframes slideU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* ═══ BUTTONS / FORMS ═══ */
+.btn-solid{background:var(--text);color:#fff;border:none;border-radius:9px;font-family:'Syne',sans-serif;
+  font-size:.74rem;font-weight:700;letter-spacing:.04em;padding:.4rem .9rem;cursor:pointer;
+  transition:background .15s;white-space:nowrap}
+.btn-solid:hover{background:#333;color:#fff}
+.btn-solid:disabled{opacity:.4;cursor:not-allowed}
+.btn-solid-red{background:#d1453b}.btn-solid-red:hover{background:#b83530}
+.form-label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:.3rem;display:block}
+.form-control{border:1.5px solid var(--border);border-radius:9px;font-size:.87rem;background:var(--bg);
+  color:var(--text);width:100%;padding:.4rem .7rem;font-family:'DM Sans',sans-serif}
+.form-control:focus{border-color:var(--text);box-shadow:none;background:#fff;outline:none}
+textarea.form-control{resize:vertical}
+/* ═══════════════════════════════
+   GAME 1 — CLEANING
+   ═══════════════════════════════ */
+.game-shelf{background:#faf5ed;border:1.5px solid #e8dcc8;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.game-shelf-label{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;color:var(--muted);
+  padding:8px 12px 2px;text-transform:uppercase;letter-spacing:.05em}
+.game-shelf-row{display:flex;gap:8px;padding:6px 12px 12px;flex-wrap:wrap}
+.game-shelf-item{width:54px;height:54px;display:flex;align-items:center;justify-content:center;
+  font-size:1.7rem;background:#fff;border:1.5px solid var(--border);border-radius:10px;
+  position:relative;user-select:none;transition:transform .12s,border-color .15s}
+.game-shelf-item.dirty{cursor:pointer;border-color:#c9a87c}
+.game-shelf-item.dirty:active{transform:scale(.9)}
+.grime{position:absolute;inset:0;background:rgba(160,120,60,.22);border-radius:9px;
+  pointer-events:none;animation:gPulse 2s ease-in-out infinite}
+@keyframes gPulse{0%,100%{opacity:.65}50%{opacity:1}}
+.game-shelf-item.wiping .grime{animation:wipe .35s ease-out forwards}
+@keyframes wipe{to{opacity:0;transform:scale(1.5)}}
+.game-shelf-item.sparkle::after{content:'✨';position:absolute;font-size:.7rem;top:-5px;right:-5px;
+  animation:sparkFade .6s ease-out forwards}
+@keyframes sparkFade{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5) translateY(-6px)}}
+/* ═══════════════════════════════
+   GAME 2 — PLANOGRAM
+   ═══════════════════════════════ */
+.plano-pool{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:12px;
+  background:#faf5ed;border:1.5px dashed #d4c9b5;border-radius:12px;justify-content:center}
+.plano-item{width:50px;height:50px;display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;background:#fff;border:2px solid var(--border);border-radius:10px;
+  cursor:pointer;user-select:none;transition:all .15s}
+.plano-item:active{transform:scale(.92)}
+.plano-item.sel{border-color:var(--text);background:#f0ede8;transform:scale(1.12);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.plano-item.placed{opacity:.22;pointer-events:none;border-style:dashed}
+.plano-target{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;
+  margin-bottom:8px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .12s}
+.plano-target:hover{border-color:#bbb}
+.plano-target-label{font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;margin-bottom:6px}
+.plano-slots{display:flex;gap:6px;min-height:38px;align-items:center;padding:2px 0}
+.plano-placed{font-size:1.4rem;animation:snap .3s ease-out}
+@keyframes snap{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+/* ═══════════════════════════════
+   GAME 3 — EXPIRY
+   ═══════════════════════════════ */
+.expiry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.exp-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;
+  padding:16px 6px 12px;text-align:center;cursor:pointer;transition:all .15s;
+  user-select:none;position:relative}
+.exp-card:hover{border-color:#bbb}.exp-card:active{transform:scale(.95)}
+.exp-emoji{display:block;font-size:1.9rem;margin-bottom:4px}
+.exp-name{display:block;font-size:.72rem;color:var(--muted);font-weight:500}
+.exp-card.flagged{border-color:#dc2626;background:#fef2f2;pointer-events:none}
+.exp-card.flagged::after{content:'🚩';position:absolute;top:4px;right:6px;font-size:.75rem}
+.exp-card.safe-flash{animation:safeFlash .5s ease-out}
+@keyframes safeFlash{0%{background:#dcfce7}100%{background:var(--surface)}}
+/* inspect modal */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.35);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;
+  align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:var(--surface);border:1.5px solid var(--border);border-radius:18px;
+  padding:1.4rem;max-width:300px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.12);
+  animation:mPop .25s ease-out}
+@keyframes mPop{from{transform:scale(.92) translateY(16px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-box-header{text-align:center;margin-bottom:.9rem;position:relative}
+.modal-box-header h4{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;margin:4px 0 0}
+.modal-close{position:absolute;top:-6px;right:-6px;background:none;border:none;font-size:1.3rem;
+  cursor:pointer;color:var(--muted);padding:4px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-box-body{margin-bottom:1rem}
+.lbl-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0ede8;font-size:.82rem}
+.lbl-row:last-child{border-bottom:none}
+.lbl-k{color:var(--muted);font-weight:500}.lbl-v{font-weight:600;text-align:right}
+.btn-flag{width:100%;padding:10px;font-size:.82rem}
+/* ═══════════════════════════════
+   PASSWORD & CLAIM
+   ═══════════════════════════════ */
+.pw-row{display:flex;gap:8px;align-items:center;max-width:320px}
+.pw-row .form-control{flex:1}
+.pw-error{color:#dc2626;font-size:.78rem;margin-top:8px;display:none}
+.pw-error.show{display:block;animation:slideU .3s ease-out}
+.claim-wrap{margin-top:1.2rem}
+.claim-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:1.2rem;max-width:400px}
+.claim-head{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:.8rem;text-align:center}
+.claim-prog{margin-bottom:1rem}
+.prog-ok{display:block;color:#166534;background:#dcfce7;padding:8px 14px;border-radius:8px;font-size:.82rem;text-align:center}
+.prog-wait{display:block;color:#92400e;background:#fef3c7;padding:8px 14px;border-radius:8px;font-size:.82rem;text-align:center}
+.btn-claim{width:100%;padding:12px;font-size:.86rem;margin-top:6px}
+/* ═══ SUCCESS OVERLAY ═══ */
+.success-ov{position:fixed;inset:0;z-index:9999;background:rgba(245,244,240,.92);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;
+  align-items:center;justify-content:center}
+.success-ov.show{display:flex}
+.success-in{text-align:center;padding:2rem;animation:slideU .5s ease-out}
+.success-in h2{font-family:'Syne',sans-serif;font-weight:800;margin:.6rem 0 .4rem}
+.success-in p{color:var(--muted);font-size:.88rem;line-height:1.6;margin-bottom:.3rem}
+.success-in .btn-solid{margin-top:1rem;padding:.6rem 1.4rem;font-size:.82rem}
+/* ═══ CONFETTI ═══ */
+.conf-wrap{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000;overflow:hidden}
+.conf{position:absolute;border-radius:2px;animation:confDrop linear forwards}
+@keyframes confDrop{0%{transform:translateY(-12px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(720deg);opacity:0}}
+/* ═══ UTILITY ═══ */
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .35s ease-in-out}
+@keyframes bump{0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)}}
+.bump{animation:bump .3s ease-out}
+@keyframes mPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@media(max-width:420px){
+  .expiry-grid{grid-template-columns:repeat(2,1fr)}
+  .sec-hero,.tab-content-area{padding:1rem}
+}
+</style>
+</head>
+<body>
+<!-- ════════════ HERO ════════════ -->
+<div class="sec-hero">
+  <div class="hero-top-row">
+    <a href="/dashboard.html" class="back-link"><i class="bi bi-arrow-left"></i> All Sections</a>
+    <div class="money-badge"><i class="bi bi-wallet2"></i> <span id="money-amt">$0</span><span class="money-of">/ $15</span></div>
+  </div>
+  <div class="hero-row">
+    <div class="hero-icon" style="animation:mPulse 1.6s ease-in-out infinite">💰</div>
+    <div><p class="hero-name">The Money</p><p class="hero-loc">App</p></div>
+  </div>
+  <div class="disclaimer">
+    Hold up — you just wanna take all <strong>$15</strong> for free?
+    That's ¾&nbsp;of an hour's pay!&nbsp;😤<br>
+    Do some work on this section first, please.
+  </div>
+</div>
+<!-- ════════════ TAB BAR ════════════ -->
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-tab="cleaning"><i class="bi bi-droplet me-1"></i>Cleaning<i class="bi bi-check-circle-fill tab-check" id="chk-c"></i></button>
+  <button class="tab-btn"        data-tab="planogram"><i class="bi bi-grid me-1"></i>Planogram<i class="bi bi-check-circle-fill tab-check" id="chk-p"></i></button>
+  <button class="tab-btn"        data-tab="expiry"><i class="bi bi-calendar-x me-1"></i>Expiry<i class="bi bi-check-circle-fill tab-check" id="chk-e"></i></button>
+  <button class="tab-btn"        data-tab="password"><i class="bi bi-lock me-1"></i>Password<i class="bi bi-check-circle-fill tab-check" id="chk-pw"></i></button>
+</div>
+<!-- ════════════ TAB CONTENT ════════════ -->
+<div class="tab-content-area">
+  <!-- ── CLEANING ── -->
+  <div class="tab-pane-custom active" id="tab-cleaning">
+    <div class="game-header"><p class="game-title">🧹 Shelf Cleaning</p><span class="game-reward">+$5</span></div>
+    <p class="game-instruction">Some items are grimy! Tap the dirty ones to wipe&nbsp;them&nbsp;clean.</p>
+    <div id="clean-area"></div>
+    <div class="game-done" id="done-c">✅ Spotless! <strong>+$5</strong> earned.</div>
+  </div>
+  <!-- ── PLANOGRAM ── -->
+  <div class="tab-pane-custom" id="tab-planogram">
+    <div class="game-header"><p class="game-title">📋 Planogram Sort</p><span class="game-reward">+$5</span></div>
+    <p class="game-instruction">Tap an item, then tap the correct shelf to place&nbsp;it.</p>
+    <div class="plano-pool" id="pp"></div>
+    <div id="ps"></div>
+    <div class="game-done" id="done-p">✅ Perfectly planogrammed! <strong>+$5</strong> earned.</div>
+  </div>
+  <!-- ── EXPIRY ── -->
+  <div class="tab-pane-custom" id="tab-expiry">
+    <div class="game-header"><p class="game-title">📅 Expiry Hunt</p><span class="game-reward">+$5</span></div>
+    <p class="game-instruction">One product is expired. Tap to inspect labels, then flag the&nbsp;bad&nbsp;one.</p>
+    <div class="expiry-grid" id="eg"></div>
+    <div class="game-done" id="done-e">✅ Expired item flagged! <strong>+$5</strong> earned.</div>
+  </div>
+  <!-- ── PASSWORD & CLAIM ── -->
+  <div class="tab-pane-custom" id="tab-password">
+    <div class="game-header"><p class="game-title">🔒 Lotto Terminal</p></div>
+    <p class="game-instruction">Enter the password to access this lotto terminal.</p>
+    <div id="pw-sec">
+      <div class="pw-row">
+        <input type="text" class="form-control" id="pw-in" placeholder="Terminal password" autocomplete="off" inputmode="numeric">
+        <button class="btn-solid" id="pw-btn">Unlock</button>
+      </div>
+      <p class="pw-error" id="pw-err">Nope — wrong password!</p>
+    </div>
+    <div class="claim-wrap" id="claim-wrap" style="display:none">
+      <div class="claim-card">
+        <div class="claim-head">🎉 Terminal Unlocked!</div>
+        <div class="claim-prog" id="claim-prog"></div>
+        <div class="mb-3">
+          <label class="form-label">Your Name *</label>
+          <input type="text" class="form-control" id="cl-name" placeholder="e.g. John">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Interac e-Transfer Email *</label>
+          <input type="email" class="form-control" id="cl-email" placeholder="you@example.com">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Comments (optional)</label>
+          <textarea class="form-control" id="cl-note" rows="2" placeholder="Anything you wanna say…"></textarea>
+        </div>
+        <button class="btn-solid btn-claim" id="cl-btn" disabled>💸 Claim $15</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /content -->
+<!-- ════════════ EXPIRY MODAL ════════════ -->
+<div class="modal-overlay" id="exp-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-box-header">
+      <button class="modal-close" id="m-close">&times;</button>
+      <span id="m-emoji" style="font-size:2.2rem;display:block"></span>
+      <h4 id="m-name"></h4>
+    </div>
+    <div class="modal-box-body">
+      <div class="lbl-row"><span class="lbl-k">Category</span><span class="lbl-v" id="m-cat"></span></div>
+      <div class="lbl-row"><span class="lbl-k">Best Before</span><span class="lbl-v" id="m-exp"></span></div>
+      <div class="lbl-row"><span class="lbl-k">Status</span><span class="lbl-v" id="m-stat"></span></div>
+    </div>
+    <button class="btn-solid btn-solid-red btn-flag" id="m-flag">🚩 Flag as Expired</button>
+  </div>
+</div>
+<!-- ════════════ SUCCESS OVERLAY ════════════ -->
+<div class="success-ov" id="suc-ov">
+  <div class="success-in">
+    <div style="font-size:4rem">🎉💰🎉</div>
+    <h2>Claim Submitted!</h2>
+    <p>Your <strong>$15</strong> is on its way via Interac&nbsp;e&#8209;Transfer.</p>
+    <p style="font-size:.8rem">Thanks for playing — you've earned&nbsp;it!&nbsp;🏆</p>
+    <button class="btn-solid" onclick="location='/dashboard.html'">Back to Dashboard</button>
+  </div>
+</div>
+<!-- ════════════════════════════════════════════
+     SCRIPT  — zero backend, all in-memory
+     ════════════════════════════════════════════ -->
+<script>
+/* ───── state ───── */
+const G = { c:false, p:false, e:false, pw:false, $:0 };
+/* ───── tabs ───── */
+document.getElementById('tab-bar').addEventListener('click', ev => {
+  const b = ev.target.closest('.tab-btn'); if(!b) return;
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane-custom').forEach(p=>p.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+});
+/* ───── money badge ───── */
+function addMoney(n){
+  G.$+=n;
+  const el=document.getElementById('money-amt');
+  el.textContent='$'+G.$;
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  refreshClaim();
+}
+/* ═══════════════════════════════════════════
+   GAME 1  —  CLEANING
+   ═══════════════════════════════════════════ */
+const SH=[
+  {l:'Top Shelf',   items:[{e:'🥫',d:0},{e:'🍞',d:1},{e:'🧴',d:0},{e:'🥛',d:1}]},
+  {l:'Middle Shelf',items:[{e:'🍿',d:1},{e:'🧃',d:0},{e:'🍪',d:1},{e:'🧁',d:0}]},
+  {l:'Bottom Shelf',items:[{e:'🧽',d:0},{e:'🧻',d:1},{e:'🪣',d:0},{e:'🪥',d:0}]}
+];
+function initClean(){
+  const w=document.getElementById('clean-area');
+  SH.forEach(s=>{
+    const shelf=document.createElement('div'); shelf.className='game-shelf';
+    shelf.innerHTML=`<div class="game-shelf-label">${s.l}</div>`;
+    const row=document.createElement('div'); row.className='game-shelf-row';
+    s.items.forEach(i=>{
+      const d=document.createElement('div');
+      d.className='game-shelf-item'+(i.d?' dirty':'');
+      d.innerHTML=`<span>${i.e}</span>`+(i.d?'<span class="grime"></span>':'');
+      row.appendChild(d);
+    });
+    shelf.appendChild(row); w.appendChild(shelf);
+  });
+  w.addEventListener('click',ev=>{
+    if(G.c) return;
+    const it=ev.target.closest('.game-shelf-item.dirty'); if(!it) return;
+    it.classList.add('wiping');
+    setTimeout(()=>{
+      it.classList.remove('dirty','wiping');
+      const g=it.querySelector('.grime'); if(g) g.remove();
+      it.classList.add('sparkle'); setTimeout(()=>it.classList.remove('sparkle'),700);
+      if(!w.querySelector('.dirty')){
+        G.c=true;
+        document.getElementById('done-c').classList.add('show');
+        document.getElementById('chk-c').classList.add('done');
+        addMoney(5);
+      }
+    },350);
+  });
+}
+/* ═══════════════════════════════════════════
+   GAME 2  —  PLANOGRAM
+   ═══════════════════════════════════════════ */
+const PI=[
+  {e:'🍟',c:'chips'},{e:'🥔',c:'chips'},
+  {e:'🍫',c:'choc'}, {e:'🍬',c:'choc'},
+  {e:'🧃',c:'other'},{e:'🥤',c:'other'}
+];
+const PT=[
+  {id:'chips',l:'🥔 Chips'},
+  {id:'choc', l:'🍫 Chocolates'},
+  {id:'other',l:'📦 Everything Else'}
+];
+let sel=null, placed=0;
+function initPlano(){
+  const pool=document.getElementById('pp'), sh=document.getElementById('ps');
+  [...PI].sort(()=>Math.random()-.5).forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='plano-item'; d.dataset.cat=p.c; d.textContent=p.e;
+    d.addEventListener('click',()=>pickItem(d));
+    pool.appendChild(d);
+  });
+  PT.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='plano-target'; d.dataset.acc=t.id;
+    d.innerHTML=`<div class="plano-target-label">${t.l}</div><div class="plano-slots"></div>`;
+    d.addEventListener('click',()=>dropItem(d,t.id));
+    sh.appendChild(d);
+  });
+}
+function pickItem(el){
+  if(G.p||el.classList.contains('placed')) return;
+  document.querySelectorAll('.plano-item.sel').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); sel=el;
+}
+function dropItem(shelf,acc){
+  if(!sel||G.p) return;
+  if(sel.dataset.cat===acc){
+    const s=shelf.querySelector('.plano-slots');
+    const sp=document.createElement('span'); sp.className='plano-placed'; sp.textContent=sel.textContent;
+    s.appendChild(sp);
+    sel.classList.remove('sel'); sel.classList.add('placed'); sel=null; placed++;
+    if(placed===PI.length){
+      G.p=true;
+      document.getElementById('done-p').classList.add('show');
+      document.getElementById('chk-p').classList.add('done');
+      addMoney(5);
+    }
+  } else {
+    shelf.classList.add('shake');
+    setTimeout(()=>shelf.classList.remove('shake'),400);
+  }
+}
+/* ═══════════════════════════════════════════
+   GAME 3  —  EXPIRY
+   ═══════════════════════════════════════════ */
+const EX=[
+  {e:'🥛',n:'Milk',       cat:'Dairy',     exp:'2025-08-15',bad:false},
+  {e:'🍞',n:'Bread',      cat:'Bakery',    exp:'2025-07-28',bad:false},
+  {e:'🧀',n:'Cheese Slices',cat:'Dairy',   exp:'2025-01-12',bad:true},
+  {e:'🥚',n:'Eggs',       cat:'Dairy',     exp:'2025-07-30',bad:false},
+  {e:'🍎',n:'Apple Juice',cat:'Beverages', exp:'2025-11-01',bad:false},
+  {e:'🥜',n:'Trail Mix',  cat:'Snacks',    exp:'2026-03-20',bad:false}
+];
+let cur=null;
+function initExpiry(){
+  const grid=document.getElementById('eg');
+  [...EX].sort(()=>Math.random()-.5).forEach(p=>{
+    const c=document.createElement('div'); c.className='exp-card';
+    c.innerHTML=`<span class="exp-emoji">${p.e}</span><span class="exp-name">${p.n}</span>`;
+    c.addEventListener('click',()=>inspect(p,c));
+    grid.appendChild(c);
+  });
+  document.getElementById('m-close').addEventListener('click',closeM);
+  document.getElementById('m-flag').addEventListener('click',flag);
+  document.getElementById('exp-modal').addEventListener('click',e=>{if(e.target.id==='exp-modal')closeM()});
+}
+function inspect(p,card){
+  if(G.e) return; cur={...p,card};
+  document.getElementById('m-emoji').textContent=p.e;
+  document.getElementById('m-name').textContent=p.n;
+  document.getElementById('m-cat').textContent=p.cat;
+  const d=new Date(p.exp);
+  const fmt=d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const xp=document.getElementById('m-exp');
+  xp.textContent=fmt; xp.style.color=p.bad?'#dc2626':'inherit'; xp.style.fontWeight=p.bad?'700':'500';
+  const st=document.getElementById('m-stat');
+  st.textContent=p.bad?'⚠️ PAST DUE':'✅ Good'; st.style.color=p.bad?'#dc2626':'#16a34a';
+  document.getElementById('m-flag').textContent='🚩 Flag as Expired';
+  document.getElementById('exp-modal').style.display='flex';
+}
+function closeM(){document.getElementById('exp-modal').style.display='none';cur=null}
+function flag(){
+  if(!cur) return;
+  if(cur.bad){
+    G.e=true; cur.card.classList.add('flagged'); closeM();
+    document.querySelectorAll('.exp-card').forEach(c=>{c.style.pointerEvents='none'});
+    document.getElementById('done-e').classList.add('show');
+    document.getElementById('chk-e').classList.add('done');
+    addMoney(5);
+  } else {
+    const b=document.getElementById('m-flag');
+    b.textContent='❌ Nope — this one\'s fine!';
+    b.classList.add('shake');
+    setTimeout(()=>{b.classList.remove('shake');closeM()},1100);
+  }
+}
+/* ═══════════════════════════════════════════
+   PASSWORD  &  CLAIM
+   ═══════════════════════════════════════════ */
+function initPw(){
+  document.getElementById('pw-btn').addEventListener('click',tryPw);
+  document.getElementById('pw-in').addEventListener('keydown',e=>{if(e.key==='Enter')tryPw()});
+  document.getElementById('cl-btn').addEventListener('click',submitClaim);
+}
+function tryPw(){
+  if(document.getElementById('pw-in').value.trim()==='101158'){
+    G.pw=true;
+    document.getElementById('pw-sec').style.display='none';
+    document.getElementById('claim-wrap').style.display='';
+    document.getElementById('chk-pw').classList.add('done');
+    refreshClaim();
+  } else {
+    const er=document.getElementById('pw-err');
+    er.classList.add('show');
+    document.getElementById('pw-in').classList.add('shake');
+    setTimeout(()=>document.getElementById('pw-in').classList.remove('shake'),400);
+    setTimeout(()=>er.classList.remove('show'),2000);
+  }
+}
+function refreshClaim(){
+  const el=document.getElementById('claim-prog'), btn=document.getElementById('cl-btn');
+  if(!el) return;
+  if(G.$>=15){
+    el.innerHTML='<span class="prog-ok">✅ All games complete — <strong>$15</strong> earned. Claim below!</span>';
+    if(G.pw) btn.disabled=false;
+  } else {
+    el.innerHTML='<span class="prog-wait">Earned <strong>$'+G.$+'</strong> / $15 — finish all games first.</span>';
+    btn.disabled=true;
+  }
+}
+async function submitClaim(){
+  const name=document.getElementById('cl-name').value.trim();
+  const email=document.getElementById('cl-email').value.trim();
+  const note=document.getElementById('cl-note').value.trim();
+  if(!name||!email){alert('Please fill in your name and email.');return}
+  if(!email.includes('@')){alert('That doesn\'t look like an email.');return}
+  const btn=document.getElementById('cl-btn');
+  btn.disabled=true; btn.textContent='Submitting…';
+  try{
+    const r=await fetch('/api/easter-egg/claim',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,interacId:email,comments:note,earned:G.$})
+    });
+    if(!r.ok) throw 0;
+    boom(); document.getElementById('suc-ov').style.display='flex';
+  }catch{
+    alert('Oops — something went wrong. Try again!');
+    btn.disabled=false; btn.textContent='💸 Claim $15';
+  }
+}
+/* ═══ CONFETTI 🎊 ═══ */
+function boom(){
+  const w=document.createElement('div');w.className='conf-wrap';document.body.appendChild(w);
+  const cols=['#fcd34d','#34d399','#60a5fa','#f87171','#a78bfa','#fb923c'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');p.className='conf';
+    p.style.left=Math.random()*100+'%';
+    p.style.background=cols[Math.random()*cols.length|0];
+    p.style.width=(6+Math.random()*8)+'px';
+    p.style.height=(6+Math.random()*8)+'px';
+    p.style.animationDuration=(1.5+Math.random()*2)+'s';
+    p.style.animationDelay=Math.random()*.6+'s';
+    w.appendChild(p);
+  }
+  setTimeout(()=>w.remove(),4500);
+}
+/* ═══ BOOT ═══ */
+document.addEventListener('DOMContentLoaded',()=>{
+  initClean(); initPlano(); initExpiry(); initPw(); refreshClaim();
+});
+</script>
+</body>
+</html>
