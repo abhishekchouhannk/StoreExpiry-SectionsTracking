@@ -1,704 +1,1325 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>The Money</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<style>
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --border: #e4e2dc;
-    --text: #1a1a18;
-    --muted: #8a8880;
-    --pill-r: 999px;
-  }
-  * { box-sizing: border-box; }
-  body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; margin:0; }
-  /* ── SECTION HERO (reused) ── */
-  .sec-hero { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.2rem 1.4rem 1.1rem; }
-  .hero-top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .7rem; gap: .6rem; flex-wrap: wrap; }
-  .back-link { display: inline-flex; align-items: center; gap: .35rem; font-size: .76rem; font-weight: 600; color: var(--muted); text-decoration: none; text-transform: uppercase; letter-spacing: .06em; font-family: 'Syne', sans-serif; transition: color .12s; }
-  .back-link:hover { color: var(--text); }
-  .hero-row { display: flex; align-items: center; gap: .9rem; }
-  .hero-icon { font-size: 2rem; line-height: 1; animation: money-float 2.4s ease-in-out infinite; }
-  @keyframes money-float { 0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-4px) rotate(-4deg);} }
-  .hero-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.35rem; letter-spacing: -.02em; margin: 0 0 .15rem; }
-  .hero-loc { font-size: .78rem; color: var(--muted); margin: 0; }
-  .money-counter-pill { display:flex; align-items:center; gap:6px; font-family:'Syne',sans-serif; font-size:.72rem; font-weight:700; padding:5px 12px; border-radius:999px; border:1.5px solid var(--border); background: var(--surface); color: var(--text); white-space:nowrap; }
-  .money-counter-pill i { color:#c47a1a; }
-  .money-disclaimer { margin-top: .9rem; background:#fff8e1; border:1.5px dashed #f0c14b; border-radius: 12px; padding:.75rem 1rem; font-size:.82rem; line-height:1.55; color:#6b5300; }
-  .money-progress-wrap { margin-top:.9rem; }
-  .money-progress-track { background: var(--border); border-radius: 999px; height: 10px; overflow:hidden; }
-  .money-progress-bar { background: linear-gradient(90deg,#f0a742,#c47a1a); height:100%; width:0%; transition: width .5s ease; }
-  .money-progress-label { font-size:.75rem; font-weight:700; color:var(--muted); margin-top:.35rem; text-align:right; font-family:'Syne',sans-serif; }
-  /* ── TAB BAR (reused) ── */
-  .tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.4rem; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab-btn { font-family: 'Syne', sans-serif; font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: .75rem .9rem; border: none; background: none; color: var(--muted); border-bottom: 2.5px solid transparent; cursor: pointer; white-space: nowrap; transition: all .15s; }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
-  .tab-reward { font-size:.62rem; opacity:.55; margin-left:3px; }
-  .tab-check { font-size:.75rem; }
-  .tab-content-area { padding: 1.4rem; max-width: 720px; margin: 0 auto; }
-  .tab-pane-custom { display: none; }
-  .tab-pane-custom.active { display: block; }
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem; gap: .75rem; flex-wrap: wrap; }
-  .toolbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .88rem; margin: 0; }
-  .game-hint { font-size: .76rem; color: var(--muted); }
-  .btn-solid { background: var(--text); color: #fff; border: none; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: .74rem; font-weight: 700; letter-spacing: .04em; padding: .55rem .9rem; cursor: pointer; transition: background .15s; white-space: nowrap; }
-  .btn-solid:hover { background: #333; }
-  .btn-solid:disabled { opacity:.45; cursor:not-allowed; }
-  .form-label { font-size: .72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .3rem; display: block; }
-  .form-control { border: 1.5px solid var(--border); border-radius: 9px; font-size: .87rem; background: var(--bg); color: var(--text); width: 100%; padding: .5rem .7rem; }
-  .form-control:focus { border-color: var(--text); box-shadow: none; background: #fff; outline: none; }
-  .form-control.is-invalid { border-color: #d1453b !important; }
-  .field-error { font-size: .76rem; color: #d1453b; margin: .5rem 0 0; display: none; }
-  .mb-3 { margin-bottom: .9rem !important; }
-  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--muted); font-size: .85rem; font-style: italic; }
-  /* ═══ CLEANING GAME ═══ */
-  .shelf-unit { display:flex; flex-direction:column; gap:14px; }
-  .shelf-row { background:var(--surface); border:1.5px solid var(--border); border-radius:14px; padding:1rem; }
-  .shelf-row-label { font-family:'Syne',sans-serif; font-weight:700; font-size:.72rem; margin-bottom:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
-  .shelf-items { display:flex; gap:16px; flex-wrap:wrap; }
-  .shelf-item { font-size:2.1rem; cursor:pointer; position:relative; transition: transform .15s; user-select:none; }
-  .shelf-item:hover { transform: scale(1.15); }
-  .shelf-item.dirty { filter: grayscale(.85) brightness(.75); }
-  .shelf-item.dirty::after { content:'💨'; position:absolute; top:-8px; right:-10px; font-size:1rem; }
-  .shelf-item.just-cleaned { animation: clean-pop .45s ease; }
-  @keyframes clean-pop { 0%{transform:scale(1);} 45%{transform:scale(1.45) rotate(8deg);} 100%{transform:scale(1) rotate(0);} }
-  /* ═══ PLANOGRAM GAME ═══ */
-  .plano-shelves { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:1.2rem; }
-  .plano-shelf { flex:1 1 150px; background:var(--surface); border:1.5px dashed var(--border); border-radius:14px; padding:1rem; text-align:center; cursor:pointer; transition: border-color .15s; min-height: 120px; }
-  .plano-shelf:hover { border-color: var(--text); }
-  .plano-shelf-label { font-family:'Syne',sans-serif; font-weight:700; font-size:.76rem; margin-bottom:.6rem; }
-  .plano-shelf-slot { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; min-height: 38px; }
-  .plano-placed { font-size:1.7rem; }
-  .plano-tray { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; background:var(--bg); border:1.5px solid var(--border); border-radius:14px; padding:1.1rem; min-height:76px; align-items:center; }
-  .plano-item { font-size:2.1rem; cursor:pointer; transition: transform .15s, filter .15s; }
-  .plano-item:hover { transform: scale(1.15); }
-  .plano-item.selected { transform: scale(1.3); filter: drop-shadow(0 0 6px #f0c14b); }
-  .shelf-shake { animation: shelf-shake .4s; border-color:#d1453b !important; }
-  @keyframes shelf-shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
-  .plano-tray-empty { font-size:.8rem; color: var(--muted); font-style: italic; }
-  /* ═══ EXPIRY GAME ═══ */
-  .expiry-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:12px; }
-  .expiry-card { background:var(--surface); border:1.5px solid var(--border); border-radius:14px; padding:1.1rem .5rem; text-align:center; cursor:pointer; transition: all .15s; }
-  .expiry-card:hover { border-color:var(--text); transform: translateY(-2px); }
-  .expiry-card.found { border-color:#22c55e; background:#f0fdf4; }
-  .expiry-emoji { font-size:2.3rem; margin-bottom:.4rem; }
-  .expiry-name { font-size:.76rem; font-weight:600; margin:0; }
-  /* ═══ PASSWORD / CLAIM ═══ */
-  #password-gate, #claim-form-wrap { max-width: 380px; margin: 1rem auto 0; }
-  /* Toast */
-  .earn-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color:#fff; padding: .65rem 1.3rem; border-radius: 999px; font-family:'Syne',sans-serif; font-weight:700; font-size:.82rem; opacity:0; transition: all .3s ease; z-index: 2000; box-shadow:0 10px 30px rgba(0,0,0,.2); white-space:nowrap; }
-  .earn-toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
-  @media (max-width: 600px) {
-    .tab-content-area { padding: 1rem; }
-    .sec-hero { padding: 1rem; }
-  }
-
-  .already-claimed-banner {
-  margin-top: .7rem;
-  background: #fff4e0;
-  border: 1.5px solid #f0b429;
-  border-radius: 12px;
-  padding: .75rem 1rem;
-  font-size: .82rem;
-  line-height: 1.55;
-  color: #7a5200;
-}
-
-@keyframes terminal-pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px rgba(0,255,100,.4)); }
-  50%       { filter: drop-shadow(0 0 12px rgba(0,255,100,.9)); }
-}
-
-@keyframes wrong-shake {
-  0%, 100% { transform: translateX(0); }
-  20%       { transform: translateX(-8px); }
-  40%       { transform: translateX(8px); }
-  60%       { transform: translateX(-6px); }
-  80%       { transform: translateX(6px); }
-}
-
-.terminal-wrong {
-  animation: wrong-shake .4s ease;
-  border-color: #ff4444 !important;
-  box-shadow: 0 0 20px rgba(255,68,68,.3) !important;
-}
-</style>
-</head>
-<body>
-  <!-- ── HERO ── -->
-  <div class="sec-hero">
-    <div class="hero-top-row">
-      <a href="/dashboard.html" class="back-link" onclick="event.preventDefault();window.location='/dashboard.html'">
-        <i class="bi bi-arrow-left"></i> All Sections
-      </a>
-      <div class="money-counter-pill">
-        <i class="bi bi-piggy-bank-fill"></i>
-        <span id="money-counter-text">$0 earned</span>
-      </div>
-    </div>
-    <div class="hero-row">
-      <div class="hero-icon">💰</div>
-      <div>
-        <p class="hero-name">The Money</p>
-        <p class="hero-loc">App</p>
-      </div>
-    </div>
-    <div class="money-disclaimer" id="money-disclaimer">
-      🧐 Hold up — you just wanna take these <strong>$15</strong> for free? That's 3/4 of an hour's pay.
-      Do some work on this section first, please.
-    </div>
-
-    <!-- NEW DISCLAIMER-->
-<div class="already-claimed-banner" id="already-claimed-banner" style="display:none;"></div>
-    <div class="money-progress-wrap">
-      <div class="money-progress-track"><div class="money-progress-bar" id="money-progress-bar"></div></div>
-      <p class="money-progress-label" id="money-progress-label">$0 / $15 earned</p>
-    </div>
-  </div>
-  <!-- ── TAB BAR ── -->
-  <div class="tab-bar" id="tab-bar">
-    <button class="tab-btn active" data-tab="cleaning"><i class="bi bi-droplet me-1"></i>Cleaning<span class="tab-reward">+$5</span></button>
-    <button class="tab-btn" data-tab="planogram"><i class="bi bi-grid me-1"></i>Planogram<span class="tab-reward">+$5</span></button>
-    <button class="tab-btn" data-tab="expiry"><i class="bi bi-calendar-x me-1"></i>Expiry<span class="tab-reward">+$5</span></button>
-    <button class="tab-btn" data-tab="password"><i class="bi bi-lock-fill me-1"></i>Password</button>
-  </div>
-  <!-- ── TAB CONTENT ── -->
-  <div class="tab-content-area">
-    <!-- CLEANING GAME -->
-    <div class="tab-pane-custom active" id="tab-cleaning">
-      <div class="toolbar">
-        <p class="toolbar-title">Shelf Cleaning Duty</p>
-        <span class="game-hint">Click the dusty 💨 items to clean them</span>
-      </div>
-      <div class="shelf-unit" id="clean-shelves"></div>
-    </div>
-    <!-- PLANOGRAM GAME -->
-    <div class="tab-pane-custom" id="tab-planogram">
-      <div class="toolbar">
-        <p class="toolbar-title">Planogram Integrity</p>
-        <span class="game-hint">Tap an item, then tap the correct shelf</span>
-      </div>
-      <div class="plano-shelves">
-        <div class="plano-shelf" data-category="chips">
-          <p class="plano-shelf-label">🥔 Chips</p>
-          <div class="plano-shelf-slot"></div>
-        </div>
-        <div class="plano-shelf" data-category="chocolate">
-          <p class="plano-shelf-label">🍫 Chocolate</p>
-          <div class="plano-shelf-slot"></div>
-        </div>
-        <div class="plano-shelf" data-category="other">
-          <p class="plano-shelf-label">🧺 Everything Else</p>
-          <div class="plano-shelf-slot"></div>
-        </div>
-      </div>
-      <div class="plano-tray" id="plano-tray"></div>
-    </div>
-    <!-- EXPIRY GAME -->
-    <div class="tab-pane-custom" id="tab-expiry">
-      <div class="toolbar">
-        <p class="toolbar-title">Find The Expiring Product</p>
-        <span class="game-hint">Click items to check their label 🔎</span>
-      </div>
-      <div class="expiry-grid" id="expiry-grid"></div>
-    </div>
-    <!-- PASSWORD / CLAIM -->
-    <div class="tab-pane-custom" id="tab-password">
-      <div id="password-locked" class="empty-state">
-        🔒 Complete Cleaning, Planogram &amp; Expiry first to unlock the lotto terminal.
-      </div>
-      <div id="password-gate" style="display:none;">
-  
-  <!-- Terminal screen aesthetic -->
-  <div style="
-    background: #0d0d0d;
-    border-radius: 16px;
-    padding: 2rem 1.5rem;
-    text-align: center;
-    margin-bottom: 1rem;
-    border: 1.5px solid #333;
-    box-shadow: 0 0 40px rgba(0,255,100,.08), inset 0 0 30px rgba(0,0,0,.5);
-    font-family: 'Courier New', monospace;
-  ">
-    <!-- Blinking cursor header -->
-    <div style="color: #00ff66; font-size: .75rem; letter-spacing: .15em; margin-bottom: 1.2rem; opacity: .7;">
-      SYSTEM TERMINAL v2.4.1
-    </div>
-
-    <!-- Animated lock icon -->
-    <div id="terminal-lock-icon" style="font-size: 3rem; margin-bottom: 1rem; animation: terminal-pulse 2s ease-in-out infinite;">
-      🔐
-    </div>
-
-    <!-- Typewriter text -->
-    <p id="terminal-typewriter" style="
-      color: #00ff66;
-      font-size: .82rem;
-      letter-spacing: .05em;
-      min-height: 2.5rem;
-      margin-bottom: 1.5rem;
-    "></p>
-
-    <!-- Input styled as terminal -->
-    <input 
-      type="password" 
-      class="form-control" 
-      id="password-input" 
-      placeholder="_ _ _ _ _ _"
-      style="
-        background: #1a1a1a;
-        border: 1.5px solid #333;
-        color: #00ff66;
-        font-family: 'Courier New', monospace;
-        text-align: center;
-        font-size: 1.1rem;
-        letter-spacing: .3em;
-        border-radius: 8px;
-        margin-bottom: .8rem;
-      "
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Money</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
+    <style>
+      :root {
+        --bg: #f5f4f0;
+        --surface: #ffffff;
+        --border: #e4e2dc;
+        --text: #1a1a18;
+        --muted: #8a8880;
+        --pill-r: 999px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        font-family: "DM Sans", sans-serif;
+        color: var(--text);
+        min-height: 100vh;
+        margin: 0;
+      }
+      /* ── SECTION HERO (reused) ── */
+      .sec-hero {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 1.2rem 1.4rem 1.1rem;
+      }
+      .hero-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.7rem;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-family: "Syne", sans-serif;
+        transition: color 0.12s;
+      }
+      .back-link:hover {
+        color: var(--text);
+      }
+      .hero-row {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+      }
+      .hero-icon {
+        font-size: 2rem;
+        line-height: 1;
+        animation: money-float 2.4s ease-in-out infinite;
+      }
+      @keyframes money-float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0);
+        }
+        50% {
+          transform: translateY(-4px) rotate(-4deg);
+        }
+      }
+      .hero-name {
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: 1.35rem;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.15rem;
+      }
+      .hero-loc {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 0;
+      }
+      .money-counter-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: "Syne", sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1.5px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        white-space: nowrap;
+      }
+      .money-counter-pill i {
+        color: #c47a1a;
+      }
+      .money-disclaimer {
+        margin-top: 0.9rem;
+        background: #fff8e1;
+        border: 1.5px dashed #f0c14b;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        color: #6b5300;
+      }
+      .money-progress-wrap {
+        margin-top: 0.9rem;
+      }
+      .money-progress-track {
+        background: var(--border);
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+      }
+      .money-progress-bar {
+        background: linear-gradient(90deg, #f0a742, #c47a1a);
+        height: 100%;
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+      .money-progress-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--muted);
+        margin-top: 0.35rem;
+        text-align: right;
+        font-family: "Syne", sans-serif;
+      }
+      /* ── TAB BAR (reused) ── */
+      .tab-bar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 1.4rem;
+        display: flex;
+        gap: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .tab-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .tab-btn {
+        font-family: "Syne", sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 0.75rem 0.9rem;
+        border: none;
+        background: none;
+        color: var(--muted);
+        border-bottom: 2.5px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .tab-btn:hover {
+        color: var(--text);
+      }
+      .tab-btn.active {
+        color: var(--text);
+        border-bottom-color: var(--text);
+      }
+      .tab-reward {
+        font-size: 0.62rem;
+        opacity: 0.55;
+        margin-left: 3px;
+      }
+      .tab-check {
+        font-size: 0.75rem;
+      }
+      .tab-content-area {
+        padding: 1.4rem;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      .tab-pane-custom {
+        display: none;
+      }
+      .tab-pane-custom.active {
+        display: block;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.1rem;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .toolbar-title {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.88rem;
+        margin: 0;
+      }
+      .game-hint {
+        font-size: 0.76rem;
+        color: var(--muted);
+      }
+      .btn-solid {
+        background: var(--text);
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        font-family: "Syne", sans-serif;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.55rem 0.9rem;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
+      .btn-solid:hover {
+        background: #333;
+      }
+      .btn-solid:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .form-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.3rem;
+        display: block;
+      }
+      .form-control {
+        border: 1.5px solid var(--border);
+        border-radius: 9px;
+        font-size: 0.87rem;
+        background: var(--bg);
+        color: var(--text);
+        width: 100%;
+        padding: 0.5rem 0.7rem;
+      }
+      .form-control:focus {
+        border-color: var(--text);
+        box-shadow: none;
+        background: #fff;
+        outline: none;
+      }
+      .form-control.is-invalid {
+        border-color: #d1453b !important;
+      }
+      .field-error {
+        font-size: 0.76rem;
+        color: #d1453b;
+        margin: 0.5rem 0 0;
+        display: none;
+      }
+      .mb-3 {
+        margin-bottom: 0.9rem !important;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-style: italic;
+      }
+      /* ═══ CLEANING GAME ═══ */
+      .shelf-unit {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .shelf-row {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+      }
+      .shelf-row-label {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.72rem;
+        margin-bottom: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .shelf-items {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .shelf-item {
+        font-size: 2.1rem;
+        cursor: pointer;
+        position: relative;
+        transition: transform 0.15s;
+        user-select: none;
+      }
+      .shelf-item:hover {
+        transform: scale(1.15);
+      }
+      .shelf-item.dirty {
+        filter: grayscale(0.85) brightness(0.75);
+      }
+      .shelf-item.dirty::after {
+        content: "💨";
+        position: absolute;
+        top: -8px;
+        right: -10px;
+        font-size: 1rem;
+      }
+      .shelf-item.just-cleaned {
+        animation: clean-pop 0.45s ease;
+      }
+      @keyframes clean-pop {
+        0% {
+          transform: scale(1);
+        }
+        45% {
+          transform: scale(1.45) rotate(8deg);
+        }
+        100% {
+          transform: scale(1) rotate(0);
+        }
+      }
+      /* ═══ PLANOGRAM GAME ═══ */
+      .plano-shelves {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 1.2rem;
+      }
+      .plano-shelf {
+        flex: 1 1 150px;
+        background: var(--surface);
+        border: 1.5px dashed var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.15s;
+        min-height: 120px;
+      }
+      .plano-shelf:hover {
+        border-color: var(--text);
+      }
+      .plano-shelf-label {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.76rem;
+        margin-bottom: 0.6rem;
+      }
+      .plano-shelf-slot {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        min-height: 38px;
+      }
+      .plano-placed {
+        font-size: 1.7rem;
+      }
+      .plano-tray {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+        background: var(--bg);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        padding: 1.1rem;
+        min-height: 76px;
+        align-items: center;
+      }
+      .plano-item {
+        font-size: 2.1rem;
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          filter 0.15s;
+      }
+      .plano-item:hover {
+        transform: scale(1.15);
+      }
+      .plano-item.selected {
+        transform: scale(1.3);
+        filter: drop-shadow(0 0 6px #f0c14b);
+      }
+      .shelf-shake {
+        animation: shelf-shake 0.4s;
+        border-color: #d1453b !important;
+      }
+      @keyframes shelf-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-6px);
+        }
+        75% {
+          transform: translateX(6px);
+        }
+      }
+      .plano-tray-empty {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-style: italic;
+      }
+      /* ═══ EXPIRY GAME ═══ */
+      .expiry-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+      }
+      .expiry-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 14px;
+        padding: 1.1rem 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .expiry-card:hover {
+        border-color: var(--text);
+        transform: translateY(-2px);
+      }
+      .expiry-card.found {
+        border-color: #22c55e;
+        background: #f0fdf4;
+      }
+      .expiry-emoji {
+        font-size: 2.3rem;
+        margin-bottom: 0.4rem;
+      }
+      .expiry-name {
+        font-size: 0.76rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      /* ═══ PASSWORD / CLAIM ═══ */
+      #password-gate,
+      #claim-form-wrap {
+        max-width: 380px;
+        margin: 1rem auto 0;
+      }
+      /* Toast */
+      .earn-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--text);
+        color: #fff;
+        padding: 0.65rem 1.3rem;
+        border-radius: 999px;
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.82rem;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 2000;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        white-space: nowrap;
+      }
+      .earn-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      @media (max-width: 600px) {
+        .tab-content-area {
+          padding: 1rem;
+        }
+        .sec-hero {
+          padding: 1rem;
+        }
+      }
 
-    <p class="field-error" id="password-error" style="color: #ff4444;">
-      ❌ Access denied. Try again.
-    </p>
+      .already-claimed-banner {
+        margin-top: 0.7rem;
+        background: #fff4e0;
+        border: 1.5px solid #f0b429;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        color: #7a5200;
+      }
 
-    <button class="btn-solid" id="password-submit" style="
-      width: 100%;
-      background: #00ff66;
-      color: #0d0d0d;
-      font-family: 'Courier New', monospace;
-      letter-spacing: .1em;
-    ">
-      AUTHENTICATE →
-    </button>
-  </div>
+      @keyframes terminal-pulse {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 4px rgba(0, 255, 100, 0.4));
+        }
+        50% {
+          filter: drop-shadow(0 0 12px rgba(0, 255, 100, 0.9));
+        }
+      }
 
-  <!-- Subtle hint — doesn't mention lotto directly -->
-  <p style="
-    font-size: .72rem;
-    color: var(--muted);
-    text-align: center;
-    font-style: italic;
-    line-height: 1.6;
-  ">
-    💡 Hint: You use this password every day at work.<br>It's 6 digits long.
-  </p>
+      @keyframes wrong-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-8px);
+        }
+        40% {
+          transform: translateX(8px);
+        }
+        60% {
+          transform: translateX(-6px);
+        }
+        80% {
+          transform: translateX(6px);
+        }
+      }
 
-</div>
-      <div id="claim-form-wrap" style="display:none;">
-        <p class="toolbar-title" style="text-align:center;margin-bottom:.3rem;">🏆 Claim Your $15</p>
-        <p style="font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:1.2rem;">
-          Fill this out and you'll get e-transferred.
+      .terminal-wrong {
+        animation: wrong-shake 0.4s ease;
+        border-color: #ff4444 !important;
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.3) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── HERO ── -->
+    <div class="sec-hero">
+      <div class="hero-top-row">
+        <a
+          href="/dashboard.html"
+          class="back-link"
+          onclick="
+            event.preventDefault();
+            window.location = '/dashboard.html';
+          "
+        >
+          <i class="bi bi-arrow-left"></i> All Sections
+        </a>
+        <div class="money-counter-pill">
+          <i class="bi bi-piggy-bank-fill"></i>
+          <span id="money-counter-text">$0 earned</span>
+        </div>
+      </div>
+      <div class="hero-row">
+        <div class="hero-icon">💰</div>
+        <div>
+          <p class="hero-name">The Money</p>
+          <p class="hero-loc">App</p>
+        </div>
+      </div>
+      <div class="money-disclaimer" id="money-disclaimer">
+        🧐 Hold up — you just wanna take these <strong>$15</strong> for free?
+        That's 3/4 of an hour's pay. Do some work on this section first, please.
+      </div>
+
+      <!-- NEW DISCLAIMER-->
+      <div
+        class="already-claimed-banner"
+        id="already-claimed-banner"
+        style="display: none"
+      ></div>
+      <div class="money-progress-wrap">
+        <div class="money-progress-track">
+          <div class="money-progress-bar" id="money-progress-bar"></div>
+        </div>
+        <p class="money-progress-label" id="money-progress-label">
+          $0 / $15 earned
         </p>
-        <div class="mb-3">
-          <label class="form-label">Your Name *</label>
-          <input type="text" class="form-control" id="claim-name" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Interac E-Transfer Email *</label>
-          <input type="email" class="form-control" id="claim-email" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Comments (optional)</label>
-          <textarea class="form-control" id="claim-comments" rows="3"></textarea>
-        </div>
-        <button class="btn-solid" id="claim-submit" style="width:100%;">💸 Submit Claim</button>
-        <p class="field-error" id="claim-error"></p>
-      </div>
-      <div id="already-claimed-tab" style="display:none; text-align:center; padding:2rem 0;">
-  <div style="font-size:2.8rem;">🏆</div>
-  <p style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:.2rem;" id="already-claimed-name"></p>
-  <p style="font-size:.82rem;color:var(--muted);" id="already-claimed-time"></p>
-  <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;">
-    Feel free to keep playing the games for fun though! 🎮
-  </p>
-</div>
-      <div id="claim-success" style="display:none; text-align:center; padding:2rem 0;">
-        <div style="font-size:2.8rem;">🎉</div>
-        <p style="font-weight:700;font-family:'Syne',sans-serif;">Claim submitted!</p>
-        <p style="font-size:.82rem;color:var(--muted);">Sit tight — your $15 is on its way.</p>
       </div>
     </div>
-  </div>
-  <!-- Expiry label modal -->
-  <div class="modal fade" id="modal-expiry-label" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content" style="border:1.5px solid var(--border);border-radius:16px;">
-        <div class="modal-header" style="border-bottom:1px solid var(--border);">
-          <h5 class="modal-title" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;">Product Label</h5>
-          <button class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- ── TAB BAR ── -->
+    <div class="tab-bar" id="tab-bar">
+      <button class="tab-btn active" data-tab="cleaning">
+        <i class="bi bi-droplet me-1"></i>Cleaning<span class="tab-reward"
+          >+$5</span
+        >
+      </button>
+      <button class="tab-btn" data-tab="planogram">
+        <i class="bi bi-grid me-1"></i>Planogram<span class="tab-reward"
+          >+$5</span
+        >
+      </button>
+      <button class="tab-btn" data-tab="expiry">
+        <i class="bi bi-calendar-x me-1"></i>Expiry<span class="tab-reward"
+          >+$5</span
+        >
+      </button>
+      <button class="tab-btn" data-tab="password">
+        <i class="bi bi-lock-fill me-1"></i>Password
+      </button>
+    </div>
+    <!-- ── TAB CONTENT ── -->
+    <div class="tab-content-area">
+      <!-- CLEANING GAME -->
+      <div class="tab-pane-custom active" id="tab-cleaning">
+        <div class="toolbar">
+          <p class="toolbar-title">Shelf Cleaning Duty</p>
+          <span class="game-hint">Click the dusty 💨 items to clean them</span>
         </div>
-        <div class="modal-body" id="expiry-modal-body" style="text-align:center;padding:1.4rem;"></div>
+        <div class="shelf-unit" id="clean-shelves"></div>
+      </div>
+      <!-- PLANOGRAM GAME -->
+      <div class="tab-pane-custom" id="tab-planogram">
+        <div class="toolbar">
+          <p class="toolbar-title">Planogram Integrity</p>
+          <span class="game-hint">Tap an item, then tap the correct shelf</span>
+        </div>
+        <div class="plano-shelves">
+          <div class="plano-shelf" data-category="chips">
+            <p class="plano-shelf-label">🥔 Chips</p>
+            <div class="plano-shelf-slot"></div>
+          </div>
+          <div class="plano-shelf" data-category="chocolate">
+            <p class="plano-shelf-label">🍫 Chocolate</p>
+            <div class="plano-shelf-slot"></div>
+          </div>
+          <div class="plano-shelf" data-category="other">
+            <p class="plano-shelf-label">🧺 Everything Else</p>
+            <div class="plano-shelf-slot"></div>
+          </div>
+        </div>
+        <div class="plano-tray" id="plano-tray"></div>
+      </div>
+      <!-- EXPIRY GAME -->
+      <div class="tab-pane-custom" id="tab-expiry">
+        <div class="toolbar">
+          <p class="toolbar-title">Find The Expiring Product</p>
+          <span class="game-hint">Click items to check their label 🔎</span>
+        </div>
+        <div class="expiry-grid" id="expiry-grid"></div>
+      </div>
+      <!-- PASSWORD / CLAIM -->
+      <div class="tab-pane-custom" id="tab-password">
+        <div id="password-locked" class="empty-state">
+          🔒 Complete Cleaning, Planogram &amp; Expiry first to unlock the lotto
+          terminal.
+        </div>
+        <div id="password-gate" style="display: none">
+          <!-- Terminal screen aesthetic -->
+          <div
+            style="
+              background: #0d0d0d;
+              border-radius: 16px;
+              padding: 2rem 1.5rem;
+              text-align: center;
+              margin-bottom: 1rem;
+              border: 1.5px solid #333;
+              box-shadow:
+                0 0 40px rgba(0, 255, 100, 0.08),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
+              font-family: &quot;Courier New&quot;, monospace;
+            "
+          >
+            <!-- Blinking cursor header -->
+            <div
+              style="
+                color: #00ff66;
+                font-size: 0.75rem;
+                letter-spacing: 0.15em;
+                margin-bottom: 1.2rem;
+                opacity: 0.7;
+              "
+            >
+              SYSTEM TERMINAL v2.4.1
+            </div>
+
+            <!-- Animated lock icon -->
+            <div
+              id="terminal-lock-icon"
+              style="
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                animation: terminal-pulse 2s ease-in-out infinite;
+              "
+            >
+              🔐
+            </div>
+
+            <!-- Typewriter text -->
+            <p
+              id="terminal-typewriter"
+              style="
+                color: #00ff66;
+                font-size: 0.82rem;
+                letter-spacing: 0.05em;
+                min-height: 2.5rem;
+                margin-bottom: 1.5rem;
+              "
+            ></p>
+
+            <!-- Input styled as terminal -->
+            <input
+              type="password"
+              class="form-control"
+              id="password-input"
+              placeholder="_ _ _ _ _ _"
+              style="
+                background: #1a1a1a;
+                border: 1.5px solid #333;
+                color: #00ff66;
+                font-family: &quot;Courier New&quot;, monospace;
+                text-align: center;
+                font-size: 1.1rem;
+                letter-spacing: 0.3em;
+                border-radius: 8px;
+                margin-bottom: 0.8rem;
+              "
+            />
+
+            <p class="field-error" id="password-error" style="color: #ff4444">
+              ❌ Access denied. Try again.
+            </p>
+
+            <button
+              class="btn-solid"
+              id="password-submit"
+              style="
+                width: 100%;
+                background: #00ff66;
+                color: #0d0d0d;
+                font-family: &quot;Courier New&quot;, monospace;
+                letter-spacing: 0.1em;
+              "
+            >
+              AUTHENTICATE →
+            </button>
+          </div>
+
+          <!-- Subtle hint — doesn't mention lotto directly -->
+          <p
+            style="
+              font-size: 0.72rem;
+              color: var(--muted);
+              text-align: center;
+              font-style: italic;
+              line-height: 1.6;
+            "
+          >
+            💡 Hint: You use this password every day at work.<br />It's 6 digits
+            long.
+          </p>
+        </div>
+        <div id="claim-form-wrap" style="display: none">
+          <p
+            class="toolbar-title"
+            style="text-align: center; margin-bottom: 0.3rem"
+          >
+            🏆 Claim Your $15
+          </p>
+          <p
+            style="
+              font-size: 0.8rem;
+              color: var(--muted);
+              text-align: center;
+              margin-bottom: 1.2rem;
+            "
+          >
+            Fill this out and you'll get e-transferred.
+          </p>
+          <div class="mb-3">
+            <label class="form-label">Your Name *</label>
+            <input type="text" class="form-control" id="claim-name" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Interac E-Transfer Email *</label>
+            <input type="email" class="form-control" id="claim-email" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Comments (optional)</label>
+            <textarea
+              class="form-control"
+              id="claim-comments"
+              rows="3"
+            ></textarea>
+          </div>
+          <button class="btn-solid" id="claim-submit" style="width: 100%">
+            💸 Submit Claim
+          </button>
+          <p class="field-error" id="claim-error"></p>
+        </div>
+        <div
+          id="already-claimed-tab"
+          style="display: none; text-align: center; padding: 2rem 0"
+        >
+          <div style="font-size: 2.8rem">🏆</div>
+          <p
+            style="
+              font-weight: 700;
+              font-family: &quot;Syne&quot;, sans-serif;
+              margin-bottom: 0.2rem;
+            "
+            id="already-claimed-name"
+          ></p>
+          <p
+            style="font-size: 0.82rem; color: var(--muted)"
+            id="already-claimed-time"
+          ></p>
+          <p style="font-size: 0.8rem; color: var(--muted); margin-top: 1rem">
+            Feel free to keep playing the games for fun though! 🎮
+          </p>
+        </div>
+        <div
+          id="claim-success"
+          style="display: none; text-align: center; padding: 2rem 0"
+        >
+          <div style="font-size: 2.8rem">🎉</div>
+          <p
+            style="font-weight: 700; font-family: &quot;Syne&quot;, sans-serif"
+          >
+            Claim submitted!
+          </p>
+          <p style="font-size: 0.82rem; color: var(--muted)">
+            Sit tight — your $15 is on its way.
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-/* ══════════════ STATE ══════════════ */
-const state = { cleaning: false, planogram: false, expiry: false, earned: 0 };
-/* ══════════════ TAB SWITCHING ══════════════ */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane-custom').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-  });
-});
-/* ══════════════ SHARED HELPERS ══════════════ */
-function completeTask(task) {
-  if (state[task]) return;
-  state[task] = true;
-  state.earned += 5;
-  updateProgressUI();
-  markTabComplete(task);
-  showEarnToast(task);
-  checkUnlockPassword();
-}
-function updateProgressUI() {
-  const pct = Math.min(100, (state.earned / 15) * 100);
-  document.getElementById('money-progress-bar').style.width = pct + '%';
-  document.getElementById('money-progress-label').textContent = `$${state.earned} / $15 earned`;
-  document.getElementById('money-counter-text').textContent = `$${state.earned} earned`;
-  if (state.earned >= 15) {
-    document.getElementById('money-disclaimer').innerHTML =
-      `🎉 Nice work! You've earned the full <strong>$15</strong> — head to the <strong>Password</strong> tab to claim it.`;
-  }
-}
-function markTabComplete(task) {
-  const btn = document.querySelector(`.tab-btn[data-tab="${task}"]`);
-  if (btn && !btn.querySelector('.tab-check')) {
-    const check = document.createElement('span');
-    check.className = 'tab-check';
-    check.textContent = ' ✅';
-    btn.appendChild(check);
-  }
-}
-function showEarnToast(task) {
-  const labels = { cleaning: 'Cleaning done', planogram: 'Planogram done', expiry: 'Expiry check done' };
-  const toast = document.createElement('div');
-  toast.className = 'earn-toast';
-  toast.textContent = `+$5 — ${labels[task]}! 🎉`;
-  document.body.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.add('show'));
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-  }, 2200);
-}
-function checkUnlockPassword() {
-  if (claimedAlready) return;
-  if (state.cleaning && state.planogram && state.expiry) {
-    document.getElementById('password-locked').style.display = 'none';
-    document.getElementById('password-gate').style.display   = 'block';
-  }
-}
-/* ══════════════ CLEANING GAME ══════════════ */
-const cleaningShelves = [
-  [{ emoji: '🍫', dirty: true }, { emoji: '🍪', dirty: false }, { emoji: '🥤', dirty: true }, { emoji: '🍬', dirty: false }],
-  [{ emoji: '🍭', dirty: true }, { emoji: '🧃', dirty: false }, { emoji: '🍩', dirty: true }, { emoji: '🍿', dirty: false }],
-  [{ emoji: '🥨', dirty: true }, { emoji: '🍕', dirty: false }, { emoji: '🌮', dirty: false }, { emoji: '🍔', dirty: false }],
-];
-let dirtyRemaining = cleaningShelves.flat().filter(i => i.dirty).length;
-function renderCleaningShelves() {
-  const wrap = document.getElementById('clean-shelves');
-  wrap.innerHTML = '';
-  cleaningShelves.forEach((shelf, sIdx) => {
-    const row = document.createElement('div');
-    row.className = 'shelf-row';
-    row.innerHTML = `<p class="shelf-row-label">Shelf ${sIdx + 1}</p><div class="shelf-items"></div>`;
-    const itemsWrap = row.querySelector('.shelf-items');
-    shelf.forEach((item, iIdx) => {
-      const el = document.createElement('span');
-      el.className = 'shelf-item' + (item.dirty ? ' dirty' : '');
-      el.textContent = item.emoji;
-      el.addEventListener('click', () => {
-        if (!item.dirty) return;
-        item.dirty = false;
-        el.classList.remove('dirty');
-        el.classList.add('just-cleaned');
-        dirtyRemaining--;
-        setTimeout(() => el.classList.remove('just-cleaned'), 450);
-        if (dirtyRemaining === 0) completeTask('cleaning');
+    <!-- Expiry label modal -->
+    <div class="modal fade" id="modal-expiry-label" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div
+          class="modal-content"
+          style="border: 1.5px solid var(--border); border-radius: 16px"
+        >
+          <div
+            class="modal-header"
+            style="border-bottom: 1px solid var(--border)"
+          >
+            <h5
+              class="modal-title"
+              style="
+                font-family: &quot;Syne&quot;, sans-serif;
+                font-weight: 700;
+                font-size: 0.9rem;
+              "
+            >
+              Product Label
+            </h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div
+            class="modal-body"
+            id="expiry-modal-body"
+            style="text-align: center; padding: 1.4rem"
+          ></div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      /* ══════════════ STATE ══════════════ */
+      const state = {
+        cleaning: false,
+        planogram: false,
+        expiry: false,
+        earned: 0,
+      };
+      /* ══════════════ TAB SWITCHING ══════════════ */
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((b) => b.classList.remove("active"));
+          document
+            .querySelectorAll(".tab-pane-custom")
+            .forEach((p) => p.classList.remove("active"));
+          btn.classList.add("active");
+          document
+            .getElementById("tab-" + btn.dataset.tab)
+            .classList.add("active");
+        });
       });
-      itemsWrap.appendChild(el);
-    });
-    wrap.appendChild(row);
-  });
-}
-/* ══════════════ PLANOGRAM GAME ══════════════ */
-const planoItems = [
-  { emoji: '🥔', cat: 'chips', placed: false },
-  { emoji: '🌽', cat: 'chips', placed: false },
-  { emoji: '🍫', cat: 'chocolate', placed: false },
-  { emoji: '🍩', cat: 'chocolate', placed: false },
-  { emoji: '🧃', cat: 'other', placed: false },
-  { emoji: '🧻', cat: 'other', placed: false },
-];
-let selectedPlanoIdx = null;
-function renderPlanoTray() {
-  const tray = document.getElementById('plano-tray');
-  tray.innerHTML = '';
-  const remaining = planoItems.filter(i => !i.placed);
-  if (remaining.length === 0) {
-    tray.innerHTML = '<span class="plano-tray-empty">All stocked! ✅</span>';
-    return;
-  }
-  planoItems.forEach((item, idx) => {
-    if (item.placed) return;
-    const el = document.createElement('span');
-    el.className = 'plano-item';
-    el.textContent = item.emoji;
-    el.addEventListener('click', () => {
-      document.querySelectorAll('.plano-item.selected').forEach(e => e.classList.remove('selected'));
-      selectedPlanoIdx = idx;
-      el.classList.add('selected');
-    });
-    tray.appendChild(el);
-  });
-}
-document.querySelectorAll('.plano-shelf').forEach(shelf => {
-  shelf.addEventListener('click', () => {
-    if (selectedPlanoIdx === null) return;
-    const item = planoItems[selectedPlanoIdx];
-    if (item.cat === shelf.dataset.category) {
-      item.placed = true;
-      const slot = shelf.querySelector('.plano-shelf-slot');
-      const span = document.createElement('span');
-      span.className = 'plano-placed';
-      span.textContent = item.emoji;
-      slot.appendChild(span);
-      selectedPlanoIdx = null;
-      renderPlanoTray();
-      if (planoItems.every(i => i.placed)) completeTask('planogram');
-    } else {
-      shelf.classList.add('shelf-shake');
-      setTimeout(() => shelf.classList.remove('shelf-shake'), 400);
-    }
-  });
-});
-/* ══════════════ EXPIRY GAME ══════════════ */
-const expiryItems = [
-  { emoji: '🥛', name: 'Whole Milk', label: 'in 12 days', expiring: false },
-  { emoji: '🍞', name: 'White Bread', label: 'in 6 days', expiring: false },
-  { emoji: '🧀', name: 'Cheddar Cheese', label: 'TOMORROW ⚠️', expiring: true },
-  { emoji: '🥚', name: 'Eggs (dozen)', label: 'in 20 days', expiring: false },
-  { emoji: '🍗', name: 'Fried Chicken', label: 'in 3 days', expiring: false },
-  { emoji: '🧃', name: 'Juice Box', label: 'in 45 days', expiring: false },
-];
-function renderExpiryGrid() {
-  const grid = document.getElementById('expiry-grid');
-  grid.innerHTML = '';
-  expiryItems.forEach((item, idx) => {
-    const card = document.createElement('div');
-    card.className = 'expiry-card';
-    card.innerHTML = `<div class="expiry-emoji">${item.emoji}</div><p class="expiry-name">${item.name}</p>`;
-    card.addEventListener('click', () => showExpiryLabel(idx, card));
-    grid.appendChild(card);
-  });
-}
-function showExpiryLabel(idx, cardEl) {
-  const item = expiryItems[idx];
-  const body = document.getElementById('expiry-modal-body');
-  body.innerHTML = `
+      /* ══════════════ SHARED HELPERS ══════════════ */
+      function completeTask(task) {
+        if (state[task]) return;
+        state[task] = true;
+        state.earned += 5;
+        updateProgressUI();
+        markTabComplete(task);
+        showEarnToast(task);
+        checkUnlockPassword();
+      }
+      function updateProgressUI() {
+        const pct = Math.min(100, (state.earned / 15) * 100);
+        document.getElementById("money-progress-bar").style.width = pct + "%";
+        document.getElementById("money-progress-label").textContent =
+          `$${state.earned} / $15 earned`;
+        document.getElementById("money-counter-text").textContent =
+          `$${state.earned} earned`;
+        if (state.earned >= 15) {
+          document.getElementById("money-disclaimer").innerHTML =
+            `🎉 Nice work! You've earned the full <strong>$15</strong> — head to the <strong>Password</strong> tab to claim it.`;
+        }
+      }
+      function markTabComplete(task) {
+        const btn = document.querySelector(`.tab-btn[data-tab="${task}"]`);
+        if (btn && !btn.querySelector(".tab-check")) {
+          const check = document.createElement("span");
+          check.className = "tab-check";
+          check.textContent = " ✅";
+          btn.appendChild(check);
+        }
+      }
+      function showEarnToast(task) {
+        const labels = {
+          cleaning: "Cleaning done",
+          planogram: "Planogram done",
+          expiry: "Expiry check done",
+        };
+        const toast = document.createElement("div");
+        toast.className = "earn-toast";
+        toast.textContent = `+$5 — ${labels[task]}! 🎉`;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("show"));
+        setTimeout(() => {
+          toast.classList.remove("show");
+          setTimeout(() => toast.remove(), 300);
+        }, 2200);
+      }
+      function checkUnlockPassword() {
+        if (claimedAlready) return;
+        if (state.cleaning && state.planogram && state.expiry) {
+          document.getElementById("password-locked").style.display = "none";
+          document.getElementById("password-gate").style.display = "block";
+        }
+      }
+      /* ══════════════ CLEANING GAME ══════════════ */
+      const cleaningShelves = [
+        [
+          { emoji: "🍫", dirty: true },
+          { emoji: "🍪", dirty: false },
+          { emoji: "🥤", dirty: true },
+          { emoji: "🍬", dirty: false },
+        ],
+        [
+          { emoji: "🍭", dirty: true },
+          { emoji: "🧃", dirty: false },
+          { emoji: "🍩", dirty: true },
+          { emoji: "🍿", dirty: false },
+        ],
+        [
+          { emoji: "🥨", dirty: true },
+          { emoji: "🍕", dirty: false },
+          { emoji: "🌮", dirty: false },
+          { emoji: "🍔", dirty: false },
+        ],
+      ];
+      let dirtyRemaining = cleaningShelves.flat().filter((i) => i.dirty).length;
+      function renderCleaningShelves() {
+        const wrap = document.getElementById("clean-shelves");
+        wrap.innerHTML = "";
+        cleaningShelves.forEach((shelf, sIdx) => {
+          const row = document.createElement("div");
+          row.className = "shelf-row";
+          row.innerHTML = `<p class="shelf-row-label">Shelf ${sIdx + 1}</p><div class="shelf-items"></div>`;
+          const itemsWrap = row.querySelector(".shelf-items");
+          shelf.forEach((item, iIdx) => {
+            const el = document.createElement("span");
+            el.className = "shelf-item" + (item.dirty ? " dirty" : "");
+            el.textContent = item.emoji;
+            el.addEventListener("click", () => {
+              if (!item.dirty) return;
+              item.dirty = false;
+              el.classList.remove("dirty");
+              el.classList.add("just-cleaned");
+              dirtyRemaining--;
+              setTimeout(() => el.classList.remove("just-cleaned"), 450);
+              if (dirtyRemaining === 0) completeTask("cleaning");
+            });
+            itemsWrap.appendChild(el);
+          });
+          wrap.appendChild(row);
+        });
+      }
+      /* ══════════════ PLANOGRAM GAME ══════════════ */
+      const planoItems = [
+        { emoji: "🥔", cat: "chips", placed: false },
+        { emoji: "🌽", cat: "chips", placed: false },
+        { emoji: "🍫", cat: "chocolate", placed: false },
+        { emoji: "🍩", cat: "chocolate", placed: false },
+        { emoji: "🧃", cat: "other", placed: false },
+        { emoji: "🧻", cat: "other", placed: false },
+      ];
+      let selectedPlanoIdx = null;
+      function renderPlanoTray() {
+        const tray = document.getElementById("plano-tray");
+        tray.innerHTML = "";
+        const remaining = planoItems.filter((i) => !i.placed);
+        if (remaining.length === 0) {
+          tray.innerHTML =
+            '<span class="plano-tray-empty">All stocked! ✅</span>';
+          return;
+        }
+        planoItems.forEach((item, idx) => {
+          if (item.placed) return;
+          const el = document.createElement("span");
+          el.className = "plano-item";
+          el.textContent = item.emoji;
+          el.addEventListener("click", () => {
+            document
+              .querySelectorAll(".plano-item.selected")
+              .forEach((e) => e.classList.remove("selected"));
+            selectedPlanoIdx = idx;
+            el.classList.add("selected");
+          });
+          tray.appendChild(el);
+        });
+      }
+      document.querySelectorAll(".plano-shelf").forEach((shelf) => {
+        shelf.addEventListener("click", () => {
+          if (selectedPlanoIdx === null) return;
+          const item = planoItems[selectedPlanoIdx];
+          if (item.cat === shelf.dataset.category) {
+            item.placed = true;
+            const slot = shelf.querySelector(".plano-shelf-slot");
+            const span = document.createElement("span");
+            span.className = "plano-placed";
+            span.textContent = item.emoji;
+            slot.appendChild(span);
+            selectedPlanoIdx = null;
+            renderPlanoTray();
+            if (planoItems.every((i) => i.placed)) completeTask("planogram");
+          } else {
+            shelf.classList.add("shelf-shake");
+            setTimeout(() => shelf.classList.remove("shelf-shake"), 400);
+          }
+        });
+      });
+      /* ══════════════ EXPIRY GAME ══════════════ */
+      const expiryItems = [
+        {
+          emoji: "🥛",
+          name: "Whole Milk",
+          label: "in 12 days",
+          expiring: false,
+        },
+        {
+          emoji: "🍞",
+          name: "White Bread",
+          label: "in 6 days",
+          expiring: false,
+        },
+        {
+          emoji: "🧀",
+          name: "Cheddar Cheese",
+          label: "TOMORROW ⚠️",
+          expiring: true,
+        },
+        {
+          emoji: "🥚",
+          name: "Eggs (dozen)",
+          label: "in 20 days",
+          expiring: false,
+        },
+        {
+          emoji: "🍗",
+          name: "Fried Chicken",
+          label: "in 3 days",
+          expiring: false,
+        },
+        {
+          emoji: "🧃",
+          name: "Juice Box",
+          label: "in 45 days",
+          expiring: false,
+        },
+      ];
+      function renderExpiryGrid() {
+        const grid = document.getElementById("expiry-grid");
+        grid.innerHTML = "";
+        expiryItems.forEach((item, idx) => {
+          const card = document.createElement("div");
+          card.className = "expiry-card";
+          card.innerHTML = `<div class="expiry-emoji">${item.emoji}</div><p class="expiry-name">${item.name}</p>`;
+          card.addEventListener("click", () => showExpiryLabel(idx, card));
+          grid.appendChild(card);
+        });
+      }
+      function showExpiryLabel(idx, cardEl) {
+        const item = expiryItems[idx];
+        const body = document.getElementById("expiry-modal-body");
+        body.innerHTML = `
     <div style="font-size:3rem;">${item.emoji}</div>
     <p style="font-weight:700;margin:.5rem 0 .2rem;font-family:'Syne',sans-serif;">${item.name}</p>
     <p style="color:var(--muted);font-size:.85rem;">Best before: <strong>${item.label}</strong></p>
-    ${item.expiring ? '<p style="color:#166534;font-weight:700;margin-top:.7rem;">🎉 That\'s the one! Nice catch.</p>' : ''}
+    ${item.expiring ? '<p style="color:#166534;font-weight:700;margin-top:.7rem;">🎉 That\'s the one! Nice catch.</p>' : ""}
   `;
-  new bootstrap.Modal(document.getElementById('modal-expiry-label')).show();
-  if (item.expiring) {
-    cardEl.classList.add('found');
-    if (!state.expiry) completeTask('expiry');
-  }
-}
-/* ── Typewriter effect ── */
-function typewriter(el, text, speed = 45) {
-  el.textContent = '';
-  let i = 0;
-  const interval = setInterval(() => {
-    el.textContent += text[i];
-    i++;
-    if (i >= text.length) clearInterval(interval);
-  }, speed);
-}
-
-/* ── Run typewriter on tab switch to password ── */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    // existing tab switching code stays...
-    if (btn.dataset.tab === 'password') {
-      const tw = document.getElementById('terminal-typewriter');
-      if (tw && document.getElementById('password-gate').style.display !== 'none') {
-        typewriter(tw, '> ACCESS RESTRICTED\n> Enter your 6-digit employee code to continue...');
+        new bootstrap.Modal(
+          document.getElementById("modal-expiry-label"),
+        ).show();
+        if (item.expiring) {
+          cardEl.classList.add("found");
+          if (!state.expiry) completeTask("expiry");
+        }
       }
-    }
-  });
-});
+      /* ── Typewriter effect ── */
+      function typewriter(el, text, speed = 45) {
+        el.textContent = "";
+        let i = 0;
+        const interval = setInterval(() => {
+          el.textContent += text[i];
+          i++;
+          if (i >= text.length) clearInterval(interval);
+        }, speed);
+      }
 
-/* ── Also run on page load if already unlocked ── */
-function checkUnlockPassword() {
-  if (state.cleaning && state.planogram && state.expiry) {
-    document.getElementById('password-locked').style.display = 'none';
-    document.getElementById('password-gate').style.display = 'block';
-    // Run typewriter immediately if password tab is active
-    const tw = document.getElementById('terminal-typewriter');
-    if (tw) {
-      setTimeout(() => {
-        typewriter(tw, '> ACCESS RESTRICTED\n> Enter your 6-digit employee code to continue...');
-      }, 300);
-    }
-  }
-}
+      /* ── Run typewriter on tab switch to password ── */
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          // existing tab switching code stays...
+          if (btn.dataset.tab === "password") {
+            const tw = document.getElementById("terminal-typewriter");
+            if (
+              tw &&
+              document.getElementById("password-gate").style.display !== "none"
+            ) {
+              typewriter(
+                tw,
+                "> ACCESS RESTRICTED\n> Enter your 6-digit employee code to continue...",
+              );
+            }
+          }
+        });
+      });
 
-/* ── Password submit with animations ── */
-document.getElementById('password-submit').addEventListener('click', () => {
-  const input = document.getElementById('password-input');
-  const val   = input.value.trim();
-  const err   = document.getElementById('password-error');
-  const terminalBox = input.closest('div');
+      /* ── Also run on page load if already unlocked ── */
+      function checkUnlockPassword() {
+        if (state.cleaning && state.planogram && state.expiry) {
+          document.getElementById("password-locked").style.display = "none";
+          document.getElementById("password-gate").style.display = "block";
+          // Run typewriter immediately if password tab is active
+          const tw = document.getElementById("terminal-typewriter");
+          if (tw) {
+            setTimeout(() => {
+              typewriter(
+                tw,
+                "> ACCESS RESTRICTED\n> Enter your 6-digit employee code to continue...",
+              );
+            }, 300);
+          }
+        }
+      }
 
-  err.style.display = 'none';
-  input.style.borderColor = '#333';
+      /* ── Password submit with animations ── */
+      document
+        .getElementById("password-submit")
+        .addEventListener("click", () => {
+          const input = document.getElementById("password-input");
+          const val = input.value.trim();
+          const err = document.getElementById("password-error");
+          const terminalBox = input.closest("div");
 
-  if (val === '101158') {
-    // Success animation before revealing form
-    const lockIcon = document.getElementById('terminal-lock-icon');
-    lockIcon.textContent = '🔓';
-    lockIcon.style.animation = 'none';
+          err.style.display = "none";
+          input.style.borderColor = "#333";
 
-    const tw = document.getElementById('terminal-typewriter');
-    typewriter(tw, '> ACCESS GRANTED\n> Welcome. Redirecting...');
+          if (val === "101158") {
+            // Success animation before revealing form
+            const lockIcon = document.getElementById("terminal-lock-icon");
+            lockIcon.textContent = "🔓";
+            lockIcon.style.animation = "none";
 
-    setTimeout(() => {
-      document.getElementById('password-gate').style.display   = 'none';
-      document.getElementById('claim-form-wrap').style.display = 'block';
-    }, 1800);
+            const tw = document.getElementById("terminal-typewriter");
+            typewriter(tw, "> ACCESS GRANTED\n> Welcome. Redirecting...");
 
-  } else {
-    // Wrong password — shake + flash red + increment attempt counter
-    terminalBox.classList.add('terminal-wrong');
-    input.classList.add('is-invalid');
-    input.style.borderColor = '#ff4444';
-    err.style.display = 'block';
+            setTimeout(() => {
+              document.getElementById("password-gate").style.display = "none";
+              document.getElementById("claim-form-wrap").style.display =
+                "block";
+            }, 1800);
+          } else {
+            // Wrong password — shake + flash red + increment attempt counter
+            terminalBox.classList.add("terminal-wrong");
+            input.classList.add("is-invalid");
+            input.style.borderColor = "#ff4444";
+            err.style.display = "block";
 
-    const tw = document.getElementById('terminal-typewriter');
-    const attempts = (parseInt(tw.dataset.attempts || 0)) + 1;
-    tw.dataset.attempts = attempts;
+            const tw = document.getElementById("terminal-typewriter");
+            const attempts = parseInt(tw.dataset.attempts || 0) + 1;
+            tw.dataset.attempts = attempts;
 
-    const messages = [
-      '> ACCESS DENIED. Incorrect code.',
-      '> ACCESS DENIED. Are you sure you know it?',
-      '> ACCESS DENIED. Think harder...',
-      '> ACCESS DENIED. It\'s something you do every day...',
-      '> ACCESS DENIED. 6 digits. You see it daily.',
-    ];
-    typewriter(tw, messages[Math.min(attempts - 1, messages.length - 1)]);
+            const messages = [
+              "> ACCESS DENIED. Incorrect code.",
+              "> ACCESS DENIED. Are you sure you know it?",
+              "> ACCESS DENIED. Think harder...",
+              "> ACCESS DENIED. It's something you do every day...",
+              "> ACCESS DENIED. 6 digits. You see it daily.",
+            ];
+            typewriter(
+              tw,
+              messages[Math.min(attempts - 1, messages.length - 1)],
+            );
 
-    setTimeout(() => {
-      terminalBox.classList.remove('terminal-wrong');
-      input.value = '';
-      input.style.borderColor = '#333';
-      input.classList.remove('is-invalid');
-    }, 600);
-  }
-});
-/* ══════════════ CLAIM FORM SUBMISSION (only real network call) ══════════════ */
-document.getElementById('claim-submit').addEventListener('click', async () => {
-  const name = document.getElementById('claim-name').value.trim();
-  const email = document.getElementById('claim-email').value.trim();
-  const comments = document.getElementById('claim-comments').value.trim();
-  const errorEl = document.getElementById('claim-error');
-  errorEl.style.display = 'none';
-  if (!name || !email) {
-    errorEl.textContent = 'Name and email are required.';
-    errorEl.style.display = 'block';
-    return;
-  }
-  const btn = document.getElementById('claim-submit');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
-  try {
-    const res = await fetch('/api/easter-egg/money-claim', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, comments, amount: state.earned }),
-    });
-    const json = await res.json();
-    if (res.status === 409) {
-      // Someone beat them to it by seconds — show the real winner
-      showAlreadyClaimedUI(json.existing);
-      return;
-    }
-    if (!res.ok) throw new Error(json.error || 'Something went wrong');
-    document.getElementById('claim-form-wrap').style.display = 'none';
-    document.getElementById('claim-success').style.display = 'block';
-  } catch (e) {
-    errorEl.textContent = 'Failed to submit: ' + e.message;
-    errorEl.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = '💸 Submit Claim';
-  }
-});
+            setTimeout(() => {
+              terminalBox.classList.remove("terminal-wrong");
+              input.value = "";
+              input.style.borderColor = "#333";
+              input.classList.remove("is-invalid");
+            }, 600);
+          }
+        });
+      /* ══════════════ CLAIM FORM SUBMISSION (only real network call) ══════════════ */
+      document
+        .getElementById("claim-submit")
+        .addEventListener("click", async () => {
+          const name = document.getElementById("claim-name").value.trim();
+          const email = document.getElementById("claim-email").value.trim();
+          const comments = document
+            .getElementById("claim-comments")
+            .value.trim();
+          const errorEl = document.getElementById("claim-error");
+          errorEl.style.display = "none";
+          if (!name || !email) {
+            errorEl.textContent = "Name and email are required.";
+            errorEl.style.display = "block";
+            return;
+          }
+          const btn = document.getElementById("claim-submit");
+          btn.disabled = true;
+          btn.textContent = "Submitting…";
+          try {
+            const res = await fetch("/api/easter-egg/money-claim", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name,
+                email,
+                comments,
+                amount: state.earned,
+              }),
+            });
+            const json = await res.json();
+            if (res.status === 409) {
+              // Someone beat them to it by seconds — show the real winner
+              showAlreadyClaimedUI(json.existing);
+              return;
+            }
+            if (!res.ok) throw new Error(json.error || "Something went wrong");
+            document.getElementById("claim-form-wrap").style.display = "none";
+            document.getElementById("claim-success").style.display = "block";
+          } catch (e) {
+            errorEl.textContent = "Failed to submit: " + e.message;
+            errorEl.style.display = "block";
+            btn.disabled = false;
+            btn.textContent = "💸 Submit Claim";
+          }
+        });
 
-async function checkClaimStatus() {
-  try {
-    const res = await fetch('/api/easter-egg/money-claim');
-    const data = await res.json();
-    if (data.claimed) showAlreadyClaimedUI(data);
-  } catch (e) {
-    console.error('Failed to check claim status', e);
-  }
-}
+      async function checkClaimStatus() {
+        try {
+          const res = await fetch("/api/easter-egg/money-claim");
+          const data = await res.json();
+          if (data.claimed) showAlreadyClaimedUI(data);
+        } catch (e) {
+          console.error("Failed to check claim status", e);
+        }
+      }
 
-/* ══════════════ INIT ══════════════ */
-renderCleaningShelves();
-renderPlanoTray();
-renderExpiryGrid();
-updateProgressUI();
-checkClaimStatus(); // Check if the money has already been claimed by someone else
-</script>
-<script>
-  let claimedAlready = false;
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-function formatClaimDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: 'numeric', minute: '2-digit',
-  });
-}
-function showAlreadyClaimedUI(data) {
-  claimedAlready = true;
-  const banner = document.getElementById('already-claimed-banner');
-  banner.style.display = 'block';
-  banner.innerHTML =
-    `🏆 <strong>${escapeHtml(data.name)}</strong> already found the money and claimed it on ` +
-    `<strong>${formatClaimDate(data.claimedAt)}</strong>. Thanks for playing — better luck next time!`;
-  // Hide every claim-related UI state and show the winner card instead
-  document.getElementById('password-locked').style.display   = 'none';
-  document.getElementById('password-gate').style.display     = 'none';
-  document.getElementById('claim-form-wrap').style.display    = 'none';
-  document.getElementById('claim-success').style.display      = 'none';
-  const tab = document.getElementById('already-claimed-tab');
-  tab.style.display = 'block';
-  document.getElementById('already-claimed-name').textContent = `${data.name} won the $15!`;
-  document.getElementById('already-claimed-time').textContent = `Claimed on ${formatClaimDate(data.claimedAt)}`;
-}
-
-</script>
-</body>
+      /* ══════════════ INIT ══════════════ */
+      renderCleaningShelves();
+      renderPlanoTray();
+      renderExpiryGrid();
+      updateProgressUI();
+      checkClaimStatus(); // Check if the money has already been claimed by someone else
+    </script>
+    <script>
+      let claimedAlready = false;
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+      function formatClaimDate(iso) {
+        const d = new Date(iso);
+        return d.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+      }
+      function showAlreadyClaimedUI(data) {
+        claimedAlready = true;
+        const banner = document.getElementById("already-claimed-banner");
+        banner.style.display = "block";
+        banner.innerHTML =
+          `🏆 <strong>${escapeHtml(data.name)}</strong> already found the money and claimed it on ` +
+          `<strong>${formatClaimDate(data.claimedAt)}</strong>. Thanks for playing — better luck next time!`;
+        // Hide every claim-related UI state and show the winner card instead
+        document.getElementById("password-locked").style.display = "none";
+        document.getElementById("password-gate").style.display = "none";
+        document.getElementById("claim-form-wrap").style.display = "none";
+        document.getElementById("claim-success").style.display = "none";
+        const tab = document.getElementById("already-claimed-tab");
+        tab.style.display = "block";
+        document.getElementById("already-claimed-name").textContent =
+          `${data.name} won the $15!`;
+        document.getElementById("already-claimed-time").textContent =
+          `Claimed on ${formatClaimDate(data.claimedAt)}`;
+      }
+    </script>
+  </body>
 </html>
