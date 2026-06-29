@@ -16,5 +16,5 @@ router.use('/testwash', require('./testwash.routes'));
 router.use('/weekly-report', require('./weeklyReport.routes'));
 router.use('/section-activity', require('./sectionActivity.routes'));
 router.use('/employees', require('./employees.routes'));
-router.use('/easter-egg', require('./easterEgg.routes'));
+router.use('/easter-egg', require('./easteregg.routes'));
 module.exports = router;
