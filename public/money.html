@@ -833,7 +833,7 @@
           <div class="attempt-dot"></div>
         </div>
         <p class="terminal-hint" id="terminal-hint">
-          6 digits. Something you interact with every single day.
+          Find the password. Or you can try everything from 000000 to 999999, but that will take a while. XD
         </p>
       </div>
     </div>
@@ -1171,41 +1171,6 @@
           if (!state.expiry) completeTask("expiry");
         }
       }
-      /* ══════════════ PASSWORD GATE ══════════════ */
-      /* ── terminal password submit ── */
-// document.getElementById('password-submit').addEventListener('click', handlePasswordSubmit);
-// document.getElementById('password-input').addEventListener('keydown', e => {
-//   if (e.key === 'Enter') handlePasswordSubmit();
-// });
-// function handlePasswordSubmit() {
-//   const val = document.getElementById('password-input').value.trim();
-//   if (val === '101158') {
-//     /* ── correct: play the happy face, then transition to claim form ── */
-//     simulateCorrect();
-//     setTimeout(() => {
-//       // fade out the terminal
-//       const gate = document.getElementById('password-gate');
-//       gate.style.transition = 'opacity 0.4s ease';
-//       gate.style.opacity = '0';
-//       setTimeout(() => {
-//         gate.style.display = 'none';
-//         gate.style.opacity = '1';           // reset for if it's ever re-shown
-//         // show the claim form
-//         const claim = document.getElementById('claim-form-wrap');
-//         claim.style.display = 'block';
-//         claim.style.opacity = '0';
-//         claim.style.transition = 'opacity 0.4s ease';
-//         requestAnimationFrame(() => { claim.style.opacity = '1'; });
-//       }, 400);                               // matches the fade-out duration
-//     }, 1800);
-//     // ↑ adjust this to however long your simulateCorrect() celebration lasts
-//     //   (face goes happy → screen text changes → then we transition)
-//   } else {
-//     /* ── wrong: face changes + attempt dot fills are handled inside simulateWrong ── */
-//     simulateWrong();
-//   }
-// }
-// above is different from the original code, but it achieves the same functionality with a cleaner transition to the claim form.
       document
         .getElementById("claim-submit")
         .addEventListener("click", async () => {
@@ -1556,10 +1521,10 @@ function scheduleRandomTease() {
 let attempts = 0;
 const MAX_ATTEMPTS = 5;
 const WRONG_MESSAGES = [
-  { main: 'BOOO 👎', sub: "Wrong. You don't seem so bright, do you?", hint: '6 digits. Something in this store.' },
-  { main: 'BLEHHH 🤢', sub: "Did you leave your brain at home today?", hint: "It's not your PIN. Think work, not home." },
-  { main: 'SERIOUSLY?! 😤', sub: "Do you even pay attention at work? It's a simple passcode.", hint: "Customers use it. You watch them use it. Every. Day." },
-  { main: 'OH COME ON 🫠', sub: "This is actually painful to watch.", hint: "It prints things. Little paper things. People get excited about them." },
+  { main: 'BOOO 👎', sub: "Wrong. You don't seem so bright, do you?", hint: "It's not your PIN. Think work, not home." },
+  { main: 'BLEHHH 🤢', sub: "Did you leave your brain at home today?", hint: "Employees use it. Every. Day." },
+  { main: 'SERIOUSLY?! 😤', sub: "Do you even pay attention at work? It's a simple passcode.", hint: "NO HINT THIS TIME <^_^>" },
+  { main: 'OH COME ON 🫠', sub: "I was programmed to expect mistakes. You're exceeding expectations.", hint: "It prints things. Little paper things. People get excited about them." },
   { main: 'FINE. 🙄', sub: "You insignificant creature — it's the LOTTO terminal password. Should I take $5 off for this?", hint: "The machine. By the till. That one. Yes." },
 ];
 // Pool the shake face is randomly drawn from on every wrong attempt.
@@ -1616,14 +1581,7 @@ function simulateCorrect() {
     }, 400);
   }, 2200);
 }
-/* ── REAL SUBMIT (hardened against duplicate bindings) ──
-   Using .onclick / .onkeydown ASSIGNMENT instead of addEventListener
-   means if this script ever runs twice (duplicate <script> tag,
-   re-init, etc.) the second assignment REPLACES the first instead
-   of stacking a second listener on top. This alone fixes the
-   "+2 per wrong attempt" symptom at the root.
-   The isProcessing lock is a second safety net so even genuinely
-   duplicated DOM nodes/listeners can't double-fire mid-animation. */
+/* ── REAL SUBMIT */
 let isProcessing = false;
 function handlePasswordSubmit() {
   if (isProcessing) return;
