@@ -496,6 +496,198 @@
           padding: 1rem;
         }
       }
+       .terminal-wrap { max-width: 440px; width: 100%; }
+ 
+  .terminal-device {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.08);
+  }
+ 
+  /* ── TOP BAR ── */
+  .device-topbar {
+    background: var(--text);
+    padding: .65rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  .device-dots { display: flex; gap: 5px; }
+  .device-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .device-title {
+    font-family: 'Syne', sans-serif;
+    font-size: .65rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+    margin: 0 auto;
+  }
+ 
+  /* ── SCREEN ── */
+  .device-screen {
+    background: #111110;
+    padding: 1.6rem 1.4rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 320px;
+    justify-content: center;
+  }
+  /* scanlines */
+  .device-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,0,0,.12) 3px, rgba(0,0,0,.12) 4px
+    );
+    pointer-events: none;
+    z-index: 3;
+  }
+ 
+  /* ── CANVAS FACE ── */
+  #face-canvas {
+    display: block;
+    margin: 0 auto 1.1rem;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    z-index: 2;
+    position: relative;
+  }
+ 
+  .screen-label {
+    font-family: 'Syne', sans-serif;
+    font-size: .62rem; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: rgba(245,200,66,.6);
+    text-align: center;
+    margin-bottom: .3rem;
+    z-index: 2; position: relative;
+  }
+  .screen-main {
+    font-family: 'Syne', sans-serif;
+    font-size: .88rem; font-weight: 700;
+    color: #f5f4f0;
+    text-align: center;
+    margin-bottom: .55rem;
+    z-index: 2; position: relative;
+    min-height: 1.3rem;
+    transition: all .2s ease;
+  }
+  .screen-sub {
+    font-size: .76rem;
+    color: rgba(245,244,240,.45);
+    text-align: center;
+    line-height: 1.55;
+    z-index: 2; position: relative;
+    font-style: italic;
+    min-height: 2.8rem;
+    transition: all .25s ease;
+    padding: 0 .5rem;
+  }
+  .cursor {
+    display: inline-block; width: 7px; height: 2px;
+    background: #f5c842; vertical-align: middle; margin-left: 2px;
+    animation: blink .75s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+ 
+  /* ── INPUT AREA ── */
+  .device-input-area {
+    padding: 1.2rem 1.2rem 1rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+ 
+  .terminal-input-wrap {
+    position: relative; margin-bottom: .7rem;
+  }
+  .terminal-input {
+    width: 100%;
+    padding: .65rem 1rem .65rem 2.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    letter-spacing: .25em; text-align: center;
+    background: var(--bg); color: var(--text);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .terminal-input:focus {
+    outline: none; border-color: var(--text);
+    box-shadow: 0 0 0 3px rgba(26,26,24,.07);
+    background: #fff;
+  }
+  .terminal-input.shake {
+    border-color: #d1453b;
+    box-shadow: 0 0 0 3px rgba(209,69,59,.09);
+    animation: input-shake .4s ease;
+  }
+  .terminal-input.correct {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.1);
+  }
+  @keyframes input-shake {
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-7px);}
+    40%{transform:translateX(7px);}
+    60%{transform:translateX(-5px);}
+    80%{transform:translateX(5px);}
+  }
+  .lock-icon {
+    position: absolute; left: .8rem; top: 50%;
+    transform: translateY(-50%); font-size: .95rem;
+    transition: all .3s ease;
+  }
+ 
+  .unlock-btn {
+    width: 100%; padding: .62rem;
+    background: var(--text); color: #fff;
+    border: none; border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: .76rem; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase;
+    cursor: pointer; transition: background .15s, transform .1s;
+  }
+  .unlock-btn:hover { background: #333; transform: translateY(-1px); }
+  .unlock-btn:active { transform: translateY(0); }
+ 
+  /* attempt dots */
+  .attempt-dots { display: flex; gap: 5px; justify-content: center; margin-top: .7rem; }
+  .attempt-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border); transition: background .3s ease;
+  }
+  .attempt-dot.used { background: #d1453b; }
+ 
+  .terminal-hint {
+    margin-top: .65rem; text-align: center;
+    font-size: .71rem; color: var(--muted);
+    line-height: 1.55; font-style: italic;
+    min-height: 1.4rem;
+    transition: all .3s ease;
+  }
+ 
+  /* demo controls */
+  .demo-controls {
+    display: flex; gap: .4rem; justify-content: center;
+    margin-top: 1rem; flex-wrap: wrap;
+  }
+  .demo-btn {
+    font-family: 'Syne', sans-serif; font-size: .62rem; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--muted); cursor: pointer; transition: all .15s;
+  }
+  .demo-btn:hover { border-color: var(--text); color: var(--text); }
     </style>
   </head>
   <body>
@@ -598,46 +790,56 @@
         </div>
         <div class="expiry-grid" id="expiry-grid"></div>
       </div>
-      <!-- PASSWORD / CLAIM -->
+      <!-- PASSWORD / CLAIM MONEY -->
       <div class="tab-pane-custom" id="tab-password">
         <div id="password-locked" class="empty-state">
           🔒 Complete Cleaning, Planogram &amp; Expiry first to unlock the lotto
           terminal.
         </div>
         <div id="password-gate" style="display: none">
-          <p
-            class="toolbar-title"
-            style="text-align: center; margin-bottom: 0.3rem"
-          >
-            🎰 Lotto Terminal Locked
-          </p>
-          <p
-            style="
-              font-size: 0.82rem;
-              color: var(--muted);
-              text-align: center;
-              margin-bottom: 1rem;
-            "
-          >
-            Enter the terminal password to continue.
-          </p>
-          <input
-            type="password"
-            class="form-control"
-            id="password-input"
-            placeholder="Enter password"
-          />
-          <p class="field-error" id="password-error">
-            Incorrect password, try again.
-          </p>
-          <button
-            class="btn-solid"
-            id="password-submit"
-            style="width: 100%; margin-top: 0.8rem"
-          >
-            Unlock
-          </button>
+  <div class="terminal-wrap">
+    <div class="terminal-device">
+      <div class="device-topbar">
+        <div class="device-dots">
+          <div class="device-dot dot-r"></div>
+          <div class="device-dot dot-y"></div>
+          <div class="device-dot dot-g"></div>
         </div>
+        <span class="device-title">Secure Terminal</span>
+      </div>
+      <div class="device-screen">
+        <canvas id="face-canvas" width="160" height="160"
+                style="width:160px;height:160px;"></canvas>
+        <p class="screen-label">Access Required</p>
+        <p class="screen-main" id="screen-main">
+          Enter the 6-digit code<span class="cursor"></span>
+        </p>
+        <p class="screen-sub" id="screen-sub">
+          You should know this one. Think about what you do every shift.
+        </p>
+      </div>
+      <div class="device-input-area">
+        <div class="terminal-input-wrap">
+          <span class="lock-icon" id="lock-icon">🔒</span>
+          <input type="password" class="terminal-input" id="password-input"
+                 placeholder="• • • • • •" maxlength="6" inputmode="numeric" />
+        </div>
+        <button class="unlock-btn" id="password-submit">Unlock</button>
+        <div class="attempt-dots" id="attempt-dots">
+          <div class="attempt-dot"></div>
+          <div class="attempt-dot"></div>
+          <div class="attempt-dot"></div>
+          <div class="attempt-dot"></div>
+          <div class="attempt-dot"></div>
+        </div>
+        <p class="terminal-hint" id="terminal-hint">
+          6 digits. Something you interact with every single day.
+        </p>
+      </div>
+    </div>
+  </div>
+  <!-- demo-controls intentionally removed -->
+</div>
         <div id="claim-form-wrap" style="display: none">
           <p
             class="toolbar-title"
@@ -970,21 +1172,40 @@
         }
       }
       /* ══════════════ PASSWORD GATE ══════════════ */
-      document
-        .getElementById("password-submit")
-        .addEventListener("click", () => {
-          const val = document.getElementById("password-input").value.trim();
-          const err = document.getElementById("password-error");
-          if (val === "101158") {
-            document.getElementById("password-gate").style.display = "none";
-            document.getElementById("claim-form-wrap").style.display = "block";
-          } else {
-            err.style.display = "block";
-            document
-              .getElementById("password-input")
-              .classList.add("is-invalid");
-          }
-        });
+      /* ── terminal password submit ── */
+document.getElementById('password-submit').addEventListener('click', handlePasswordSubmit);
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handlePasswordSubmit();
+});
+function handlePasswordSubmit() {
+  const val = document.getElementById('password-input').value.trim();
+  if (val === '101158') {
+    /* ── correct: play the happy face, then transition to claim form ── */
+    simulateCorrect();
+    setTimeout(() => {
+      // fade out the terminal
+      const gate = document.getElementById('password-gate');
+      gate.style.transition = 'opacity 0.4s ease';
+      gate.style.opacity = '0';
+      setTimeout(() => {
+        gate.style.display = 'none';
+        gate.style.opacity = '1';           // reset for if it's ever re-shown
+        // show the claim form
+        const claim = document.getElementById('claim-form-wrap');
+        claim.style.display = 'block';
+        claim.style.opacity = '0';
+        claim.style.transition = 'opacity 0.4s ease';
+        requestAnimationFrame(() => { claim.style.opacity = '1'; });
+      }, 400);                               // matches the fade-out duration
+    }, 1800);
+    // ↑ adjust this to however long your simulateCorrect() celebration lasts
+    //   (face goes happy → screen text changes → then we transition)
+  } else {
+    /* ── wrong: face changes + attempt dot fills are handled inside simulateWrong ── */
+    simulateWrong();
+  }
+}
+// above is different from the original code, but it achieves the same functionality with a cleaner transition to the claim form.
       document
         .getElementById("claim-submit")
         .addEventListener("click", async () => {
@@ -1061,7 +1282,7 @@
         /* update hero disclaimer */
         document.getElementById("money-disclaimer").innerHTML =
           `🏆 This prize was already claimed by <strong>${esc(winner.name)}</strong> on ${when}.<br>
-     You can still play the games for fun though!`;
+     You can still play the games (do chores) for fun though!`;
         /* replace the entire password tab so the form is never reachable */
         document.getElementById("tab-password").innerHTML = `
     <div class="empty-state">
@@ -1087,5 +1308,386 @@
       updateProgressUI();
       checkClaimStatus();
     </script>
+    <script>
+/* ══════════════════════════════════════════
+   PIXEL FACE RENDERER
+   Grid: 16×16 pixels, each cell = 9px on canvas (144px used, centered in 160px)
+   Color key: Y=yellow, K=black, W=white, P=pink, T=tongue(red), _=transparent, R=red-eye
+══════════════════════════════════════════ */
+ 
+// color variables — defined before FACES so grids can reference them
+const _ = null;
+const Y = '#f5c842';
+const K = '#1a1a18';
+const W = '#ffffff';
+const P = '#ffb3c6';
+const T = '#ff5577';
+const R = '#ff9999';
+const D = '#d4a017';
+ 
+ 
+const FACES = {
+  idle: [
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,Y,K,K,K,Y,Y,Y],
+    [Y,Y,K,W,K,Y,Y,Y,Y,Y,K,W,K,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,Y,K,K,K,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,K,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,K,Y,Y],
+    [Y,Y,Y,K,Y,Y,Y,Y,Y,Y,Y,Y,K,Y,Y,Y],
+    [Y,Y,Y,Y,K,K,K,K,K,K,K,K,Y,Y,Y,Y],
+    [_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+  ],
+ 
+  tease: [
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,Y,K,K,Y,Y,Y,Y],  // right eye normal, left eye pulled
+    [Y,Y,K,W,K,Y,Y,Y,Y,K,W,K,Y,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,K,R,K,Y,Y,Y,Y],  // pulled down
+    [Y,Y,Y,Y,Y,Y,Y,Y,K,Y,Y,Y,Y,Y,Y,Y],  // finger pulling
+    [Y,K,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],  // smirk left
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,K,Y],  // smirk right
+    [Y,Y,K,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,K,Y,Y,T,T,T,T,Y,Y,Y,Y,Y,Y],  // tongue!
+    [Y,Y,Y,Y,K,K,T,T,T,T,K,K,Y,Y,Y,Y],
+    [_,Y,Y,Y,Y,Y,T,T,T,T,Y,Y,Y,Y,Y,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+  ],
+ 
+  worried: [
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,K,K,Y,Y,Y,Y,K,K,Y,Y,Y,Y,Y],  // raised worried brows
+    [Y,K,K,Y,Y,K,K,K,K,Y,Y,K,K,Y,Y,Y],  // more brow arch
+    [Y,Y,K,K,K,Y,Y,Y,Y,K,K,K,Y,Y,Y,Y],  // eyes squinting
+    [Y,Y,K,W,K,Y,Y,Y,Y,K,W,K,Y,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,K,K,K,Y,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,Y,K,Y,Y,Y,Y,Y,K,Y,Y,Y,Y,Y],  // worried mouth corners up
+    [Y,Y,Y,K,Y,Y,Y,Y,Y,Y,Y,K,Y,Y,Y,Y],
+    [_,Y,Y,Y,K,K,K,K,K,K,Y,Y,Y,Y,Y,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+  ],
+ 
+  angry: [
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,Y,Y,K,Y,Y,Y,Y,Y,Y,Y,Y,K,Y,Y,_],   // angry brows slanted
+    [Y,Y,K,K,Y,Y,Y,Y,Y,Y,Y,K,K,Y,Y,Y],
+    [Y,K,K,Y,K,K,Y,Y,Y,K,K,Y,K,K,Y,Y],
+    [Y,Y,Y,Y,K,W,K,Y,K,W,K,Y,Y,Y,Y,Y],   // eyes with brow shadow
+    [Y,Y,Y,Y,K,K,K,Y,K,K,K,Y,Y,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,P,Y,Y,Y,Y,Y,Y,Y,Y,Y,P,Y,Y,Y],   // red cheeks (fuming)
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,Y,K,K,Y,Y,Y,Y,Y,K,K,Y,Y,Y,Y],   // frown corners
+    [Y,Y,K,Y,Y,K,K,K,K,K,Y,Y,K,Y,Y,Y],
+    [_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+  ],
+ 
+  happy: [
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,Y,K,K,K,Y,Y,Y],   // happy closed eyes (^_^)
+    [Y,Y,K,Y,K,Y,Y,Y,Y,Y,K,Y,K,Y,Y,Y],
+    [Y,Y,K,K,K,Y,Y,Y,Y,Y,K,K,K,Y,Y,Y],
+    [Y,P,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,P,Y,Y],   // pink cheeks
+    [Y,P,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,P,Y,Y],
+    [Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y],
+    [Y,Y,K,Y,Y,Y,Y,Y,Y,Y,Y,Y,K,Y,Y,Y],
+    [Y,Y,Y,K,Y,Y,Y,Y,Y,Y,Y,K,Y,Y,Y,Y],
+    [Y,Y,Y,Y,K,K,W,W,W,W,K,Y,Y,Y,Y,Y],   // big smile with teeth
+    [_,Y,Y,Y,Y,Y,K,K,K,K,Y,Y,Y,Y,Y,_],
+    [_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_],
+    [_,_,_,Y,Y,Y,Y,Y,Y,Y,Y,Y,Y,_,_,_],
+  ],
+};
+ 
+ 
+const CELL = 9;      // px per pixel cell
+const GRID = 16;     // grid size
+const canvas = document.getElementById('face-canvas');
+const ctx = canvas.getContext('2d');
+ 
+// actual canvas size
+canvas.width  = GRID * CELL;
+canvas.height = GRID * CELL;
+canvas.style.width  = (GRID * CELL) + 'px';
+canvas.style.height = (GRID * CELL) + 'px';
+ 
+let currentFace = 'idle';
+let bounceT = 0;
+let bounceAnim = null;
+let shakeT = 0;
+let shakeAnim = null;
+let isShaking = false;
+let isSpinning = false;
+let spinAngle = 0;
+ 
+function drawFace(name, offsetY = 0, offsetX = 0, angle = 0) {
+  currentFace = name;
+  const grid = FACES[name];
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+ 
+  if (angle !== 0) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(angle);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  }
+ 
+  for (let row = 0; row < GRID; row++) {
+    for (let col = 0; col < GRID; col++) {
+      const color = grid[row][col];
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(
+        col * CELL + offsetX,
+        row * CELL + offsetY,
+        CELL, CELL
+      );
+    }
+  }
+  ctx.restore();
+}
+ 
+/* ── IDLE BOUNCE LOOP ── */
+function startBounce() {
+  stopBounce();
+  bounceT = 0;
+  function loop() {
+    bounceT += 0.04;
+    const offsetY = Math.sin(bounceT) * 3;
+    if (!isShaking && !isSpinning && currentFace === 'idle') {
+      drawFace('idle', offsetY);
+    }
+    bounceAnim = requestAnimationFrame(loop);
+  }
+  bounceAnim = requestAnimationFrame(loop);
+}
+function stopBounce() {
+  if (bounceAnim) cancelAnimationFrame(bounceAnim);
+}
+ 
+/* ── TEASE BOUNCE ── */
+function startTeaseBounce() {
+  stopBounce();
+  bounceT = 0;
+  function loop() {
+    bounceT += 0.05;
+    const offsetY = Math.sin(bounceT) * 4;
+    const offsetX = Math.sin(bounceT * 0.7) * 2;
+    if (currentFace === 'tease') {
+      drawFace('tease', offsetY, offsetX);
+    }
+    bounceAnim = requestAnimationFrame(loop);
+  }
+  bounceAnim = requestAnimationFrame(loop);
+}
+ 
+/* ── SHAKE on wrong ── */
+function shakeFace(faceName) {
+  isShaking = true;
+  stopBounce();
+  shakeT = 0;
+  drawFace(faceName);
+  function loop() {
+    shakeT += 0.4;
+    const offsetX = Math.sin(shakeT * 6) * 6 * Math.exp(-shakeT * 0.3);
+    drawFace(faceName, 0, offsetX);
+    if (shakeT < 5) {
+      shakeAnim = requestAnimationFrame(loop);
+    } else {
+      isShaking = false;
+      // go to tease after angry
+      currentFace = 'tease';
+      startTeaseBounce();
+    }
+  }
+  shakeAnim = requestAnimationFrame(loop);
+}
+ 
+/* ── SPIN on correct ── */
+function spinFace() {
+  isSpinning = true;
+  stopBounce();
+  spinAngle = 0;
+  function loop() {
+    spinAngle += 0.18;
+    drawFace('happy', 0, 0, spinAngle);
+    if (spinAngle < Math.PI * 2) {
+      requestAnimationFrame(loop);
+    } else {
+      isSpinning = false;
+      drawFace('happy');
+      // gentle happy bounce
+      bounceT = 0;
+      function happyBounce() {
+        bounceT += 0.04;
+        drawFace('happy', Math.sin(bounceT) * 2);
+        bounceAnim = requestAnimationFrame(happyBounce);
+      }
+      bounceAnim = requestAnimationFrame(happyBounce);
+    }
+  }
+  requestAnimationFrame(loop);
+}
+ 
+/* ── RANDOM TEASE ── */
+let teaseTimeout;
+function scheduleRandomTease() {
+  clearTimeout(teaseTimeout);
+  teaseTimeout = setTimeout(() => {
+    if (currentFace === 'idle') {
+      currentFace = 'tease';
+      startTeaseBounce();
+      setTimeout(() => {
+        currentFace = 'idle';
+        startBounce();
+        scheduleRandomTease();
+      }, 1800);
+    } else {
+      scheduleRandomTease();
+    }
+  }, 3500 + Math.random() * 2000);
+}
+ 
+/* ══════════════════════════════════════════
+   GAME LOGIC
+══════════════════════════════════════════ */
+let attempts = 0;
+const MAX_ATTEMPTS = 5;
+ 
+const WRONG_MESSAGES = [
+  {
+    main: 'BOOO 👎',
+    sub: "Wrong. You don't seem so bright, do you?",
+    hint: '6 digits. Something in this store.',
+    face: 'tease',
+  },
+  {
+    main: 'BLEHHH 🤢',
+    sub: "Did you leave your brain at home today?",
+    hint: "It's not your PIN. Think work, not home.",
+    face: 'worried',
+  },
+  {
+    main: 'SERIOUSLY?! 😤',
+    sub: "Do you even pay attention at work? It's a simple passcode.",
+    hint: "Customers use it. You watch them use it. Every. Day.",
+    face: 'angry',
+  },
+  {
+    main: 'OH COME ON 🫠',
+    sub: "This is actually painful to watch.",
+    hint: "It prints things. Little paper things. People get excited about them.",
+    face: 'angry',
+  },
+  {
+    main: 'FINE. 🙄',
+    sub: "You insignificant creature — it's the LOTTO terminal password. Should I take $5 off for this?",
+    hint: "The machine. By the till. That one. Yes.",
+    face: 'tease',
+  },
+];
+ 
+function simulateWrong() {
+  const input = document.getElementById('password-input');
+  const screenMain = document.getElementById('screen-main');
+  const screenSub  = document.getElementById('screen-sub');
+  const hint       = document.getElementById('terminal-hint');
+  const dots       = document.querySelectorAll('.attempt-dot');
+ 
+  if (attempts >= MAX_ATTEMPTS) return;
+ 
+  const msg = WRONG_MESSAGES[attempts];
+ 
+  // shake input
+  input.classList.remove('shake');
+  void input.offsetWidth;
+  input.classList.add('shake');
+  setTimeout(() => input.classList.remove('shake'), 500);
+ 
+  // face
+  shakeFace(msg.face);
+ 
+  // fill dot
+  dots[attempts].classList.add('used');
+  attempts++;
+ 
+  // update text
+  screenMain.textContent = msg.main;
+  screenSub.textContent  = msg.sub;
+  hint.textContent       = msg.hint;
+ 
+  // clear input
+  setTimeout(() => { input.value = ''; }, 450);
+}
+ 
+function simulateCorrect() {
+  const input      = document.getElementById('password-input');
+  const lockIcon   = document.getElementById('lock-icon');
+  const screenMain = document.getElementById('screen-main');
+  const screenSub  = document.getElementById('screen-sub');
+ 
+  input.classList.add('correct');
+  input.disabled = true;
+  lockIcon.textContent = '🔓';
+ 
+  spinFace();
+ 
+  screenMain.textContent = 'ACCESS GRANTED ✓';
+  screenSub.textContent  = 'Well done detective. Redirecting...';
+ 
+  setTimeout(() => {
+    screenSub.textContent = '🎉 Alright alright, you got it. Go claim your money.';
+  }, 1600);
+ 
+  // your existing code:
+  // setTimeout(() => {
+  //   document.getElementById('password-gate').style.display = 'none';
+  //   document.getElementById('claim-form-wrap').style.display = 'block';
+  // }, 2200);
+}
+ 
+/* ── real submit ── */
+document.getElementById('password-submit').addEventListener('click', () => {
+  const val = document.getElementById('password-input').value.trim();
+  if (val === '101158') {
+    simulateCorrect();
+  } else {
+    simulateWrong();
+  }
+});
+ 
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('password-submit').click();
+});
+ 
+/* ── init ── */
+drawFace('idle');
+startBounce();
+scheduleRandomTease();
+</script>
   </body>
 </html>
