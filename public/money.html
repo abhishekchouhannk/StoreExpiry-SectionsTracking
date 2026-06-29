@@ -1424,17 +1424,14 @@ const FACES = {
 };
  
  
-const CELL = 9;      // px per pixel cell
-const GRID = 16;     // grid size
+const CELL = 9;
+const GRID = 16;
 const canvas = document.getElementById('face-canvas');
 const ctx = canvas.getContext('2d');
- 
-// actual canvas size
 canvas.width  = GRID * CELL;
 canvas.height = GRID * CELL;
 canvas.style.width  = (GRID * CELL) + 'px';
 canvas.style.height = (GRID * CELL) + 'px';
- 
 let currentFace = 'idle';
 let bounceT = 0;
 let bounceAnim = null;
@@ -1443,43 +1440,39 @@ let shakeAnim = null;
 let isShaking = false;
 let isSpinning = false;
 let spinAngle = 0;
- 
 function drawFace(name, offsetY = 0, offsetX = 0, angle = 0) {
   currentFace = name;
   const grid = FACES[name];
   ctx.save();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
- 
   if (angle !== 0) {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(angle);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
   }
- 
   for (let row = 0; row < GRID; row++) {
     for (let col = 0; col < GRID; col++) {
       const color = grid[row][col];
       if (!color) continue;
       ctx.fillStyle = color;
-      ctx.fillRect(
-        col * CELL + offsetX,
-        row * CELL + offsetY,
-        CELL, CELL
-      );
+      ctx.fillRect(col * CELL + offsetX, row * CELL + offsetY, CELL, CELL);
     }
   }
   ctx.restore();
 }
- 
-/* ── IDLE BOUNCE LOOP ── */
-function startBounce() {
+/* ── GENERIC BOUNCE LOOP (replaces startBounce + startTeaseBounce) ──
+   Works for ANY face, not just idle/tease, so worried/angry/happy
+   can settle into their own gentle idle-bounce too. */
+function startFaceBounce(faceName, opts = {}) {
+  const { ampY = 3, speedY = 0.04, ampX = 0, speedX = 0.7 } = opts;
   stopBounce();
   bounceT = 0;
   function loop() {
-    bounceT += 0.04;
-    const offsetY = Math.sin(bounceT) * 3;
-    if (!isShaking && !isSpinning && currentFace === 'idle') {
-      drawFace('idle', offsetY);
+    bounceT += speedY;
+    const offsetY = Math.sin(bounceT) * ampY;
+    const offsetX = ampX ? Math.sin(bounceT * speedX) * ampX : 0;
+    if (!isShaking && !isSpinning && currentFace === faceName) {
+      drawFace(faceName, offsetY, offsetX);
     }
     bounceAnim = requestAnimationFrame(loop);
   }
@@ -1488,24 +1481,17 @@ function startBounce() {
 function stopBounce() {
   if (bounceAnim) cancelAnimationFrame(bounceAnim);
 }
- 
-/* ── TEASE BOUNCE ── */
-function startTeaseBounce() {
-  stopBounce();
-  bounceT = 0;
-  function loop() {
-    bounceT += 0.05;
-    const offsetY = Math.sin(bounceT) * 4;
-    const offsetX = Math.sin(bounceT * 0.7) * 2;
-    if (currentFace === 'tease') {
-      drawFace('tease', offsetY, offsetX);
-    }
-    bounceAnim = requestAnimationFrame(loop);
-  }
-  bounceAnim = requestAnimationFrame(loop);
-}
- 
-/* ── SHAKE on wrong ── */
+// Per-face bounce "personalities" so tease still sways side to side etc.
+const BOUNCE_PRESETS = {
+  idle:    { ampY: 3, speedY: 0.04 },
+  tease:   { ampY: 4, speedY: 0.05, ampX: 2, speedX: 0.7 },
+  worried: { ampY: 2, speedY: 0.035 },
+  angry:   { ampY: 2, speedY: 0.06 },
+  happy:   { ampY: 2, speedY: 0.04 },
+};
+/* ── SHAKE on wrong (FIXED) ──
+   Now settles into whatever face was actually passed in,
+   instead of hardcoding 'tease'. */
 function shakeFace(faceName) {
   isShaking = true;
   stopBounce();
@@ -1519,14 +1505,12 @@ function shakeFace(faceName) {
       shakeAnim = requestAnimationFrame(loop);
     } else {
       isShaking = false;
-      // go to tease after angry
-      currentFace = 'tease';
-      startTeaseBounce();
+      currentFace = faceName;                         // settle into the REAL face
+      startFaceBounce(faceName, BOUNCE_PRESETS[faceName]);
     }
   }
   shakeAnim = requestAnimationFrame(loop);
 }
- 
 /* ── SPIN on correct ── */
 function spinFace() {
   isSpinning = true;
@@ -1539,31 +1523,26 @@ function spinFace() {
       requestAnimationFrame(loop);
     } else {
       isSpinning = false;
-      drawFace('happy');
-      // gentle happy bounce
-      bounceT = 0;
-      function happyBounce() {
-        bounceT += 0.04;
-        drawFace('happy', Math.sin(bounceT) * 2);
-        bounceAnim = requestAnimationFrame(happyBounce);
-      }
-      bounceAnim = requestAnimationFrame(happyBounce);
+      currentFace = 'happy';
+      startFaceBounce('happy', BOUNCE_PRESETS.happy);
     }
   }
   requestAnimationFrame(loop);
 }
- 
-/* ── RANDOM TEASE ── */
+/* ── RANDOM IDLE FIDGET (FIXED) ──
+   Now picks a random face from the pool instead of always 'tease'. */
+const IDLE_FIDGET_POOL = ['tease', 'worried', 'angry'];
 let teaseTimeout;
 function scheduleRandomTease() {
   clearTimeout(teaseTimeout);
   teaseTimeout = setTimeout(() => {
     if (currentFace === 'idle') {
-      currentFace = 'tease';
-      startTeaseBounce();
+      const face = IDLE_FIDGET_POOL[Math.floor(Math.random() * IDLE_FIDGET_POOL.length)];
+      currentFace = face;
+      startFaceBounce(face, BOUNCE_PRESETS[face]);
       setTimeout(() => {
         currentFace = 'idle';
-        startBounce();
+        startFaceBounce('idle', BOUNCE_PRESETS.idle);
         scheduleRandomTease();
       }, 1800);
     } else {
@@ -1571,122 +1550,100 @@ function scheduleRandomTease() {
     }
   }, 3500 + Math.random() * 2000);
 }
- 
 /* ══════════════════════════════════════════
    GAME LOGIC
 ══════════════════════════════════════════ */
 let attempts = 0;
 const MAX_ATTEMPTS = 5;
- 
 const WRONG_MESSAGES = [
-  {
-    main: 'BOOO 👎',
-    sub: "Wrong. You don't seem so bright, do you?",
-    hint: '6 digits. Something in this store.',
-    face: 'tease',
-  },
-  {
-    main: 'BLEHHH 🤢',
-    sub: "Did you leave your brain at home today?",
-    hint: "It's not your PIN. Think work, not home.",
-    face: 'worried',
-  },
-  {
-    main: 'SERIOUSLY?! 😤',
-    sub: "Do you even pay attention at work? It's a simple passcode.",
-    hint: "Customers use it. You watch them use it. Every. Day.",
-    face: 'angry',
-  },
-  {
-    main: 'OH COME ON 🫠',
-    sub: "This is actually painful to watch.",
-    hint: "It prints things. Little paper things. People get excited about them.",
-    face: 'angry',
-  },
-  {
-    main: 'FINE. 🙄',
-    sub: "You insignificant creature — it's the LOTTO terminal password. Should I take $5 off for this?",
-    hint: "The machine. By the till. That one. Yes.",
-    face: 'tease',
-  },
+  { main: 'BOOO 👎', sub: "Wrong. You don't seem so bright, do you?", hint: '6 digits. Something in this store.' },
+  { main: 'BLEHHH 🤢', sub: "Did you leave your brain at home today?", hint: "It's not your PIN. Think work, not home." },
+  { main: 'SERIOUSLY?! 😤', sub: "Do you even pay attention at work? It's a simple passcode.", hint: "Customers use it. You watch them use it. Every. Day." },
+  { main: 'OH COME ON 🫠', sub: "This is actually painful to watch.", hint: "It prints things. Little paper things. People get excited about them." },
+  { main: 'FINE. 🙄', sub: "You insignificant creature — it's the LOTTO terminal password. Should I take $5 off for this?", hint: "The machine. By the till. That one. Yes." },
 ];
- 
+// Pool the shake face is randomly drawn from on every wrong attempt.
+// (Message text still escalates by attempt#, but the FACE is now random
+//  each time — that's the "personality" variety you wanted.)
+const WRONG_FACE_POOL = ['tease', 'worried', 'angry'];
 function simulateWrong() {
-  const input = document.getElementById('password-input');
+  const input      = document.getElementById('password-input');
   const screenMain = document.getElementById('screen-main');
   const screenSub  = document.getElementById('screen-sub');
   const hint       = document.getElementById('terminal-hint');
   const dots       = document.querySelectorAll('.attempt-dot');
- 
   if (attempts >= MAX_ATTEMPTS) return;
- 
   const msg = WRONG_MESSAGES[attempts];
- 
-  // shake input
+  const randomFace = WRONG_FACE_POOL[Math.floor(Math.random() * WRONG_FACE_POOL.length)];
   input.classList.remove('shake');
   void input.offsetWidth;
   input.classList.add('shake');
   setTimeout(() => input.classList.remove('shake'), 500);
- 
-  // face
-  shakeFace(msg.face);
- 
-  // fill dot
-  dots[attempts].classList.add('used');
-  attempts++;
- 
-  // update text
+  shakeFace(randomFace);
+  dots[attempts].classList.add('used');   // fills exactly ONE dot
+  attempts++;                             // increments by exactly ONE
   screenMain.textContent = msg.main;
   screenSub.textContent  = msg.sub;
   hint.textContent       = msg.hint;
- 
-  // clear input
   setTimeout(() => { input.value = ''; }, 450);
 }
- 
 function simulateCorrect() {
   const input      = document.getElementById('password-input');
   const lockIcon   = document.getElementById('lock-icon');
   const screenMain = document.getElementById('screen-main');
   const screenSub  = document.getElementById('screen-sub');
- 
   input.classList.add('correct');
   input.disabled = true;
   lockIcon.textContent = '🔓';
- 
   spinFace();
- 
   screenMain.textContent = 'ACCESS GRANTED ✓';
   screenSub.textContent  = 'Well done detective. Redirecting...';
- 
   setTimeout(() => {
     screenSub.textContent = '🎉 Alright alright, you got it. Go claim your money.';
   }, 1600);
- 
-  // your existing code:
-  // setTimeout(() => {
-  //   document.getElementById('password-gate').style.display = 'none';
-  //   document.getElementById('claim-form-wrap').style.display = 'block';
-  // }, 2200);
+  setTimeout(() => {
+    const gate = document.getElementById('password-gate');
+    gate.style.transition = 'opacity 0.4s ease';
+    gate.style.opacity = '0';
+    setTimeout(() => {
+      gate.style.display = 'none';
+      gate.style.opacity = '1';
+      const claim = document.getElementById('claim-form-wrap');
+      claim.style.display = 'block';
+      claim.style.opacity = '0';
+      claim.style.transition = 'opacity 0.4s ease';
+      requestAnimationFrame(() => { claim.style.opacity = '1'; });
+    }, 400);
+  }, 2200);
 }
- 
-/* ── real submit ── */
-document.getElementById('password-submit').addEventListener('click', () => {
+/* ── REAL SUBMIT (hardened against duplicate bindings) ──
+   Using .onclick / .onkeydown ASSIGNMENT instead of addEventListener
+   means if this script ever runs twice (duplicate <script> tag,
+   re-init, etc.) the second assignment REPLACES the first instead
+   of stacking a second listener on top. This alone fixes the
+   "+2 per wrong attempt" symptom at the root.
+   The isProcessing lock is a second safety net so even genuinely
+   duplicated DOM nodes/listeners can't double-fire mid-animation. */
+let isProcessing = false;
+function handlePasswordSubmit() {
+  if (isProcessing) return;
+  isProcessing = true;
   const val = document.getElementById('password-input').value.trim();
   if (val === '101158') {
     simulateCorrect();
+    // no more attempts possible after success; no need to reset lock
   } else {
     simulateWrong();
+    setTimeout(() => { isProcessing = false; }, 500); // matches shake/input-clear timing
   }
-});
- 
-document.getElementById('password-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('password-submit').click();
-});
- 
+}
+document.getElementById('password-submit').onclick = handlePasswordSubmit;
+document.getElementById('password-input').onkeydown = (e) => {
+  if (e.key === 'Enter') handlePasswordSubmit();
+};
 /* ── init ── */
 drawFace('idle');
-startBounce();
+startFaceBounce('idle', BOUNCE_PRESETS.idle);
 scheduleRandomTease();
 </script>
   </body>
