@@ -459,12 +459,6 @@
         font-weight: 600;
         margin: 0;
       }
-      /* ═══ PASSWORD / CLAIM ═══ */
-      #password-gate,
-      #claim-form-wrap {
-        max-width: 380px;
-        margin: 1rem auto 0;
-      }
       /* Toast */
       .earn-toast {
         position: fixed;
@@ -508,15 +502,6 @@
         color: #7a5200;
       }
 
-      @keyframes terminal-pulse {
-        0%,
-        100% {
-          filter: drop-shadow(0 0 4px rgba(0, 255, 100, 0.4));
-        }
-        50% {
-          filter: drop-shadow(0 0 12px rgba(0, 255, 100, 0.9));
-        }
-      }
 
       @keyframes wrong-shake {
         0%,
@@ -537,11 +522,6 @@
         }
       }
 
-      .terminal-wrong {
-        animation: wrong-shake 0.4s ease;
-        border-color: #ff4444 !important;
-        box-shadow: 0 0 20px rgba(255, 68, 68, 0.3) !important;
-      }
     </style>
   </head>
   <body>
@@ -658,109 +638,7 @@
           terminal.
         </div>
         <div id="password-gate" style="display: none">
-          <!-- Terminal screen aesthetic -->
-          <div
-            style="
-              background: #0d0d0d;
-              border-radius: 16px;
-              padding: 2rem 1.5rem;
-              text-align: center;
-              margin-bottom: 1rem;
-              border: 1.5px solid #333;
-              box-shadow:
-                0 0 40px rgba(0, 255, 100, 0.08),
-                inset 0 0 30px rgba(0, 0, 0, 0.5);
-              font-family: &quot;Courier New&quot;, monospace;
-            "
-          >
-            <!-- Blinking cursor header -->
-            <div
-              style="
-                color: #00ff66;
-                font-size: 0.75rem;
-                letter-spacing: 0.15em;
-                margin-bottom: 1.2rem;
-                opacity: 0.7;
-              "
-            >
-              SYSTEM TERMINAL v2.4.1
-            </div>
-
-            <!-- Animated lock icon -->
-            <div
-              id="terminal-lock-icon"
-              style="
-                font-size: 3rem;
-                margin-bottom: 1rem;
-                animation: terminal-pulse 2s ease-in-out infinite;
-              "
-            >
-              🔐
-            </div>
-
-            <!-- Typewriter text -->
-            <p
-              id="terminal-typewriter"
-              style="
-                color: #00ff66;
-                font-size: 0.82rem;
-                letter-spacing: 0.05em;
-                min-height: 2.5rem;
-                margin-bottom: 1.5rem;
-              "
-            ></p>
-
-            <!-- Input styled as terminal -->
-            <input
-              type="password"
-              class="form-control"
-              id="password-input"
-              placeholder="_ _ _ _ _ _"
-              style="
-                background: #1a1a1a;
-                border: 1.5px solid #333;
-                color: #00ff66;
-                font-family: &quot;Courier New&quot;, monospace;
-                text-align: center;
-                font-size: 1.1rem;
-                letter-spacing: 0.3em;
-                border-radius: 8px;
-                margin-bottom: 0.8rem;
-              "
-            />
-
-            <p class="field-error" id="password-error" style="color: #ff4444">
-              ❌ Access denied. Try again.
-            </p>
-
-            <button
-              class="btn-solid"
-              id="password-submit"
-              style="
-                width: 100%;
-                background: #00ff66;
-                color: #0d0d0d;
-                font-family: &quot;Courier New&quot;, monospace;
-                letter-spacing: 0.1em;
-              "
-            >
-              AUTHENTICATE →
-            </button>
-          </div>
-
-          <!-- Subtle hint — doesn't mention lotto directly -->
-          <p
-            style="
-              font-size: 0.72rem;
-              color: var(--muted);
-              text-align: center;
-              font-style: italic;
-              line-height: 1.6;
-            "
-          >
-            💡 Hint: You use this password every day at work.<br />It's 6 digits
-            long.
-          </p>
+         // New terminal with pixelated avatar here
         </div>
         <div id="claim-form-wrap" style="display: none">
           <p
@@ -1163,63 +1041,7 @@
         }
       }
 
-      /* ── Password submit with animations ── */
-      document
-        .getElementById("password-submit")
-        .addEventListener("click", () => {
-          const input = document.getElementById("password-input");
-          const val = input.value.trim();
-          const err = document.getElementById("password-error");
-          const terminalBox = input.closest("div");
-
-          err.style.display = "none";
-          input.style.borderColor = "#333";
-
-          if (val === "101158") {
-            // Success animation before revealing form
-            const lockIcon = document.getElementById("terminal-lock-icon");
-            lockIcon.textContent = "🔓";
-            lockIcon.style.animation = "none";
-
-            const tw = document.getElementById("terminal-typewriter");
-            typewriter(tw, "> ACCESS GRANTED\n> Welcome. Redirecting...");
-
-            setTimeout(() => {
-              document.getElementById("password-gate").style.display = "none";
-              document.getElementById("claim-form-wrap").style.display =
-                "block";
-            }, 1800);
-          } else {
-            // Wrong password — shake + flash red + increment attempt counter
-            terminalBox.classList.add("terminal-wrong");
-            input.classList.add("is-invalid");
-            input.style.borderColor = "#ff4444";
-            err.style.display = "block";
-
-            const tw = document.getElementById("terminal-typewriter");
-            const attempts = parseInt(tw.dataset.attempts || 0) + 1;
-            tw.dataset.attempts = attempts;
-
-            const messages = [
-              "> ACCESS DENIED. Incorrect code.",
-              "> ACCESS DENIED. Are you sure you know it?",
-              "> ACCESS DENIED. Think harder...",
-              "> ACCESS DENIED. It's something you do every day...",
-              "> ACCESS DENIED. 6 digits. You see it daily.",
-            ];
-            typewriter(
-              tw,
-              messages[Math.min(attempts - 1, messages.length - 1)],
-            );
-
-            setTimeout(() => {
-              terminalBox.classList.remove("terminal-wrong");
-              input.value = "";
-              input.style.borderColor = "#333";
-              input.classList.remove("is-invalid");
-            }, 600);
-          }
-        });
+      
       /* ══════════════ CLAIM FORM SUBMISSION (only real network call) ══════════════ */
       document
         .getElementById("claim-submit")
