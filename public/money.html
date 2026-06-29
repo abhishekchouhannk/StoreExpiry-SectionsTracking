@@ -101,6 +101,36 @@
     .tab-content-area { padding: 1rem; }
     .sec-hero { padding: 1rem; }
   }
+
+  .already-claimed-banner {
+  margin-top: .7rem;
+  background: #fff4e0;
+  border: 1.5px solid #f0b429;
+  border-radius: 12px;
+  padding: .75rem 1rem;
+  font-size: .82rem;
+  line-height: 1.55;
+  color: #7a5200;
+}
+
+@keyframes terminal-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(0,255,100,.4)); }
+  50%       { filter: drop-shadow(0 0 12px rgba(0,255,100,.9)); }
+}
+
+@keyframes wrong-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-6px); }
+  80%       { transform: translateX(6px); }
+}
+
+.terminal-wrong {
+  animation: wrong-shake .4s ease;
+  border-color: #ff4444 !important;
+  box-shadow: 0 0 20px rgba(255,68,68,.3) !important;
+}
 </style>
 </head>
 <body>
@@ -126,6 +156,9 @@
       🧐 Hold up — you just wanna take these <strong>$15</strong> for free? That's 3/4 of an hour's pay.
       Do some work on this section first, please.
     </div>
+
+    <!-- NEW DISCLAIMER-->
+<div class="already-claimed-banner" id="already-claimed-banner" style="display:none;"></div>
     <div class="money-progress-wrap">
       <div class="money-progress-track"><div class="money-progress-bar" id="money-progress-bar"></div></div>
       <p class="money-progress-label" id="money-progress-label">$0 / $15 earned</p>
@@ -184,14 +217,83 @@
         🔒 Complete Cleaning, Planogram &amp; Expiry first to unlock the lotto terminal.
       </div>
       <div id="password-gate" style="display:none;">
-        <p class="toolbar-title" style="text-align:center;margin-bottom:.3rem;">🎰 Lotto Terminal Locked</p>
-        <p style="font-size:.82rem;color:var(--muted);text-align:center;margin-bottom:1rem;">
-          Enter the terminal password to continue.
-        </p>
-        <input type="password" class="form-control" id="password-input" placeholder="Enter password" />
-        <p class="field-error" id="password-error">Incorrect password, try again.</p>
-        <button class="btn-solid" id="password-submit" style="width:100%;margin-top:.8rem;">Unlock</button>
-      </div>
+  
+  <!-- Terminal screen aesthetic -->
+  <div style="
+    background: #0d0d0d;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    border: 1.5px solid #333;
+    box-shadow: 0 0 40px rgba(0,255,100,.08), inset 0 0 30px rgba(0,0,0,.5);
+    font-family: 'Courier New', monospace;
+  ">
+    <!-- Blinking cursor header -->
+    <div style="color: #00ff66; font-size: .75rem; letter-spacing: .15em; margin-bottom: 1.2rem; opacity: .7;">
+      SYSTEM TERMINAL v2.4.1
+    </div>
+
+    <!-- Animated lock icon -->
+    <div id="terminal-lock-icon" style="font-size: 3rem; margin-bottom: 1rem; animation: terminal-pulse 2s ease-in-out infinite;">
+      🔐
+    </div>
+
+    <!-- Typewriter text -->
+    <p id="terminal-typewriter" style="
+      color: #00ff66;
+      font-size: .82rem;
+      letter-spacing: .05em;
+      min-height: 2.5rem;
+      margin-bottom: 1.5rem;
+    "></p>
+
+    <!-- Input styled as terminal -->
+    <input 
+      type="password" 
+      class="form-control" 
+      id="password-input" 
+      placeholder="_ _ _ _ _ _"
+      style="
+        background: #1a1a1a;
+        border: 1.5px solid #333;
+        color: #00ff66;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+        font-size: 1.1rem;
+        letter-spacing: .3em;
+        border-radius: 8px;
+        margin-bottom: .8rem;
+      "
+    />
+
+    <p class="field-error" id="password-error" style="color: #ff4444;">
+      ❌ Access denied. Try again.
+    </p>
+
+    <button class="btn-solid" id="password-submit" style="
+      width: 100%;
+      background: #00ff66;
+      color: #0d0d0d;
+      font-family: 'Courier New', monospace;
+      letter-spacing: .1em;
+    ">
+      AUTHENTICATE →
+    </button>
+  </div>
+
+  <!-- Subtle hint — doesn't mention lotto directly -->
+  <p style="
+    font-size: .72rem;
+    color: var(--muted);
+    text-align: center;
+    font-style: italic;
+    line-height: 1.6;
+  ">
+    💡 Hint: You use this password every day at work.<br>It's 6 digits long.
+  </p>
+
+</div>
       <div id="claim-form-wrap" style="display:none;">
         <p class="toolbar-title" style="text-align:center;margin-bottom:.3rem;">🏆 Claim Your $15</p>
         <p style="font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:1.2rem;">
@@ -212,6 +314,14 @@
         <button class="btn-solid" id="claim-submit" style="width:100%;">💸 Submit Claim</button>
         <p class="field-error" id="claim-error"></p>
       </div>
+      <div id="already-claimed-tab" style="display:none; text-align:center; padding:2rem 0;">
+  <div style="font-size:2.8rem;">🏆</div>
+  <p style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:.2rem;" id="already-claimed-name"></p>
+  <p style="font-size:.82rem;color:var(--muted);" id="already-claimed-time"></p>
+  <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;">
+    Feel free to keep playing the games for fun though! 🎮
+  </p>
+</div>
       <div id="claim-success" style="display:none; text-align:center; padding:2rem 0;">
         <div style="font-size:2.8rem;">🎉</div>
         <p style="font-weight:700;font-family:'Syne',sans-serif;">Claim submitted!</p>
@@ -286,9 +396,10 @@ function showEarnToast(task) {
   }, 2200);
 }
 function checkUnlockPassword() {
+  if (claimedAlready) return;
   if (state.cleaning && state.planogram && state.expiry) {
     document.getElementById('password-locked').style.display = 'none';
-    document.getElementById('password-gate').style.display = 'block';
+    document.getElementById('password-gate').style.display   = 'block';
   }
 }
 /* ══════════════ CLEANING GAME ══════════════ */
@@ -410,23 +521,103 @@ function showExpiryLabel(idx, cardEl) {
     if (!state.expiry) completeTask('expiry');
   }
 }
-/* ══════════════ PASSWORD GATE ══════════════ */
+/* ── Typewriter effect ── */
+function typewriter(el, text, speed = 45) {
+  el.textContent = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    el.textContent += text[i];
+    i++;
+    if (i >= text.length) clearInterval(interval);
+  }, speed);
+}
+
+/* ── Run typewriter on tab switch to password ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // existing tab switching code stays...
+    if (btn.dataset.tab === 'password') {
+      const tw = document.getElementById('terminal-typewriter');
+      if (tw && document.getElementById('password-gate').style.display !== 'none') {
+        typewriter(tw, '> ACCESS RESTRICTED\n> Enter your 6-digit employee code to continue...');
+      }
+    }
+  });
+});
+
+/* ── Also run on page load if already unlocked ── */
+function checkUnlockPassword() {
+  if (state.cleaning && state.planogram && state.expiry) {
+    document.getElementById('password-locked').style.display = 'none';
+    document.getElementById('password-gate').style.display = 'block';
+    // Run typewriter immediately if password tab is active
+    const tw = document.getElementById('terminal-typewriter');
+    if (tw) {
+      setTimeout(() => {
+        typewriter(tw, '> ACCESS RESTRICTED\n> Enter your 6-digit employee code to continue...');
+      }, 300);
+    }
+  }
+}
+
+/* ── Password submit with animations ── */
 document.getElementById('password-submit').addEventListener('click', () => {
-  const val = document.getElementById('password-input').value.trim();
-  const err = document.getElementById('password-error');
+  const input = document.getElementById('password-input');
+  const val   = input.value.trim();
+  const err   = document.getElementById('password-error');
+  const terminalBox = input.closest('div');
+
+  err.style.display = 'none';
+  input.style.borderColor = '#333';
+
   if (val === '101158') {
-    document.getElementById('password-gate').style.display = 'none';
-    document.getElementById('claim-form-wrap').style.display = 'block';
+    // Success animation before revealing form
+    const lockIcon = document.getElementById('terminal-lock-icon');
+    lockIcon.textContent = '🔓';
+    lockIcon.style.animation = 'none';
+
+    const tw = document.getElementById('terminal-typewriter');
+    typewriter(tw, '> ACCESS GRANTED\n> Welcome. Redirecting...');
+
+    setTimeout(() => {
+      document.getElementById('password-gate').style.display   = 'none';
+      document.getElementById('claim-form-wrap').style.display = 'block';
+    }, 1800);
+
   } else {
+    // Wrong password — shake + flash red + increment attempt counter
+    terminalBox.classList.add('terminal-wrong');
+    input.classList.add('is-invalid');
+    input.style.borderColor = '#ff4444';
     err.style.display = 'block';
-    document.getElementById('password-input').classList.add('is-invalid');
+
+    const tw = document.getElementById('terminal-typewriter');
+    const attempts = (parseInt(tw.dataset.attempts || 0)) + 1;
+    tw.dataset.attempts = attempts;
+
+    const messages = [
+      '> ACCESS DENIED. Incorrect code.',
+      '> ACCESS DENIED. Are you sure you know it?',
+      '> ACCESS DENIED. Think harder...',
+      '> ACCESS DENIED. It\'s something you do every day...',
+      '> ACCESS DENIED. 6 digits. You see it daily.',
+    ];
+    typewriter(tw, messages[Math.min(attempts - 1, messages.length - 1)]);
+
+    setTimeout(() => {
+      terminalBox.classList.remove('terminal-wrong');
+      input.value = '';
+      input.style.borderColor = '#333';
+      input.classList.remove('is-invalid');
+    }, 600);
   }
 });
+/* ══════════════ CLAIM FORM SUBMISSION (only real network call) ══════════════ */
 document.getElementById('claim-submit').addEventListener('click', async () => {
-  const name     = document.getElementById('claim-name').value.trim();
-  const email    = document.getElementById('claim-email').value.trim();
+  const name = document.getElementById('claim-name').value.trim();
+  const email = document.getElementById('claim-email').value.trim();
   const comments = document.getElementById('claim-comments').value.trim();
-  const errorEl  = document.getElementById('claim-error');
+  const errorEl = document.getElementById('claim-error');
   errorEl.style.display = 'none';
   if (!name || !email) {
     errorEl.textContent = 'Name and email are required.';
@@ -437,26 +628,20 @@ document.getElementById('claim-submit').addEventListener('click', async () => {
   btn.disabled = true;
   btn.textContent = 'Submitting…';
   try {
-    const res  = await fetch('/api/easter-egg/money-claim', {
+    const res = await fetch('/api/easter-egg/money-claim', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, comments, amount: state.earned }),
     });
     const json = await res.json();
-    /* someone else claimed in the meantime */
     if (res.status === 409) {
-      handleAlreadyClaimed(json.winner);
-      /* flip to the password tab so they see the "claimed" message */
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-pane-custom').forEach(p => p.classList.remove('active'));
-      document.querySelector('.tab-btn[data-tab="password"]').classList.add('active');
-      document.getElementById('tab-password').classList.add('active');
+      // Someone beat them to it by seconds — show the real winner
+      showAlreadyClaimedUI(json.existing);
       return;
     }
     if (!res.ok) throw new Error(json.error || 'Something went wrong');
-    /* success */
     document.getElementById('claim-form-wrap').style.display = 'none';
-    document.getElementById('claim-success').style.display   = 'block';
+    document.getElementById('claim-success').style.display = 'block';
   } catch (e) {
     errorEl.textContent = 'Failed to submit: ' + e.message;
     errorEl.style.display = 'block';
@@ -464,41 +649,15 @@ document.getElementById('claim-submit').addEventListener('click', async () => {
     btn.textContent = '💸 Submit Claim';
   }
 });
-/* ══════════════ CLAIM STATUS CHECK ══════════════ */
+
 async function checkClaimStatus() {
   try {
-    const res  = await fetch('/api/easter-egg/money-claim');
+    const res = await fetch('/api/easter-egg/money-claim');
     const data = await res.json();
-    if (data.claimed) handleAlreadyClaimed(data.winner);
-  } catch {
-    /* offline / endpoint not ready — games still work, claim just won't submit */
+    if (data.claimed) showAlreadyClaimedUI(data);
+  } catch (e) {
+    console.error('Failed to check claim status', e);
   }
-}
-function handleAlreadyClaimed(winner) {
-  const d    = new Date(winner.claimedAt);
-  const when = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-             + ' at '
-             + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  /* update hero disclaimer */
-  document.getElementById('money-disclaimer').innerHTML =
-    `🏆 This prize was already claimed by <strong>${esc(winner.name)}</strong> on ${when}.<br>
-     You can still play the games for fun though!`;
-  /* replace the entire password tab so the form is never reachable */
-  document.getElementById('tab-password').innerHTML = `
-    <div class="empty-state">
-      <div style="font-size:2.5rem;margin-bottom:.5rem;">🏆</div>
-      <p style="font-weight:700;font-family:'Syne',sans-serif;margin-bottom:.3rem;">
-        Prize Claimed
-      </p>
-      <p><strong>${esc(winner.name)}</strong> got here first — ${when}.</p>
-      <p style="margin-top:.4rem;">Better luck next time! 😄</p>
-    </div>`;
-}
-/* tiny HTML-escape helper */
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
 }
 
 /* ══════════════ INIT ══════════════ */
@@ -506,7 +665,40 @@ renderCleaningShelves();
 renderPlanoTray();
 renderExpiryGrid();
 updateProgressUI();
-checkClaimStatus(); 
+checkClaimStatus(); // Check if the money has already been claimed by someone else
+</script>
+<script>
+  let claimedAlready = false;
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+function formatClaimDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+  });
+}
+function showAlreadyClaimedUI(data) {
+  claimedAlready = true;
+  const banner = document.getElementById('already-claimed-banner');
+  banner.style.display = 'block';
+  banner.innerHTML =
+    `🏆 <strong>${escapeHtml(data.name)}</strong> already found the money and claimed it on ` +
+    `<strong>${formatClaimDate(data.claimedAt)}</strong>. Thanks for playing — better luck next time!`;
+  // Hide every claim-related UI state and show the winner card instead
+  document.getElementById('password-locked').style.display   = 'none';
+  document.getElementById('password-gate').style.display     = 'none';
+  document.getElementById('claim-form-wrap').style.display    = 'none';
+  document.getElementById('claim-success').style.display      = 'none';
+  const tab = document.getElementById('already-claimed-tab');
+  tab.style.display = 'block';
+  document.getElementById('already-claimed-name').textContent = `${data.name} won the $15!`;
+  document.getElementById('already-claimed-time').textContent = `Claimed on ${formatClaimDate(data.claimedAt)}`;
+}
+
 </script>
 </body>
 </html>

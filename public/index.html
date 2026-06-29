@@ -79,7 +79,7 @@
       color: var(--muted);
       line-height: 1.6;
       font-style: italic;
-      margin-bottom: 2rem;
+      margin-bottom: 1.2rem;
       padding: 0 .5rem;
       animation: textIn .5s ease .35s both;
     }
@@ -202,8 +202,9 @@
 
     /* ─── Easter-egg puzzle hint ─── */
 .puzzle-hint {
-  margin: 22px auto 6px;
-  padding: 14px 20px;
+  margin: 0px auto 6px;
+  margin-bottom: 15px;
+  padding: 10px 20px 16px;
   max-width: 320px;
   border: 1.5px dashed rgba(128, 128, 128, .35);
   border-radius: 14px;
@@ -211,11 +212,27 @@
   text-align: center;
   font-size: .82rem;
   line-height: 1.7;
+
+  /* animation */
+  animation: breathe 3s ease-in-out infinite;
 }
 .puzzle-hint .puzzle-icon {
   display: block;
   font-size: 1.3rem;
   margin-bottom: 2px;
+}
+
+@keyframes breathe {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(128, 128, 128, 0);
+    border-color: rgba(128, 128, 128, .35);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 16px 4px rgba(128, 128, 128, .15);
+    border-color: rgba(128, 128, 128, .7);
+    transform: scale(1.050);
+  }
 }
   </style>
 </head>
@@ -229,7 +246,7 @@
     <!-- Easter-egg hint -->
 <div class="puzzle-hint" id="puzzle-hint">
   <span class="puzzle-icon">🧩</span>
-  <strong>Fun Puzzle</strong><br />
+  <strong>Side Quest</strong><br />
   <strong>$15</strong> is hidden somewhere in this app.<br />
   Search for <em>&lsquo;the money&rsquo;</em> to claim&nbsp;it.<br />
   First come, first serve &amp; good&nbsp;luck! 🍀
